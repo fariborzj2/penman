@@ -34,7 +34,7 @@ export class Editor extends EventEmitter {
     // Create wrapper container
     this.container = document.createElement('div');
     this.container.className = 'penman-wrapper';
-    this.container.style.direction = this.options.direction;
+    this.container.setAttribute('dir', this.options.direction);
     this.container.lang = this.options.lang;
 
     // Create toolbar
