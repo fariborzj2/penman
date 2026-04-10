@@ -21,6 +21,8 @@
 <script>
 penman.init({
   selector: '#myTextarea',
+  lang: 'fa', // fa | en
+  direction: 'auto', // rtl | ltr | auto
   height: 300,
   plugins: [
     'advlist', 'autolink', 'link', 'image', 'lists',
