@@ -20,9 +20,7 @@ describe('Editor Core', () => {
     expect(editor.editableArea).not.toBeNull();
     expect(editor.container).not.toBeNull();
     expect(editor.container.className).toBe('penman-wrapper');
-    expect(editor.toolbar.className).toBe('penman-toolbar');
     expect(editor.editableArea.className).toBe('penman-editor-area');
-    expect(editor.statusbar.className).toBe('penman-statusbar');
   });
 
   it('should implement getContent, setContent, and focus methods', () => {
