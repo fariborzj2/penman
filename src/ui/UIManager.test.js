@@ -38,15 +38,26 @@ describe('UIManager', () => {
     expect(separators.length).toBe(1);
   });
 
-  it('should use IconProvider to render button content', () => {
+  it('should use IconProvider to render button content with actual SVGs', () => {
     editor = new Editor({
       selector: '#editor',
       toolbar: 'bold italic'
     });
 
     const boldButton = document.querySelector('.penman-btn-bold');
-    expect(boldButton.innerHTML).toContain('penman-icon-placeholder');
-    expect(boldButton.innerHTML).toContain('Bold');
+    expect(boldButton.innerHTML).toContain('<svg');
+    expect(boldButton.innerHTML).toContain('viewBox="0 0 24 24"');
+  });
+
+  it('should use fallback span for unknown icons', () => {
+    editor = new Editor({
+      selector: '#editor',
+      toolbar: 'unknownCmd'
+    });
+
+    const unknownBtn = document.querySelector('.penman-btn-unknownCmd');
+    expect(unknownBtn.innerHTML).toContain('penman-icon-fallback');
+    expect(unknownBtn.innerHTML).toContain('UnknownCmd');
   });
 
   it('should update button active states when selection changes', () => {
