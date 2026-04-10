@@ -1,6 +1,7 @@
 import { EventEmitter } from './EventEmitter.js';
 import { SelectionManager } from '../selection/SelectionManager.js';
 import { CommandManager } from '../commands/CommandManager.js';
+import { HistoryManager } from '../history/HistoryManager.js';
 import { UIManager } from '../ui/UIManager.js';
 
 export class Editor extends EventEmitter {
@@ -24,6 +25,7 @@ export class Editor extends EventEmitter {
     // Core Subsystems
     this.selection = null;
     this.commands = null;
+    this.history = null;
     this.ui = null;
 
     this.init();
@@ -35,6 +37,7 @@ export class Editor extends EventEmitter {
     // Initialize core subsystems
     this.selection = new SelectionManager(this);
     this.commands = new CommandManager(this);
+    this.history = new HistoryManager(this);
     this.ui = new UIManager(this);
 
     // Render the UI based on options
@@ -82,22 +85,41 @@ export class Editor extends EventEmitter {
 
       if (isUndo) {
         e.preventDefault();
-        // TODO: Call this.history.undo() in Milestone 2
-        console.warn('Native Undo intercepted. Penman History module not yet loaded.');
+        this.history.undo();
       }
 
       if (isRedo) {
         e.preventDefault();
-        // TODO: Call this.history.redo() in Milestone 2
-        console.warn('Native Redo intercepted. Penman History module not yet loaded.');
+        this.history.redo();
       }
     });
 
     // 2. Intercept beforeinput to block history-altering types
     this.editableArea.addEventListener('beforeinput', (e) => {
-      if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+      if (e.inputType === 'historyUndo') {
         e.preventDefault();
-        // Redirect to custom history later
+        this.history.undo();
+      } else if (e.inputType === 'historyRedo') {
+        e.preventDefault();
+        this.history.redo();
+      }
+    });
+
+    // 3. Intercept paste to prevent un-sanitized and history-polluting native pastes
+    this.editableArea.addEventListener('paste', (e) => {
+      e.preventDefault();
+
+      // Get plain text for now. (Rich text sanitization is milestone 5)
+      let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+
+      // Execute as a custom command logic:
+      // Insert text natively without history tracking of the browser, and then snapshot
+      // For now, using execCommand insertText is standard for plain text fallback.
+      document.execCommand('insertText', false, text);
+
+      // Immediately push structural change to history
+      if (this.history) {
+        this.history.pushImmediate();
       }
     });
   }

@@ -95,4 +95,60 @@ describe('Editor Core', () => {
 
     expect(executedCmd).toBe('bold');
   });
+
+  it('should push a snapshot to HistoryManager and trigger undo on Ctrl+Z', () => {
+    const editor = new Editor({ selector: '#test-textarea' });
+
+    // Check initial state
+    expect(editor.history.undoStack.length).toBe(1);
+
+    // Change content to ensure the snapshot is different
+    // (If html is exactly the same, pushImmediate ignores it)
+    editor.setContent('Some different text for history test');
+
+    // Make a change using a command
+    editor.execCommand('bold');
+
+    // Should have 2 states now (initial + bold)
+    expect(editor.history.undoStack.length).toBe(2);
+
+    // Simulate Ctrl+Z
+    const event = new KeyboardEvent('keydown', { key: 'z', ctrlKey: true });
+    editor.editableArea.dispatchEvent(event);
+
+    // Should have moved state to redoStack
+    expect(editor.history.undoStack.length).toBe(1);
+    expect(editor.history.redoStack.length).toBe(1);
+  });
+
+  it('should intercept native paste event and bypass default history pollution', () => {
+    const editor = new Editor({ selector: '#test-textarea' });
+
+    let isPrevented = false;
+    let pastedText = null;
+    let insertedCmd = null;
+
+    document.execCommand = (cmd, showUI, value) => {
+      insertedCmd = cmd;
+      pastedText = value;
+    };
+
+    const pasteEvent = new Event('paste');
+    pasteEvent.clipboardData = {
+      getData: () => 'Sanitized Paste'
+    };
+
+    // Monitor prevent default
+    const originalPreventDefault = pasteEvent.preventDefault;
+    pasteEvent.preventDefault = () => {
+      isPrevented = true;
+      originalPreventDefault.call(pasteEvent);
+    };
+
+    editor.editableArea.dispatchEvent(pasteEvent);
+
+    expect(isPrevented).toBe(true);
+    expect(insertedCmd).toBe('insertText');
+    expect(pastedText).toBe('Sanitized Paste');
+  });
 });

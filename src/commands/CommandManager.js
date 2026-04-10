@@ -45,7 +45,12 @@ export class CommandManager {
     // 5. Restore selection after normalization
     this.editor.selection.restore();
 
-    // 6. Update single source of truth
+    // 6. Push explicit snapshot to HistoryManager to bypass browser's undo stack
+    if (this.editor.history) {
+      this.editor.history.pushImmediate();
+    }
+
+    // 7. Update single source of truth
     this.editor.emit('change', this.editor.getContent());
     this.editor._syncToTextarea();
   }
