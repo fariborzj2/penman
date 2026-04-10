@@ -2,11 +2,6 @@ export class SelectionManager {
   constructor(editor) {
     this.editor = editor;
     this.MARKER_ID = 'penman-selection-marker';
-
-    // Track selection changes within the editor
-    this.editor.editableArea.addEventListener('mouseup', () => this.save());
-    this.editor.editableArea.addEventListener('keyup', () => this.save());
-    this.editor.editableArea.addEventListener('mouseleave', () => this.save());
   }
 
   /**
