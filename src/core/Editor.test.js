@@ -57,4 +57,42 @@ describe('Editor Core', () => {
 
     expect(editor.textarea.value).toBe('New Content');
   });
+
+  it('should verify the UIManager correctly renders the toolbar element', () => {
+    const editor = new Editor({
+      selector: '#test-textarea',
+      toolbar: 'bold italic'
+    });
+
+    // Check if toolbar is injected in the wrapper
+    const toolbar = editor.container.querySelector('div');
+    expect(toolbar).not.toBeNull();
+
+    // Check if buttons were created
+    const buttons = toolbar.querySelectorAll('button');
+    expect(buttons.length).toBe(2);
+    expect(buttons[0].title).toBe('bold');
+    expect(buttons[1].title).toBe('italic');
+  });
+
+  it('should trigger CommandManager correctly when a generated toolbar button is clicked', () => {
+    const editor = new Editor({
+      selector: '#test-textarea',
+      toolbar: 'bold'
+    });
+
+    // Mock document.execCommand to intercept it
+    let executedCmd = null;
+    document.execCommand = (cmd, showUI, value) => {
+      executedCmd = cmd;
+    };
+
+    const boldBtn = editor.container.querySelector('button[title="bold"]');
+    expect(boldBtn).not.toBeNull();
+
+    // Trigger click
+    boldBtn.click();
+
+    expect(executedCmd).toBe('bold');
+  });
 });
