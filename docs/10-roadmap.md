@@ -9,12 +9,12 @@
 - [x] طراحی و پیاده‌سازی معماری Event Emitter.
 
 ## مایلستون 2: هسته ویرایش (Editing Core)
-- [ ] پیاده‌سازی Selection System پایه.
-- [ ] پیاده‌سازی سیستم Undo/Redo با قابلیت Throttling.
-- [ ] پیاده‌سازی Command System (ابتدا بر پایه `execCommand`).
+- [x] پیاده‌سازی Selection System پایه.
+- [x] پیاده‌سازی سیستم Undo/Redo با قابلیت Throttling.
+- [x] پیاده‌سازی Command System (ابتدا بر پایه `execCommand`).
 
 ## مایلستون 3: رابط کاربری (UI & Toolbar)
-- [ ] ایجاد سیستم رندر Toolbar.
+- [x] ایجاد سیستم رندر Toolbar.
 - [ ] طراحی مجموعه اولیه آیکون‌های SVG.
 - [ ] پیاده‌سازی به‌روزرسانی وضعیت دکمه‌ها (Active state) بر اساس مکان نشانگر.
 

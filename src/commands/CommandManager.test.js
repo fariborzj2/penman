@@ -1,0 +1,65 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { Editor } from '../core/Editor.js';
+import { CommandManager } from './CommandManager.js';
+
+describe('CommandManager', () => {
+  let editor;
+  let commandManager;
+
+  beforeEach(() => {
+    document.body.innerHTML = '<textarea id="editor">Initial text</textarea>';
+    editor = new Editor({ selector: '#editor' });
+    commandManager = editor.commands;
+
+    // Mock execCommand to avoid actual browser document manipulation side-effects during some tests
+    document.execCommand = vi.fn();
+  });
+
+  it('should execute custom registered commands', () => {
+    const mockExecute = vi.fn();
+    commandManager.register('myCustomCommand', {
+      execute: mockExecute
+    });
+
+    commandManager.execute('myCustomCommand', 'someValue');
+    expect(mockExecute).toHaveBeenCalledWith(editor, 'someValue');
+  });
+
+  it('should fallback to execCommand for whitelisted commands', () => {
+    commandManager.execute('bold');
+    expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
+
+    commandManager.execute('justifycenter', 'value');
+    expect(document.execCommand).toHaveBeenCalledWith('justifycenter', false, 'value');
+  });
+
+  it('should block non-whitelisted and non-registered commands', () => {
+    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    commandManager.execute('formatBlock', '<h1>');
+
+    expect(document.execCommand).not.toHaveBeenCalled();
+    expect(consoleWarnSpy).toHaveBeenCalled();
+
+    consoleWarnSpy.mockRestore();
+  });
+
+  it('should normalize DOM elements (e.g., b to strong)', () => {
+    // Setup initial DOM with 'b' tags
+    editor.editableArea.innerHTML = 'Hello <b>bold</b> and <i>italic</i> world';
+
+    // We mock execCommand to not do anything, so we just test the normalization phase
+    // Wait, let's actually just call _normalizeDOM directly to test the isolation
+    commandManager._normalizeDOM();
+
+    const html = editor.editableArea.innerHTML;
+    expect(html).toContain('<strong>bold</strong>');
+    expect(html).not.toContain('<b>bold</b>');
+    expect(html).toContain('<em>italic</em>');
+    expect(html).not.toContain('<i>italic</i>');
+  });
+});
