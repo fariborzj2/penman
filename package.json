@@ -4,8 +4,28 @@
   "description": "A framework-agnostic, zero-dependency Vanilla JavaScript rich text editor (WYSIWYG).",
   "main": "src/index.js",
   "scripts": {
-    "test": "echo \"no test specified\""
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest run"
   },
   "author": "",
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "jsdom": "^29.0.2",
+    "vite": "^8.0.8",
+    "vitest": "^4.1.4"
+  },
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fariborzj2/penman.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/fariborzj2/penman/issues"
+  },
+  "homepage": "https://github.com/fariborzj2/penman#readme"
 }
