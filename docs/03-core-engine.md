@@ -7,7 +7,7 @@
    - خواندن تنظیمات (Config) پاس داده شده (شامل تنظیمات زبان `lang` و جهت متن `direction`).
    - پیدا کردن `<textarea>` هدف در DOM.
    - اعمال تنظیمات زبان و جهت متن بر روی ساختار ادیتور (مثلاً تنظیم ویژگی `dir`).
-   - پنهان کردن `<textarea>` و ایجاد ساختار DOM ادیتور (Wrapper, Toolbar, Editor Area).
+   - پنهان کردن `<textarea>` و ایجاد ساختار DOM ادیتور (Wrapper, Editor Area).
 2. **مدیریت نمونه‌ها (Instance Management):**
    - نگهداری لیستی از تمام ادیتورهای فعال در صفحه.
    - ارائه API برای دسترسی به یک نمونه خاص (مثلاً `penman.get('myTextarea')`).
@@ -21,11 +21,9 @@
 هنگام مقداردهی اولیه، هسته ساختاری مشابه زیر ایجاد می‌کند:
 ```html
 <div class="penman-wrapper">
-   <div class="penman-toolbar">...</div>
    <div class="penman-editor-area" contenteditable="true">
       <!-- محتوای ویرایشگر -->
    </div>
-   <div class="penman-statusbar">...</div>
 </div>
 <!-- textarea اصلی مخفی می‌شود -->
 <textarea id="myTextarea" style="display: none;"></textarea>

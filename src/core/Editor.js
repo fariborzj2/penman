@@ -37,10 +37,6 @@ export class Editor extends EventEmitter {
     this.container.setAttribute('dir', this.options.direction);
     this.container.lang = this.options.lang;
 
-    // Create toolbar
-    this.toolbar = document.createElement('div');
-    this.toolbar.className = 'penman-toolbar';
-
     // Create editable area
     this.editableArea = document.createElement('div');
     this.editableArea.className = 'penman-editor-area';
@@ -48,15 +44,9 @@ export class Editor extends EventEmitter {
     this.editableArea.innerHTML = this.textarea.value;
     this.editableArea.style.minHeight = `${this.options.height}px`;
 
-    // Create statusbar
-    this.statusbar = document.createElement('div');
-    this.statusbar.className = 'penman-statusbar';
-
     // Append elements
-    this.container.appendChild(this.toolbar);
     this.container.appendChild(this.editableArea);
-    this.container.appendChild(this.statusbar);
-    this.textarea.parentNode.insertBefore(this.container, this.textarea.nextSibling);
+    this.textarea.parentNode.insertBefore(this.container, this.textarea);
   }
 
   _bindEvents() {
@@ -116,8 +106,6 @@ export class Editor extends EventEmitter {
     // Clear references
     this.container = null;
     this.editableArea = null;
-    this.toolbar = null;
-    this.statusbar = null;
 
     // Clear events
     this.events = {};
