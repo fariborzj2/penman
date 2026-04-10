@@ -19,6 +19,24 @@ export class CommandManager {
   }
 
   /**
+   * Queries if the given command is active on the current selection.
+   * @param {string} cmd - Command name
+   * @returns {boolean}
+   */
+  queryState(cmd) {
+    if (this.commands[cmd] && typeof this.commands[cmd].queryState === 'function') {
+      return this.commands[cmd].queryState(this.editor);
+    } else if (this.fallbackWhitelist.includes(cmd)) {
+      try {
+        return document.queryCommandState(cmd);
+      } catch (e) {
+        return false;
+      }
+    }
+    return false;
+  }
+
+  /**
    * Executes a command on the editor
    */
   execute(cmd, value = null) {

@@ -16,6 +16,13 @@ toolbar: 'undo redo | bold italic | link image | alignleft aligncenter'
 ## آیکون‌ها
 برای سبک ماندن ادیتور، به جای استفاده از فونت آیکون‌های سنگین، Penman از آیکون‌های SVG داخلی (Inline SVG) برای دکمه‌ها استفاده می‌کند. این آیکون‌ها در یک فایل مجزا تعریف شده و سیستم UI آن‌ها را در دکمه‌ها تزریق می‌کند.
 
+### Icon System (Abstraction)
+
+- Toolbar buttons MUST NOT depend on a specific icon set
+- Each button references an `iconName`
+- Icon rendering is delegated to an external IconProvider
+- Actual SVG implementation is out of current phase scope
+
 ## تم‌ها و استایل‌ها
 استایل‌های ادیتور بر پایه CSS نوشته شده‌اند. کلاس‌های CSS دارای پیشوند `penman-` هستند (مانند `penman-btn`, `penman-toolbar`) تا با استایل‌های سایت تداخلی نداشته باشند.
 توسعه‌دهندگان می‌توانند با Overwrite کردن متغیرهای CSS (CSS Variables) ظاهر ادیتور را شخصی‌سازی کنند.

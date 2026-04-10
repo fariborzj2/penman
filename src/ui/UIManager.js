@@ -1,7 +1,11 @@
+import { IconProvider } from './IconProvider.js';
+
 export class UIManager {
   constructor(editor) {
     this.editor = editor;
     this.toolbarElement = null;
+    this.buttons = [];
+    this.iconProvider = new IconProvider();
   }
 
   /**
@@ -35,6 +39,23 @@ export class UIManager {
 
     // Inject toolbar above editable area
     this.editor.container.insertBefore(this.toolbarElement, this.editor.editableArea);
+
+    // Bind event to update active states
+    this.editor.on('selectionChange', () => this._updateButtonStates());
+  }
+
+  _updateButtonStates() {
+    this.buttons.forEach(btn => {
+      const cmd = btn.dataset.cmd;
+      if (!cmd) return;
+
+      const isActive = this.editor.commands.queryState(cmd);
+      if (isActive) {
+        btn.classList.add('penman-btn-active');
+      } else {
+        btn.classList.remove('penman-btn-active');
+      }
+    });
   }
 
   _createButton(cmd) {
@@ -42,8 +63,10 @@ export class UIManager {
     btn.className = `penman-btn penman-btn-${cmd}`;
     btn.type = 'button';
     btn.title = cmd;
-    // Basic text label as fallback if no icon
-    btn.textContent = cmd.charAt(0).toUpperCase() + cmd.slice(1);
+    btn.dataset.cmd = cmd;
+
+    // Use icon provider for rendering content
+    btn.innerHTML = this.iconProvider.getIcon(cmd) || (cmd.charAt(0).toUpperCase() + cmd.slice(1));
 
     // Prevent default mousedown to avoid stealing focus from editor immediately
     btn.addEventListener('mousedown', (e) => {
@@ -55,6 +78,8 @@ export class UIManager {
       e.preventDefault();
       this.editor.execCommand(cmd);
     });
+
+    this.buttons.push(btn);
 
     return btn;
   }

@@ -70,6 +70,17 @@ export class Editor extends EventEmitter {
   }
 
   _bindEvents() {
+    // Monitor selection changes (cursor movement, clicking)
+    this.editableArea.addEventListener('mouseup', () => {
+      this.emit('selectionChange');
+    });
+
+    this.editableArea.addEventListener('keyup', (e) => {
+      // Ignore modifier keys to reduce noise
+      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
+      this.emit('selectionChange');
+    });
+
     // Sync to textarea on input
     this.editableArea.addEventListener('input', () => {
       this._syncToTextarea();
@@ -143,6 +154,7 @@ export class Editor extends EventEmitter {
   setContent(html) {
     this.editableArea.innerHTML = html;
     this._syncToTextarea();
+    this.emit('selectionChange');
   }
 
   /**
@@ -153,6 +165,7 @@ export class Editor extends EventEmitter {
   execCommand(cmd, value = null) {
     if (this.commands) {
       this.commands.execute(cmd, value);
+      this.emit('selectionChange');
     }
   }
 
