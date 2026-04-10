@@ -1,4 +1,7 @@
 import { EventEmitter } from './EventEmitter.js';
+import { SelectionManager } from '../selection/SelectionManager.js';
+import { CommandManager } from '../commands/CommandManager.js';
+import { UIManager } from '../ui/UIManager.js';
 
 export class Editor extends EventEmitter {
   constructor(options) {
@@ -18,11 +21,25 @@ export class Editor extends EventEmitter {
     this.container = null;
     this.editableArea = null;
 
+    // Core Subsystems
+    this.selection = null;
+    this.commands = null;
+    this.ui = null;
+
     this.init();
   }
 
   init() {
     this._createUI();
+
+    // Initialize core subsystems
+    this.selection = new SelectionManager(this);
+    this.commands = new CommandManager(this);
+    this.ui = new UIManager(this);
+
+    // Render the UI based on options
+    this.ui.render();
+
     this._bindEvents();
     this.emit('init', this);
   }
@@ -50,9 +67,38 @@ export class Editor extends EventEmitter {
   }
 
   _bindEvents() {
+    // Sync to textarea on input
     this.editableArea.addEventListener('input', () => {
       this._syncToTextarea();
       this.emit('change', this.editableArea.innerHTML);
+    });
+
+    // EVENT INTERCEPTION: Prevent native history pollution
+    // 1. Intercept keyboard shortcuts (Ctrl+Z, Cmd+Z, Ctrl+Y, Cmd+Shift+Z)
+    this.editableArea.addEventListener('keydown', (e) => {
+      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+      const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
+      const isRedo = (isMac ? e.metaKey && e.shiftKey && e.key.toLowerCase() === 'z' : (e.ctrlKey && e.key.toLowerCase() === 'y'));
+
+      if (isUndo) {
+        e.preventDefault();
+        // TODO: Call this.history.undo() in Milestone 2
+        console.warn('Native Undo intercepted. Penman History module not yet loaded.');
+      }
+
+      if (isRedo) {
+        e.preventDefault();
+        // TODO: Call this.history.redo() in Milestone 2
+        console.warn('Native Redo intercepted. Penman History module not yet loaded.');
+      }
+    });
+
+    // 2. Intercept beforeinput to block history-altering types
+    this.editableArea.addEventListener('beforeinput', (e) => {
+      if (e.inputType === 'historyUndo' || e.inputType === 'historyRedo') {
+        e.preventDefault();
+        // Redirect to custom history later
+      }
     });
   }
 
@@ -78,6 +124,17 @@ export class Editor extends EventEmitter {
   }
 
   /**
+   * Central command execution interface exposed to plugins and UI
+   * @param {string} cmd - Command name
+   * @param {any} [value=null] - Command value
+   */
+  execCommand(cmd, value = null) {
+    if (this.commands) {
+      this.commands.execute(cmd, value);
+    }
+  }
+
+  /**
    * Focuses the editor's editable area
    */
   focus() {
@@ -90,6 +147,10 @@ export class Editor extends EventEmitter {
    * Destroys the editor instance, removing UI and restoring the original textarea
    */
   destroy() {
+    if (this.ui) {
+      this.ui.destroy();
+    }
+
     // Show original textarea
     if (this.textarea) {
       this.textarea.style.display = '';

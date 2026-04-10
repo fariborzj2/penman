@@ -1,0 +1,88 @@
+export class CommandManager {
+  constructor(editor) {
+    this.editor = editor;
+    this.commands = {};
+  }
+
+  /**
+   * Registers a custom command to the editor
+   */
+  register(name, commandSpec) {
+    this.commands[name] = commandSpec;
+  }
+
+  /**
+   * Defines which commands are allowed to use the browser's execCommand fallback.
+   */
+  get fallbackWhitelist() {
+    return ['bold', 'italic', 'underline', 'justifyleft', 'justifycenter', 'justifyright'];
+  }
+
+  /**
+   * Executes a command on the editor
+   */
+  execute(cmd, value = null) {
+    // 1. Restore selection so command hits the right spot
+    this.editor.selection.restore();
+
+    // 2. Execute
+    if (this.commands[cmd] && typeof this.commands[cmd].execute === 'function') {
+      this.commands[cmd].execute(this.editor, value);
+    } else if (this.fallbackWhitelist.includes(cmd)) {
+      document.execCommand(cmd, false, value);
+    } else {
+      console.warn(`Penman Editor: Command "${cmd}" aborted (not registered/whitelisted).`);
+      return;
+    }
+
+    // 3. Save selection *before* normalization via markers
+    // Because normalization rewrites tags, we must insert markers now so they are part of the DOM tree
+    this.editor.selection.save();
+
+    // 4. Normalize DOM (Marker-aware)
+    this._normalizeDOM();
+
+    // 5. Restore selection after normalization
+    this.editor.selection.restore();
+
+    // 6. Update single source of truth
+    this.editor.emit('change', this.editor.getContent());
+    this.editor._syncToTextarea();
+  }
+
+  /**
+   * Normalizes the DOM while preserving selection markers.
+   * Instead of using innerHTML which destroys object references, it manipulates child nodes.
+   */
+  _normalizeDOM() {
+    const area = this.editor.editableArea;
+    if (!area) return;
+
+    // Helper to replace a tag while keeping its children intact (Marker-aware)
+    const replaceTag = (oldTag, newTagName) => {
+      const newTag = document.createElement(newTagName);
+      // Move all children directly
+      while (oldTag.firstChild) {
+        newTag.appendChild(oldTag.firstChild);
+      }
+      oldTag.parentNode.replaceChild(newTag, oldTag);
+    };
+
+    const bTags = Array.from(area.querySelectorAll('b'));
+    bTags.forEach(node => replaceTag(node, 'strong'));
+
+    const iTags = Array.from(area.querySelectorAll('i'));
+    iTags.forEach(node => replaceTag(node, 'em'));
+
+    // Clean empty tags, ensuring we don't accidentally remove markers if they are the only children
+    // Markers are spans, so they won't be caught by this specific selector unless inside an empty tag.
+    // If a strong tag only contains a marker, it is technically NOT empty.
+    const potentialEmptyTags = Array.from(area.querySelectorAll('strong, em, u'));
+    potentialEmptyTags.forEach(node => {
+      // Remove only if completely empty (no text, no markers)
+      if (node.innerHTML === '') {
+         node.parentNode.removeChild(node);
+      }
+    });
+  }
+}
