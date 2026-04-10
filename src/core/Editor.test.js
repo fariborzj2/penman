@@ -19,6 +19,32 @@ describe('Editor Core', () => {
     expect(editor.textarea.style.display).toBe('none');
     expect(editor.editableArea).not.toBeNull();
     expect(editor.container).not.toBeNull();
+    expect(editor.container.className).toBe('penman-wrapper');
+    expect(editor.toolbar.className).toBe('penman-toolbar');
+    expect(editor.editableArea.className).toBe('penman-editor-area');
+    expect(editor.statusbar.className).toBe('penman-statusbar');
+  });
+
+  it('should implement getContent, setContent, and focus methods', () => {
+    const editor = new Editor({ selector: '#test-textarea' });
+    expect(editor.getContent()).toBe('Initial Text');
+
+    editor.setContent('<p>New HTML</p>');
+    expect(editor.getContent()).toBe('<p>New HTML</p>');
+    expect(editor.textarea.value).toBe('<p>New HTML</p>');
+
+    // Focus is hard to test fully in JSDOM, but we can verify it exists and runs without error
+    expect(() => editor.focus()).not.toThrow();
+  });
+
+  it('should implement destroy method', () => {
+    const editor = new Editor({ selector: '#test-textarea' });
+    expect(editor.textarea.style.display).toBe('none');
+
+    editor.destroy();
+    expect(editor.textarea.style.display).toBe('');
+    expect(document.querySelector('.penman-wrapper')).toBeNull();
+    expect(editor.container).toBeNull();
   });
 
   it('should sync changes from editable area to textarea', () => {
