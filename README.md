@@ -13,7 +13,7 @@ Penman یک ویرایشگر متن غنی (Rich Text Editor) سبک، قابل 
 - API ساده اما قدرتمند داشته باشد
 
 ## نمونه استفاده
-
+``` html
 <textarea name="fullstory" id="myTextarea"></textarea>
 
 <script src="js/penman.js"></script>
@@ -37,7 +37,7 @@ penman.init({
   content_css: 'css/content.css'
 });
 </script>
-
+```
 ## ویژگی‌ها
 
 - هسته سبک و مستقل (بدون dependency)
