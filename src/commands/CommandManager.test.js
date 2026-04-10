@@ -32,7 +32,20 @@ describe('CommandManager', () => {
   it('should fallback to execCommand for whitelisted commands', () => {
     commandManager.execute('bold');
     expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
+  });
 
+  it('should correctly query state for whitelisted commands', () => {
+    // Mock document.queryCommandState
+    document.queryCommandState = vi.fn().mockImplementation((cmd) => cmd === 'bold');
+
+    expect(commandManager.queryState('bold')).toBe(true);
+    expect(commandManager.queryState('italic')).toBe(false);
+
+    // Unwhitelisted/Unregistered command
+    expect(commandManager.queryState('unregisteredCommand')).toBe(false);
+  });
+
+  it('should pass value correctly on fallback execute', () => {
     commandManager.execute('justifycenter', 'value');
     expect(document.execCommand).toHaveBeenCalledWith('justifycenter', false, 'value');
   });

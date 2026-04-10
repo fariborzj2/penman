@@ -38,6 +38,41 @@ describe('UIManager', () => {
     expect(separators.length).toBe(1);
   });
 
+  it('should use IconProvider to render button content', () => {
+    editor = new Editor({
+      selector: '#editor',
+      toolbar: 'bold italic'
+    });
+
+    const boldButton = document.querySelector('.penman-btn-bold');
+    expect(boldButton.innerHTML).toContain('penman-icon-placeholder');
+    expect(boldButton.innerHTML).toContain('Bold');
+  });
+
+  it('should update button active states when selection changes', () => {
+    editor = new Editor({
+      selector: '#editor',
+      toolbar: 'bold italic'
+    });
+
+    const boldButton = document.querySelector('.penman-btn-bold');
+    const italicButton = document.querySelector('.penman-btn-italic');
+
+    // Initially they shouldn't have the active class
+    expect(boldButton.className).not.toContain('penman-btn-active');
+    expect(italicButton.className).not.toContain('penman-btn-active');
+
+    // Mock queryState to return true for 'bold'
+    editor.commands.queryState = vi.fn().mockImplementation(cmd => cmd === 'bold');
+
+    // Simulate selection change
+    editor.emit('selectionChange');
+
+    // Now 'bold' should have active class, but not 'italic'
+    expect(boldButton.className).toContain('penman-btn-active');
+    expect(italicButton.className).not.toContain('penman-btn-active');
+  });
+
   it('should call editor.execCommand when a button is clicked', () => {
     // Mock execCommand to avoid Uncaught Exception when JSDOM evaluates the fallback
     document.execCommand = vi.fn();

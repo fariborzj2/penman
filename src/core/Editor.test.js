@@ -121,6 +121,33 @@ describe('Editor Core', () => {
     expect(editor.history.redoStack.length).toBe(1);
   });
 
+  it('should emit selectionChange on mouseup and keyup', () => {
+    const editor = new Editor({ selector: '#test-textarea' });
+    let emitted = false;
+
+    editor.on('selectionChange', () => {
+      emitted = true;
+    });
+
+    const mouseEvent = new MouseEvent('mouseup');
+    editor.editableArea.dispatchEvent(mouseEvent);
+
+    expect(emitted).toBe(true);
+
+    emitted = false;
+    const keyEvent = new KeyboardEvent('keyup', { key: 'a' });
+    editor.editableArea.dispatchEvent(keyEvent);
+
+    expect(emitted).toBe(true);
+
+    // Should ignore modifier keys
+    emitted = false;
+    const modEvent = new KeyboardEvent('keyup', { key: 'Shift' });
+    editor.editableArea.dispatchEvent(modEvent);
+
+    expect(emitted).toBe(false);
+  });
+
   it('should intercept native paste event and bypass default history pollution', () => {
     const editor = new Editor({ selector: '#test-textarea' });
 
