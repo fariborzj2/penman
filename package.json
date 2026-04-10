@@ -1,0 +1,11 @@
+{
+  "name": "penman-editor",
+  "version": "0.1.0",
+  "description": "A framework-agnostic, zero-dependency Vanilla JavaScript rich text editor (WYSIWYG).",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"no test specified\""
+  },
+  "author": "",
+  "license": "MIT"
+}
