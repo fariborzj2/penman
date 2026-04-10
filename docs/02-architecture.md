@@ -22,3 +22,14 @@
 
 ## مدل رویدادها (Event Model)
 ادیتور از یک سیستم رویداد اختصاصی (Event Emitter) برای ارتباط بین ماژول‌ها استفاده می‌کند. مثلاً تغییر محتوا رویداد `change` را شلیک می‌کند که سیستم History و Sync به آن گوش می‌دهند.
+
+## ساختار دایرکتوری‌ها (Directory Structure)
+برای پیاده‌سازی ماژولار، کد منبع در پوشه `src` به این شکل سازماندهی می‌شود:
+- `src/core/`: حاوی فایل‌های `Editor.js` و سیستم رویدادها (`EventEmitter.js`).
+- `src/ui/`: اجزای رابط کاربری شامل Toolbar و قالب‌های HTML.
+- `src/commands/`: دستورات ویرایشی (`bold.js`, `italic.js`, ...).
+- `src/selection/`: مدیریت Caret و Selection.
+- `src/plugins/`: افزونه‌های مستقل سیستم.
+- `src/history/`: سیستم Undo و Redo.
+- `src/sanitization/`: تمیزکننده HTML.
+- `src/utils/`: توابع کمکی.
