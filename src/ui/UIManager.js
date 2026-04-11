@@ -1,4 +1,5 @@
 import { IconProvider } from './IconProvider.js';
+import { Modal } from './Modal.js';
 
 export class UIManager {
   constructor(editor) {
@@ -14,6 +15,17 @@ export class UIManager {
         this.registry.buttons[name] = config;
       }
     };
+  }
+
+  /**
+   * Creates and opens a modal dialog
+   * @param {Object} options - Modal options (title, body, onSubmit, etc.)
+   * @returns {Modal} The instantiated Modal object
+   */
+  createModal(options) {
+    const modal = new Modal(options);
+    modal.open();
+    return modal;
   }
 
   /**

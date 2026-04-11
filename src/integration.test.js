@@ -28,30 +28,40 @@ describe('End-to-End Integration Flow', () => {
     });
   });
 
-  it('should support plugin manager registration, rendering a button, and inserting content', () => {
-    let onActionCalled = false;
-
-    // Override the link plugin specifically for testing the callback and insertion
-    penman.PluginManager.add('link', (editorInstance) => {
-      editorInstance.ui.registry.addButton('link', {
-        text: 'Insert Link',
-        onAction: () => {
-          onActionCalled = true;
-          editorInstance.insertContent('<a href="http://example.com">link</a>');
-        }
-      });
-    });
-
+  it('should support plugin manager registration, rendering a button, triggering a modal, and inserting content', () => {
+    // Note: The built-in link plugin is registered automatically. We are just utilizing it to verify integration.
     const editor = penman.init({
       selector: '#e2e-editor',
       plugins: ['link'],
       toolbar: 'bold link'
     });
 
+    // Setup Selection mock scenario targeting a word
+    editor.editableArea.innerHTML = 'Hello <span id="target">World</span>';
+    const target = editor.editableArea.querySelector('#target');
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
     // Verify the button was rendered
     const linkBtn = document.querySelector('.penman-btn-link');
     expect(linkBtn).not.toBeNull();
     expect(linkBtn.title).toBe('Insert Link');
+
+    // Click the button
+    linkBtn.click();
+
+    // Verify Modal appeared
+    const modal = document.querySelector('.penman-modal');
+    expect(modal).not.toBeNull();
+
+    // Fill in Modal
+    const urlInput = document.querySelector('#penman-link-url');
+    const textInput = document.querySelector('#penman-link-text');
+    urlInput.value = 'http://example.com';
+    textInput.value = 'my link';
 
     // Setup mock for insertHTML (which insertContent uses)
     document.execCommand = vi.fn((cmd, showUI, value) => {
@@ -60,12 +70,16 @@ describe('End-to-End Integration Flow', () => {
       }
     });
 
-    // Click the button
-    linkBtn.click();
+    // Submit Modal
+    const submitBtn = document.querySelector('.penman-modal-btn-submit');
+    submitBtn.click();
 
-    expect(onActionCalled).toBe(true);
-    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<a href="http://example.com">link</a>');
-    expect(editor.getContent()).toContain('link');
+    // Verify Modal closed and content was inserted
+    expect(document.querySelector('.penman-modal')).toBeNull();
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<a href="http://example.com">my link</a>');
+
+    // Should have restored markers properly, so html doesn't contain markers eventually
+    expect(editor.getContent()).toContain('my link');
 
     editor.destroy();
   });
