@@ -23,6 +23,32 @@ toolbar: 'undo redo | bold italic | link image | alignleft aligncenter'
 - Icon rendering is delegated to an external IconProvider
 - Actual SVG implementation is out of current phase scope
 
+## سیستم مدال‌ها (Modal System)
+برای جلوگیری از استفاده از دیالوگ‌های بومی مرورگر (مانند `prompt`) و ارائه یک رابط کاربری یکپارچه، Penman یک سیستم Modal داخلی ارائه می‌دهد که افزونه‌ها می‌توانند از آن برای دریافت اطلاعات از کاربر استفاده کنند.
+
+مدال از طریق `editor.ui.createModal(options)` ساخته می‌شود. توجه داشته باشید که قبل از باز کردن مدال، معمولاً باید وضعیت Selection ذخیره شود و در هنگام سابمیت بازیابی گردد تا مکان نشانگر در ادیتور از دست نرود.
+
+**نمونه استفاده در پلاگین:**
+```javascript
+editor.ui.createModal({
+  title: 'Insert Link',
+  body: `
+    <div>
+      <label for="url">URL</label>
+      <input type="url" id="url" name="url" placeholder="https://example.com" required>
+    </div>
+  `,
+  submitText: 'Insert',
+  cancelText: 'Cancel',
+  onSubmit: (data) => {
+    // داده‌های فرم به صورت آبجکت برگردانده می‌شوند (مانند data.url)
+    if (data.url) {
+      editor.insertContent(\`<a href="\${data.url}">Link</a>\`);
+    }
+  }
+});
+```
+
 ## تم‌ها و استایل‌ها
-استایل‌های ادیتور بر پایه CSS نوشته شده‌اند. کلاس‌های CSS دارای پیشوند `penman-` هستند (مانند `penman-btn`, `penman-toolbar`) تا با استایل‌های سایت تداخلی نداشته باشند.
+استایل‌های ادیتور بر پایه CSS نوشته شده‌اند. کلاس‌های CSS دارای پیشوند `penman-` هستند (مانند `penman-btn`, `penman-toolbar`, `penman-modal`) تا با استایل‌های سایت تداخلی نداشته باشند.
 توسعه‌دهندگان می‌توانند با Overwrite کردن متغیرهای CSS (CSS Variables) ظاهر ادیتور را شخصی‌سازی کنند.

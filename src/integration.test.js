@@ -60,8 +60,17 @@ describe('End-to-End Integration Flow', () => {
     // Fill in Modal
     const urlInput = document.querySelector('#penman-link-url');
     const textInput = document.querySelector('#penman-link-text');
+    const targetInput = document.querySelector('#penman-link-target');
+    const relInput = document.querySelector('#penman-link-rel');
+
+    // Verify it pre-filled the selected text ("World")
+    expect(textInput.value).toBe('World');
+
     urlInput.value = 'http://example.com';
+    // Intentionally leaving textInput to see if it preserves "World", but let's change it to test full coverage
     textInput.value = 'my link';
+    targetInput.value = '_blank';
+    relInput.value = 'nofollow';
 
     // Setup mock for insertHTML (which insertContent uses)
     document.execCommand = vi.fn((cmd, showUI, value) => {
@@ -76,7 +85,7 @@ describe('End-to-End Integration Flow', () => {
 
     // Verify Modal closed and content was inserted
     expect(document.querySelector('.penman-modal')).toBeNull();
-    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<a href="http://example.com">my link</a>');
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<a href="http://example.com" target="_blank" rel="nofollow">my link</a>');
 
     // Should have restored markers properly, so html doesn't contain markers eventually
     expect(editor.getContent()).toContain('my link');
