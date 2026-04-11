@@ -76,11 +76,14 @@ export function setupBlockTypePlugin(editor) {
             item.classList.add('penman-blocktype-item-active');
           }
 
+          item.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+          });
+
           item.addEventListener('click', (e) => {
             e.preventDefault();
-            // Need to close dropdown. The dropdown trigger is handled by UIManager,
-            // but we can dispatch a click on body or let UIManager provide context.
-            // For now, we execute the command.
+            // Execute the command without clearing selection markers here,
+            // the command manager takes care of selection internally.
             editor.execCommand('formatBlock', block.cmd);
 
             // Trigger outside click to close the dropdown (or we could expose close on dropdown instance)
@@ -110,7 +113,17 @@ export function setupBlockTypePlugin(editor) {
   // Register the dropdown
   editor.ui.registry.addDropdown('blocktype', {
     text: 'Paragraph', // Default label
-    render: renderDropdownContent
+    render: renderDropdownContent,
+    onOpen: () => {
+      // Save selection when opening to maintain it during search/interaction
+      editor.selection.save();
+    },
+    onClose: () => {
+      // Clean up markers if we close without changing
+      // Note: If formatBlock was executed, the command manager already handled markers,
+      // but clearSaved is safe to call anyway.
+      editor.selection.clearSaved();
+    }
   });
 
   // Listen to selection changes to update the active block type
