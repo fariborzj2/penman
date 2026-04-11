@@ -53,6 +53,14 @@ export class SelectionManager {
   }
 
   /**
+   * Cleans up markers from the DOM without changing focus or selection.
+   * Useful when a saved selection is no longer needed.
+   */
+  clearSaved() {
+    this._removeMarkers();
+  }
+
+  /**
    * Restores the selection from the DOM markers
    */
   restore() {

@@ -160,7 +160,7 @@ export class Editor extends EventEmitter {
       document.execCommand('defaultParagraphSeparator', false, 'p');
     });
 
-    // 1. Intercept keyboard shortcuts (Ctrl+Z, Cmd+Z, Ctrl+Y, Cmd+Shift+Z)
+    // 1. Intercept keyboard shortcuts (Ctrl+Z, Cmd+Z, Ctrl+Y, Cmd+Shift+Z) and Enter
     this.editableArea.addEventListener('keydown', (e) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
@@ -174,6 +174,72 @@ export class Editor extends EventEmitter {
       if (isRedo) {
         e.preventDefault();
         this.history.redo();
+      }
+
+      // Enter key fix for blocks
+      if (e.key === 'Enter' && !e.shiftKey) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+
+        let node = sel.anchorNode;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+        // Find closest block element
+        let blockNode = null;
+        let curr = node;
+        while (curr && curr !== this.editableArea) {
+          const tagName = curr.tagName ? curr.tagName.toLowerCase() : '';
+          if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote'].includes(tagName)) {
+            blockNode = curr;
+            break;
+          }
+          curr = curr.parentNode;
+        }
+
+        if (blockNode) {
+          // If block is empty, convert to p
+          const text = blockNode.textContent.trim();
+          if (!text) {
+            e.preventDefault();
+            this.execCommand('formatBlock', 'p');
+            return;
+          }
+
+          // If at the end of the block, break out to a new p
+          const range = sel.getRangeAt(0);
+          const atEnd = range.endOffset === sel.anchorNode.textContent.length &&
+                        (sel.anchorNode === blockNode || blockNode.contains(sel.anchorNode));
+
+          // A more robust check for "end of block"
+          const endRange = document.createRange();
+          endRange.selectNodeContents(blockNode);
+          endRange.setStart(range.endContainer, range.endOffset);
+          const remainingText = endRange.cloneContents().textContent;
+
+          if (remainingText.length === 0) {
+            e.preventDefault();
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            if (blockNode.nextSibling) {
+              blockNode.parentNode.insertBefore(p, blockNode.nextSibling);
+            } else {
+              blockNode.parentNode.appendChild(p);
+            }
+
+            // Move cursor to new p
+            sel.removeAllRanges();
+            const newRange = document.createRange();
+            newRange.setStart(p, 0);
+            newRange.collapse(true);
+            sel.addRange(newRange);
+
+            if (this.history) {
+              this.history.pushImmediate();
+            }
+            this.emit('change', this.getContent());
+            this._syncToTextarea();
+          }
+        }
       }
     });
 

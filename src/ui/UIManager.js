@@ -113,7 +113,9 @@ export class UIManager {
       const dropdown = this.createDropdown({
         title: dropdownConfig.text || cmd,
         icon: iconHTML,
-        content: typeof dropdownConfig.render === 'function' ? dropdownConfig.render() : (dropdownConfig.content || '')
+        content: typeof dropdownConfig.render === 'function' ? dropdownConfig.render() : (dropdownConfig.content || ''),
+        onOpen: dropdownConfig.onOpen,
+        onClose: dropdownConfig.onClose
       });
       // Add standard button classes for styling
       dropdown.buttonElement.classList.add(`penman-btn-${cmd}`);
