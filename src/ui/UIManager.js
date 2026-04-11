@@ -1,5 +1,6 @@
 import { IconProvider } from './IconProvider.js';
 import { Modal } from './Modal.js';
+import { Dropdown } from './Dropdown.js';
 
 export class UIManager {
   constructor(editor) {
@@ -13,8 +14,21 @@ export class UIManager {
       buttons: {},
       addButton: (name, config) => {
         this.registry.buttons[name] = config;
+      },
+      dropdowns: {},
+      addDropdown: (name, config) => {
+        this.registry.dropdowns[name] = config;
       }
     };
+  }
+
+  /**
+   * Creates a dropdown instance
+   * @param {Object} options - Dropdown options (title, icon, content)
+   * @returns {Dropdown} The instantiated Dropdown object
+   */
+  createDropdown(options) {
+    return new Dropdown(options);
   }
 
   /**
@@ -79,6 +93,20 @@ export class UIManager {
   }
 
   _createButton(cmd) {
+    // Check if item is registered as a dropdown
+    const dropdownConfig = this.registry.dropdowns[cmd];
+    if (dropdownConfig) {
+      const dropdown = this.createDropdown({
+        title: dropdownConfig.text || cmd,
+        icon: dropdownConfig.icon || this.iconProvider.getIcon(cmd),
+        content: typeof dropdownConfig.render === 'function' ? dropdownConfig.render() : (dropdownConfig.content || '')
+      });
+      // Expose a way to access the dropdown instance if needed
+      dropdown.element.dataset.cmd = cmd;
+      this.buttons.push(dropdown.buttonElement); // For active state syncing if needed
+      return dropdown.element;
+    }
+
     const btn = document.createElement('button');
     btn.className = `penman-btn penman-btn-${cmd}`;
     btn.type = 'button';

@@ -23,6 +23,11 @@ toolbar: 'undo redo | bold italic | link image | alignleft aligncenter'
 - Icon rendering is delegated to an external IconProvider
 - Actual SVG implementation is out of current phase scope
 
+## سیستم منوهای بازشو (Dropdown System)
+کامپوننت پایه Dropdown به توسعه‌دهندگان و پلاگین‌ها اجازه می‌دهد تا منوهای بازشو اختصاصی (مانند انتخاب رنگ، فونت، یا گزینه‌های پیشرفته) را به رابط کاربری اضافه کنند.
+Dropdown شامل یک دکمه‌ی فعال‌کننده (Trigger) و یک کانتینر (Panel) است. با کلیک بر روی Trigger، پنل باز و بسته می‌شود.
+یکی از رفتارهای حیاتی Dropdown این است که با کلیک در فضای خارج از آن (Outside Click)، پنل باید به صورت خودکار بسته شود.
+
 ## سیستم مدال‌ها (Modal System)
 برای جلوگیری از استفاده از دیالوگ‌های بومی مرورگر (مانند `prompt`) و ارائه یک رابط کاربری یکپارچه، Penman یک سیستم Modal داخلی ارائه می‌دهد که افزونه‌ها می‌توانند از آن برای دریافت اطلاعات از کاربر استفاده کنند.
 
