@@ -83,7 +83,7 @@ export class Editor extends EventEmitter {
     // Defaulting to empty <p><br></p> if empty, ensures typing creates P instead of DIV
     const initialVal = this.textarea.value.trim();
     this.editableArea.innerHTML = initialVal ? initialVal : '<p><br></p>';
-    this.editableArea.style.minHeight = `${this.options.height}px`;
+    this.editableArea.style.height = `${this.options.height}px`;
 
     // Append elements
     this.container.appendChild(this.editableArea);
