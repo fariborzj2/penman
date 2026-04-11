@@ -28,11 +28,29 @@ describe('End-to-End Integration Flow', () => {
     });
   });
 
+  it('should support plugin manager registration and initialization', () => {
+    let pluginLoaded = false;
+    penman.PluginManager.add('testPlugin', (editorInstance) => {
+      pluginLoaded = true;
+      editorInstance.testFlag = 'working';
+    });
+
+    const editor = penman.init({
+      selector: '#e2e-editor',
+      plugins: ['testPlugin']
+    });
+
+    expect(pluginLoaded).toBe(true);
+    expect(editor.testFlag).toBe('working');
+
+    editor.destroy();
+  });
+
   it('should initialize editor, render toolbar, apply command and save to history', () => {
     // 1. Initialize Penman with toolbar configuration
     const editor = penman.init({
       selector: '#e2e-editor',
-      toolbar: 'bold italic'
+      toolbar: 'undo redo | bold italic'
     });
 
     // Verify Initialization
@@ -48,6 +66,9 @@ describe('End-to-End Integration Flow', () => {
 
     // 2. Setup Selection targeting a word
     editor.editableArea.innerHTML = 'Hello <span id="target">World</span>';
+    // Manually push to history since direct innerHTML modification doesn't trigger input events
+    editor.history.pushImmediate();
+
     const target = editor.editableArea.querySelector('#target');
     const range = document.createRange();
     range.selectNodeContents(target);
@@ -72,6 +93,19 @@ describe('End-to-End Integration Flow', () => {
     // d) Caret/Selection was restored and cleaned up
     const currentHtml = editor.getContent();
     expect(currentHtml).not.toContain('penman-selection-marker');
+
+    // 5. Test Undo/Redo integration from UI
+    const undoBtn = toolbar.querySelector('.penman-btn-undo');
+    const redoBtn = toolbar.querySelector('.penman-btn-redo');
+
+    // Trigger Undo via button click
+    undoBtn.click();
+    expect(editor.getContent()).not.toContain('<strong>World</strong>');
+    expect(editor.getContent()).toContain('<span id="target">World</span>');
+
+    // Trigger Redo via button click
+    redoBtn.click();
+    expect(editor.getContent()).toContain('<strong>World</strong>');
 
     // Clean up
     editor.destroy();

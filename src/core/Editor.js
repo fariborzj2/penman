@@ -3,6 +3,7 @@ import { SelectionManager } from '../selection/SelectionManager.js';
 import { CommandManager } from '../commands/CommandManager.js';
 import { HistoryManager } from '../history/HistoryManager.js';
 import { UIManager } from '../ui/UIManager.js';
+import { PluginManager } from '../plugins/PluginManager.js';
 
 export class Editor extends EventEmitter {
   constructor(options) {
@@ -40,8 +41,22 @@ export class Editor extends EventEmitter {
     this.history = new HistoryManager(this);
     this.ui = new UIManager(this);
 
+    // Register built-in commands
+    this.commands.register('undo', {
+      execute: (editor) => editor.history.undo(),
+      queryState: () => false
+    });
+
+    this.commands.register('redo', {
+      execute: (editor) => editor.history.redo(),
+      queryState: () => false
+    });
+
     // Render the UI based on options
     this.ui.render();
+
+    // Initialize plugins
+    PluginManager.init(this);
 
     this._bindEvents();
     this.emit('init', this);
