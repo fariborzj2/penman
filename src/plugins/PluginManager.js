@@ -1,8 +1,12 @@
 import { setupLinkPlugin } from './LinkPlugin.js';
+import { setupFormatPlugin } from './FormatPlugin.js';
+import { setupListPlugin } from './ListPlugin.js';
 
 export const PluginManager = {
   plugins: {
-    'link': setupLinkPlugin
+    'link': setupLinkPlugin,
+    'format': setupFormatPlugin,
+    'list': setupListPlugin
   },
 
   /**

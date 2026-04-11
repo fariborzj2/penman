@@ -162,7 +162,10 @@ describe('Editor Core', () => {
 
     const pasteEvent = new Event('paste');
     pasteEvent.clipboardData = {
-      getData: () => 'Sanitized Paste'
+      getData: (type) => {
+        if (type === 'text/html') return '<p>Sanitized Paste <script>alert(1)</script></p>';
+        return 'Sanitized Paste';
+      }
     };
 
     // Monitor prevent default
@@ -175,7 +178,7 @@ describe('Editor Core', () => {
     editor.editableArea.dispatchEvent(pasteEvent);
 
     expect(isPrevented).toBe(true);
-    expect(insertedCmd).toBe('insertText');
-    expect(pastedText).toBe('Sanitized Paste');
+    expect(insertedCmd).toBe('insertHTML');
+    expect(pastedText).toBe('<p>Sanitized Paste alert(1)</p>');
   });
 });
