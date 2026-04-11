@@ -31,7 +31,8 @@ describe('End-to-End Integration Flow', () => {
   it('should support plugin manager registration, rendering a button, and inserting content', () => {
     let onActionCalled = false;
 
-    penman.PluginManager.add('myLinkPlugin', (editorInstance) => {
+    // Override the link plugin specifically for testing the callback and insertion
+    penman.PluginManager.add('link', (editorInstance) => {
       editorInstance.ui.registry.addButton('link', {
         text: 'Insert Link',
         onAction: () => {
@@ -43,7 +44,7 @@ describe('End-to-End Integration Flow', () => {
 
     const editor = penman.init({
       selector: '#e2e-editor',
-      plugins: ['myLinkPlugin'],
+      plugins: ['link'],
       toolbar: 'bold link'
     });
 
