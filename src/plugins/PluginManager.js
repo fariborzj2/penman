@@ -1,5 +1,9 @@
+import { setupLinkPlugin } from './LinkPlugin.js';
+
 export const PluginManager = {
-  plugins: {},
+  plugins: {
+    'link': setupLinkPlugin
+  },
 
   /**
    * Registers a plugin to the global system
