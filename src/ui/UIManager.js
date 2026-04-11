@@ -66,7 +66,6 @@ export class UIManager {
       if (index < groups.length - 1) {
         const separator = document.createElement('span');
         separator.className = 'penman-separator';
-        separator.innerHTML = '&nbsp;|&nbsp;';
         this.toolbarElement.appendChild(separator);
       }
     });
