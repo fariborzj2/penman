@@ -74,6 +74,8 @@ export class Editor extends EventEmitter {
     this.container.className = 'penman-wrapper';
     this.container.setAttribute('dir', this.options.direction);
     this.container.lang = this.options.lang;
+    this.container.style.height = `${this.options.height}px`;
+    this.container.style.minHeight = '200px';
 
     // Create editable area
     this.editableArea = document.createElement('div');
@@ -83,11 +85,53 @@ export class Editor extends EventEmitter {
     // Defaulting to empty <p><br></p> if empty, ensures typing creates P instead of DIV
     const initialVal = this.textarea.value.trim();
     this.editableArea.innerHTML = initialVal ? initialVal : '<p><br></p>';
-    this.editableArea.style.height = `${this.options.height}px`;
+
+    // Create footer (status bar)
+    this.footer = document.createElement('div');
+    this.footer.className = 'penman-footer';
+    this.footerHtmlPath = document.createElement('div');
+    this.footerHtmlPath.className = 'penman-footer-path';
+    this.footerStats = document.createElement('div');
+    this.footerStats.className = 'penman-footer-stats';
+
+    this.footer.appendChild(this.footerHtmlPath);
+    this.footer.appendChild(this.footerStats);
 
     // Append elements
+    this.container.appendChild(this.footer);
     this.container.appendChild(this.editableArea);
+
+    // Move footer below editable area
+    this.container.appendChild(this.footer);
+
     this.textarea.parentNode.insertBefore(this.container, this.textarea);
+  }
+
+  _updateFooter() {
+    if (!this.footer) return;
+
+    // Update stats
+    const text = this.editableArea.innerText || '';
+    const chars = text.replace(/\n/g, '').length;
+    // Match words (simple word count)
+    let words = 0; if (text.trim()) { words = text.trim().split(/\s+/).filter(w => w.length > 0).length; }
+    this.footerStats.innerText = `Words: ${words} | Characters: ${chars}`;
+
+    // Update HTML Path (simplified implementation)
+    if (this.selection && typeof this.selection.getRange === 'function') {
+      const range = this.selection.getRange();
+      if (range) {
+        let node = range.commonAncestorContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+        const path = [];
+        while (node && node !== this.editableArea && this.editableArea.contains(node)) {
+          path.unshift(node.nodeName.toLowerCase());
+          node = node.parentNode;
+        }
+        if (path.length === 0) path.push('p'); // Default fallback
+        this.footerHtmlPath.innerText = path.join(' > ');
+      }
+    }
   }
 
   _bindEvents() {
@@ -96,6 +140,7 @@ export class Editor extends EventEmitter {
       this.emit('selectionChange');
     });
 
+    this.on('selectionChange', () => this._updateFooter());
     this.editableArea.addEventListener('keyup', (e) => {
       // Ignore modifier keys to reduce noise
       if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
@@ -108,6 +153,7 @@ export class Editor extends EventEmitter {
       this.emit('change', this.editableArea.innerHTML);
     });
 
+    this.on('change', () => this._updateFooter());
     // EVENT INTERCEPTION: Prevent native history pollution
     // Ensure document default block is p instead of div when empty
     this.editableArea.addEventListener('focus', () => {
