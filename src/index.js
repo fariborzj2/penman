@@ -1,4 +1,5 @@
 import { Editor } from './core/Editor.js';
+import { PluginManager } from './plugins/PluginManager.js';
 
 // Registry for instance management
 const instances = {};
@@ -68,7 +69,9 @@ const penman = {
         delete instances['#' + identifier];
       }
     }
-  }
+  },
+
+  PluginManager: PluginManager
 };
 
 export default penman;
