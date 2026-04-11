@@ -158,6 +158,7 @@
 /* Footer / Status Bar Styles */
 .penman-footer {
   padding: 4px 12px;
+  height: 20px;
   border-top: 1px solid #e1e2e4;
   background: #fafafa;
   font-size: 12px;
