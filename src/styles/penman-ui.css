@@ -11,6 +11,8 @@
   color: #222f3e;
   display: flex;
   flex-direction: column;
+  resize: vertical;
+  overflow: hidden;
 }
 
 .penman-toolbar {
@@ -151,4 +153,21 @@
   background-color: #e3effd;
   color: #0052cc;
   font-weight: 600;
+}
+
+/* Footer / Status Bar Styles */
+.penman-footer {
+  padding: 4px 12px;
+  border-top: 1px solid #e1e2e4;
+  background: #fafafa;
+  font-size: 12px;
+  color: #666;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.penman-footer-path {
+  font-family: monospace;
+  color: #0052cc;
 }
