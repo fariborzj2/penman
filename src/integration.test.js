@@ -157,4 +157,56 @@ describe('End-to-End Integration Flow', () => {
     // Clean up
     editor.destroy();
   });
+
+  it('should support lists and formats plugins correctly rendering in UI and executing commands', () => {
+    const editor = penman.init({
+      selector: '#e2e-editor',
+      plugins: ['format', 'list'],
+      toolbar: 'bold italic underline bullist numlist'
+    });
+
+    const toolbar = document.querySelector('.penman-toolbar');
+    expect(toolbar.querySelector('.penman-btn-bullist')).not.toBeNull();
+    expect(toolbar.querySelector('.penman-btn-numlist')).not.toBeNull();
+    expect(toolbar.querySelector('.penman-btn-underline')).not.toBeNull();
+
+    // Trigger a list command
+    document.execCommand = vi.fn();
+    toolbar.querySelector('.penman-btn-bullist').click();
+
+    expect(document.execCommand).toHaveBeenCalledWith('insertUnorderedList', false, null);
+
+    editor.destroy();
+  });
+
+  it('should properly intercept rich text paste and sanitize XSS payloads', () => {
+    const editor = penman.init({
+      selector: '#e2e-editor'
+    });
+
+    document.execCommand = vi.fn((cmd, showUI, value) => {
+      if (cmd === 'insertHTML') {
+        editor.editableArea.innerHTML = value;
+      }
+    });
+
+    const pasteEvent = new window.Event('paste', { bubbles: true, cancelable: true });
+    pasteEvent.clipboardData = {
+      getData: vi.fn((type) => {
+        if (type === 'text/html') return '<div onmouseover="alert(1)"><p>Safe <script>alert("xss")</script><span>Text</span></p></div>';
+        return 'Fallback Text';
+      })
+    };
+
+    let isPrevented = false;
+    pasteEvent.preventDefault = () => { isPrevented = true; };
+
+    editor.editableArea.dispatchEvent(pasteEvent);
+
+    expect(isPrevented).toBe(true);
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<p>Safe alert("xss")<span>Text</span></p>');
+    expect(editor.getContent()).toContain('<p>Safe alert("xss")<span>Text</span></p>');
+
+    editor.destroy();
+  });
 });

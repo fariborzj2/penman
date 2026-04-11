@@ -15,7 +15,7 @@ export class CommandManager {
    * Defines which commands are allowed to use the browser's execCommand fallback.
    */
   get fallbackWhitelist() {
-    return ['bold', 'italic', 'underline', 'justifyleft', 'justifycenter', 'justifyright'];
+    return ['bold', 'italic', 'underline', 'justifyleft', 'justifycenter', 'justifyright', 'insertUnorderedList', 'insertOrderedList'];
   }
 
   /**

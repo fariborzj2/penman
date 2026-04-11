@@ -4,6 +4,7 @@ import { CommandManager } from '../commands/CommandManager.js';
 import { HistoryManager } from '../history/HistoryManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { PluginManager } from '../plugins/PluginManager.js';
+import { Sanitizer } from '../sanitization/Sanitizer.js';
 
 export class Editor extends EventEmitter {
   constructor(options) {
@@ -28,6 +29,7 @@ export class Editor extends EventEmitter {
     this.commands = null;
     this.history = null;
     this.ui = null;
+    this.sanitizer = null;
 
     this.init();
   }
@@ -40,6 +42,7 @@ export class Editor extends EventEmitter {
     this.commands = new CommandManager(this);
     this.history = new HistoryManager(this);
     this.ui = new UIManager(this);
+    this.sanitizer = new Sanitizer();
 
     // Register built-in commands
     this.commands.register('undo', {
@@ -135,17 +138,23 @@ export class Editor extends EventEmitter {
     this.editableArea.addEventListener('paste', (e) => {
       e.preventDefault();
 
-      // Get plain text for now. (Rich text sanitization is milestone 5)
-      let text = (e.originalEvent || e).clipboardData.getData('text/plain');
+      const clipboardData = (e.originalEvent || e).clipboardData;
+      let html = clipboardData.getData('text/html');
+      let text = clipboardData.getData('text/plain');
 
-      // Execute as a custom command logic:
-      // Insert text natively without history tracking of the browser, and then snapshot
-      // For now, using execCommand insertText is standard for plain text fallback.
-      document.execCommand('insertText', false, text);
+      let contentToInsert = '';
 
-      // Immediately push structural change to history
-      if (this.history) {
-        this.history.pushImmediate();
+      if (html) {
+        // Sanitize rich text
+        contentToInsert = this.sanitizer.sanitize(html);
+      } else if (text) {
+        // Escape plain text
+        contentToInsert = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+      }
+
+      if (contentToInsert) {
+        // We use our insertContent method which already uses execCommand insertHTML and handles history
+        this.insertContent(contentToInsert);
       }
     });
   }
