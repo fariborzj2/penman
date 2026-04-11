@@ -4,6 +4,7 @@ export class Modal {
    * @param {string} options.title - The title of the modal
    * @param {string} options.body - The HTML body content of the modal
    * @param {Function} options.onSubmit - Callback when the submit button is clicked. Receives form data.
+   * @param {Function} [options.onCancel] - Callback when the modal is closed without submitting.
    * @param {string} [options.submitText='OK'] - Text for the submit button
    * @param {string} [options.cancelText='Cancel'] - Text for the cancel button
    */
@@ -58,6 +59,9 @@ export class Modal {
 
     const closeHandler = (e) => {
       e.preventDefault();
+      if (typeof this.options.onCancel === 'function') {
+        this.options.onCancel();
+      }
       this.close();
     };
 
@@ -67,6 +71,9 @@ export class Modal {
     // Close on overlay click
     this.overlay.addEventListener('click', (e) => {
       if (e.target === this.overlay) {
+        if (typeof this.options.onCancel === 'function') {
+          this.options.onCancel();
+        }
         this.close();
       }
     });
