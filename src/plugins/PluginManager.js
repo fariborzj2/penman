@@ -1,12 +1,14 @@
 import { setupLinkPlugin } from './LinkPlugin.js';
 import { setupFormatPlugin } from './FormatPlugin.js';
 import { setupListPlugin } from './ListPlugin.js';
+import { setupBlockTypePlugin } from './BlockTypePlugin.js';
 
 export const PluginManager = {
   plugins: {
     'link': setupLinkPlugin,
     'format': setupFormatPlugin,
-    'list': setupListPlugin
+    'list': setupListPlugin,
+    'blocktype': setupBlockTypePlugin
   },
 
   /**

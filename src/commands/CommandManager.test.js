@@ -53,7 +53,7 @@ describe('CommandManager', () => {
   it('should block non-whitelisted and non-registered commands', () => {
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    commandManager.execute('formatBlock', '<h1>');
+    commandManager.execute('insertImage', 'http://example.com');
 
     expect(document.execCommand).not.toHaveBeenCalled();
     expect(consoleWarnSpy).toHaveBeenCalled();

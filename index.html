@@ -79,6 +79,19 @@
       margin-top: 2px;
     }
 
+    /* BlockType Plugin Styles */
+    .penman-blocktype-search {
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      outline: none;
+    }
+    .penman-blocktype-search:focus {
+      border-color: #88aaff;
+    }
+    .penman-blocktype-item {
+      border-radius: 2px;
+    }
+
     /* RTL adjustments */
     [dir="rtl"] .penman-dropdown-panel {
       left: auto;
@@ -125,8 +138,8 @@
       lang: 'fa',
       direction: 'rtl',
       height: 200,
-      plugins: ['link', 'format', 'list', 'testDropdown'],
-      toolbar: 'bold italic underline | justifyleft justifycenter justifyright | bullist numlist | link | testdrop'
+      plugins: ['link', 'format', 'list', 'blocktype'],
+      toolbar: 'blocktype | bold italic underline | justifyleft justifycenter justifyright | bullist numlist | link'
     });
 
     const instance = penman.get('#myTextarea');
