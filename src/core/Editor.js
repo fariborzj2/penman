@@ -118,14 +118,27 @@ export class Editor extends EventEmitter {
     this.footerStats.innerText = `Words: ${words} | Characters: ${chars}`;
 
     // Update HTML Path (simplified implementation)
-    if (this.selection && typeof this.selection.getRange === 'function') {
-      const range = this.selection.getRange();
-      if (range) {
+    if (this.selection) {
+      const sel = this.selection.getSelection();
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
         let node = range.commonAncestorContainer;
+
+        // If selection is collapsed, use anchor node instead of commonAncestor to be more precise
+        if (sel.isCollapsed && sel.anchorNode) {
+            node = sel.anchorNode;
+        }
+
         if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
         const path = [];
         while (node && node !== this.editableArea && this.editableArea.contains(node)) {
-          path.unshift(node.nodeName.toLowerCase());
+          const tagName = node.nodeName.toLowerCase();
+          // Filter out internal selection markers
+          if (tagName === 'span' && node.id && node.id.startsWith('penman-selection-marker')) {
+            node = node.parentNode;
+            continue;
+          }
+          path.unshift(tagName);
           node = node.parentNode;
         }
         if (path.length === 0) path.push('p'); // Default fallback
