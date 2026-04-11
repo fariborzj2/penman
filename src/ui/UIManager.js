@@ -96,11 +96,28 @@ export class UIManager {
     // Check if item is registered as a dropdown
     const dropdownConfig = this.registry.dropdowns[cmd];
     if (dropdownConfig) {
+      // For dropdowns, we usually want to show the text (e.g. "Paragraph") and maybe an icon.
+      // If no icon is explicitly provided and the provider returns a fallback span, let's just use the text.
+      let iconHTML = dropdownConfig.icon || '';
+
+      if (!iconHTML && dropdownConfig.text) {
+          iconHTML = dropdownConfig.text;
+      } else if (!iconHTML) {
+          const defaultIcon = this.iconProvider.getIcon(cmd);
+          if (!defaultIcon.includes('penman-icon-fallback')) {
+             iconHTML = defaultIcon;
+          } else {
+             iconHTML = cmd;
+          }
+      }
+
       const dropdown = this.createDropdown({
         title: dropdownConfig.text || cmd,
-        icon: dropdownConfig.icon || this.iconProvider.getIcon(cmd),
+        icon: iconHTML,
         content: typeof dropdownConfig.render === 'function' ? dropdownConfig.render() : (dropdownConfig.content || '')
       });
+      // Add standard button classes for styling
+      dropdown.buttonElement.classList.add(`penman-btn-${cmd}`);
       // Expose a way to access the dropdown instance if needed
       dropdown.element.dataset.cmd = cmd;
       this.buttons.push(dropdown.buttonElement); // For active state syncing if needed
