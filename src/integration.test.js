@@ -28,20 +28,43 @@ describe('End-to-End Integration Flow', () => {
     });
   });
 
-  it('should support plugin manager registration and initialization', () => {
-    let pluginLoaded = false;
-    penman.PluginManager.add('testPlugin', (editorInstance) => {
-      pluginLoaded = true;
-      editorInstance.testFlag = 'working';
+  it('should support plugin manager registration, rendering a button, and inserting content', () => {
+    let onActionCalled = false;
+
+    penman.PluginManager.add('myLinkPlugin', (editorInstance) => {
+      editorInstance.ui.registry.addButton('link', {
+        text: 'Insert Link',
+        onAction: () => {
+          onActionCalled = true;
+          editorInstance.insertContent('<a href="http://example.com">link</a>');
+        }
+      });
     });
 
     const editor = penman.init({
       selector: '#e2e-editor',
-      plugins: ['testPlugin']
+      plugins: ['myLinkPlugin'],
+      toolbar: 'bold link'
     });
 
-    expect(pluginLoaded).toBe(true);
-    expect(editor.testFlag).toBe('working');
+    // Verify the button was rendered
+    const linkBtn = document.querySelector('.penman-btn-link');
+    expect(linkBtn).not.toBeNull();
+    expect(linkBtn.title).toBe('Insert Link');
+
+    // Setup mock for insertHTML (which insertContent uses)
+    document.execCommand = vi.fn((cmd, showUI, value) => {
+      if (cmd === 'insertHTML') {
+        editor.editableArea.innerHTML += value;
+      }
+    });
+
+    // Click the button
+    linkBtn.click();
+
+    expect(onActionCalled).toBe(true);
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<a href="http://example.com">link</a>');
+    expect(editor.getContent()).toContain('link');
 
     editor.destroy();
   });

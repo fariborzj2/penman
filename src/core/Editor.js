@@ -52,11 +52,11 @@ export class Editor extends EventEmitter {
       queryState: () => false
     });
 
-    // Render the UI based on options
-    this.ui.render();
-
-    // Initialize plugins
+    // Initialize plugins first so they can register their buttons to the UI registry
     PluginManager.init(this);
+
+    // Render the UI based on options (after plugins are initialized)
+    this.ui.render();
 
     this._bindEvents();
     this.emit('init', this);
@@ -169,6 +169,25 @@ export class Editor extends EventEmitter {
   setContent(html) {
     this.editableArea.innerHTML = html;
     this._syncToTextarea();
+    this.emit('selectionChange');
+  }
+
+  /**
+   * Inserts HTML content at the current cursor position
+   * @param {string} html - The HTML content to insert
+   */
+  insertContent(html) {
+    this.focus();
+    // Using execCommand 'insertHTML' is the standard way to insert content at cursor
+    // while maintaining undo history and selection in a contentEditable element.
+    document.execCommand('insertHTML', false, html);
+
+    if (this.history) {
+      this.history.pushImmediate();
+    }
+
+    this._syncToTextarea();
+    this.emit('change', this.getContent());
     this.emit('selectionChange');
   }
 

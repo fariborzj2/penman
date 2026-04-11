@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "node test-e2e.mjs"
   },
   "author": "",
   "license": "MIT",
@@ -27,5 +28,8 @@
   "bugs": {
     "url": "https://github.com/fariborzj2/penman/issues"
   },
-  "homepage": "https://github.com/fariborzj2/penman#readme"
+  "homepage": "https://github.com/fariborzj2/penman#readme",
+  "dependencies": {
+    "node-fetch": "^3.3.2"
+  }
 }
