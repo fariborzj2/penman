@@ -47,21 +47,34 @@ export function setupBlockTypePlugin(editor) {
         if (block.name.toLowerCase().includes(lowerFilter)) {
           const item = document.createElement('div');
           item.className = 'penman-blocktype-item';
-          item.style.padding = '8px';
+          item.style.padding = '8px 12px';
           item.style.cursor = 'pointer';
-          item.textContent = block.name;
 
-          if (block.name === currentBlockType) {
-            item.style.fontWeight = 'bold';
-            item.style.backgroundColor = '#f0f0f0';
+          // Render item specifically based on its tag to mimic how it will look in the editor
+          const innerTag = document.createElement(block.cmd);
+          innerTag.style.margin = '0';
+          innerTag.style.padding = '0';
+          innerTag.style.fontSize = 'inherit';
+          innerTag.style.fontWeight = 'inherit';
+          innerTag.textContent = block.name;
+
+          // Re-apply some native-like styling for headings inside the dropdown to match the target UI
+          if (block.cmd.startsWith('h')) {
+             innerTag.style.fontWeight = 'bold';
+             const level = parseInt(block.cmd.charAt(1), 10);
+             if (level === 1) innerTag.style.fontSize = '2em';
+             if (level === 2) innerTag.style.fontSize = '1.5em';
+             if (level === 3) innerTag.style.fontSize = '1.17em';
+             if (level === 4) innerTag.style.fontSize = '1em';
+             if (level === 5) innerTag.style.fontSize = '0.83em';
+             if (level === 6) innerTag.style.fontSize = '0.67em';
           }
 
-          item.addEventListener('mouseenter', () => {
-             item.style.backgroundColor = '#e0e0e0';
-          });
-          item.addEventListener('mouseleave', () => {
-             item.style.backgroundColor = block.name === currentBlockType ? '#f0f0f0' : 'transparent';
-          });
+          item.appendChild(innerTag);
+
+          if (block.name === currentBlockType) {
+            item.classList.add('penman-blocktype-item-active');
+          }
 
           item.addEventListener('click', (e) => {
             e.preventDefault();

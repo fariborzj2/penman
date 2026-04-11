@@ -1,0 +1,73 @@
+/*
+ * Penman Editor Content CSS
+ * Contains styles specifically applied to the user's content area (inside the editor).
+ */
+
+.penman-editor-area {
+  padding: 16px;
+  outline: none;
+  min-height: 200px;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.6;
+  color: #333;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Base Typography Resets */
+.penman-editor-area p {
+  margin: 0 0 1em 0;
+}
+
+.penman-editor-area p:last-child {
+  margin-bottom: 0;
+}
+
+.penman-editor-area h1,
+.penman-editor-area h2,
+.penman-editor-area h3,
+.penman-editor-area h4,
+.penman-editor-area h5,
+.penman-editor-area h6 {
+  margin: 1.2em 0 0.5em 0;
+  line-height: 1.3;
+  color: #111;
+  font-weight: 700;
+}
+
+.penman-editor-area h1 { font-size: 2em; }
+.penman-editor-area h2 { font-size: 1.5em; }
+.penman-editor-area h3 { font-size: 1.3em; }
+.penman-editor-area h4 { font-size: 1.1em; }
+
+.penman-editor-area ul,
+.penman-editor-area ol {
+  margin: 0 0 1em 0;
+  padding-left: 2em;
+}
+
+[dir="rtl"] .penman-editor-area ul,
+[dir="rtl"] .penman-editor-area ol {
+  padding-left: 0;
+  padding-right: 2em;
+}
+
+.penman-editor-area blockquote {
+  margin: 0 0 1em 0;
+  padding: 10px 20px;
+  background-color: #f9f9f9;
+  border-left: 5px solid #ccc;
+  font-style: italic;
+}
+
+[dir="rtl"] .penman-editor-area blockquote {
+  border-left: none;
+  border-right: 5px solid #ccc;
+}
+
+.penman-editor-area a {
+  color: #006ce6;
+  text-decoration: underline;
+  cursor: pointer;
+}
