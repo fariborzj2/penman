@@ -79,7 +79,10 @@ export class Editor extends EventEmitter {
     this.editableArea = document.createElement('div');
     this.editableArea.className = 'penman-editor-area';
     this.editableArea.contentEditable = true;
-    this.editableArea.innerHTML = this.textarea.value;
+
+    // Defaulting to empty <p><br></p> if empty, ensures typing creates P instead of DIV
+    const initialVal = this.textarea.value.trim();
+    this.editableArea.innerHTML = initialVal ? initialVal : '<p><br></p>';
     this.editableArea.style.minHeight = `${this.options.height}px`;
 
     // Append elements
@@ -106,6 +109,11 @@ export class Editor extends EventEmitter {
     });
 
     // EVENT INTERCEPTION: Prevent native history pollution
+    // Ensure document default block is p instead of div when empty
+    this.editableArea.addEventListener('focus', () => {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    });
+
     // 1. Intercept keyboard shortcuts (Ctrl+Z, Cmd+Z, Ctrl+Y, Cmd+Shift+Z)
     this.editableArea.addEventListener('keydown', (e) => {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
