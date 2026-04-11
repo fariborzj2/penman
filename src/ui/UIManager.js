@@ -6,6 +6,14 @@ export class UIManager {
     this.toolbarElement = null;
     this.buttons = [];
     this.iconProvider = new IconProvider();
+
+    // The UI Registry, allowing plugins to add items to the UI
+    this.registry = {
+      buttons: {},
+      addButton: (name, config) => {
+        this.registry.buttons[name] = config;
+      }
+    };
   }
 
   /**
@@ -62,22 +70,38 @@ export class UIManager {
     const btn = document.createElement('button');
     btn.className = `penman-btn penman-btn-${cmd}`;
     btn.type = 'button';
-    btn.title = cmd;
     btn.dataset.cmd = cmd;
 
-    // Use icon provider for rendering content
-    btn.innerHTML = this.iconProvider.getIcon(cmd) || (cmd.charAt(0).toUpperCase() + cmd.slice(1));
+    // Check if button is registered via a plugin
+    const registryConfig = this.registry.buttons[cmd];
 
-    // Prevent default mousedown to avoid stealing focus from editor immediately
-    btn.addEventListener('mousedown', (e) => {
-      e.preventDefault();
-    });
+    if (registryConfig) {
+      btn.title = registryConfig.text || cmd;
+      // You could use icon from config if provided, but fallback to our iconProvider if not
+      btn.innerHTML = registryConfig.icon ? registryConfig.icon : (this.iconProvider.getIcon(cmd) || registryConfig.text || cmd);
 
-    // Execute command on click
-    btn.addEventListener('click', (e) => {
-      e.preventDefault();
-      this.editor.execCommand(cmd);
-    });
+      btn.addEventListener('mousedown', (e) => e.preventDefault());
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        if (typeof registryConfig.onAction === 'function') {
+          registryConfig.onAction();
+        }
+      });
+    } else {
+      // Normal built-in or fall-back command
+      btn.title = cmd;
+      btn.innerHTML = this.iconProvider.getIcon(cmd) || (cmd.charAt(0).toUpperCase() + cmd.slice(1));
+
+      btn.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+      });
+
+      btn.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.editor.execCommand(cmd);
+      });
+    }
 
     this.buttons.push(btn);
 
