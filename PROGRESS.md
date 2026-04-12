@@ -118,3 +118,7 @@
 - **توضیحات:** برطرف کردن سه باگ مربوط به پلاگین. ۱. دکمه Replace All الان بدون محدودیت در طول یا جایگزین کردن تکراری کار می‌کند و روی TextNode ها Reverse Iterate میکند. ۲. باز کردن دیالوگ، بر اساس selection فعلی به طور هوشمند اینپوت Find را پر می‌کند. ۳. کلیدهای Command/Ctrl+F الان برای باز کردن منو فعال شده و دیالوگ های تکراری را باز نمی‌کنند.
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: Fix `Replace All` behavior, auto-fill input based on user's content selection, handle Ctrl+F shortcuts, and corresponding strict unit tests.
+### فاز 7 بروزرسانی All Words
+- **وضعیت:** کامل (Completed)
+- **درصد پیشرفت:** 100%
+- **توضیحات:** قابلیت All Words جایگزین Whole words شد و الان وقتی فعال باشد تمام تطابق‌ها به جای فقط یکی هایلایت می‌شوند.
