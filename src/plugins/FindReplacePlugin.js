@@ -28,7 +28,7 @@ export function setupFindReplacePlugin(editor) {
     let originalHtml = editor.getContent();
 
       // Find function
-      const performSearch = (query, matchCase, wholeWord) => {
+      const performSearch = (query, matchCase) => {
         // We will implement search using TextNodes
         const content = editor.editableArea;
         const textNodes = [];
@@ -59,20 +59,7 @@ export function setupFindReplacePlugin(editor) {
            let startIndex = 0;
            let index;
            while ((index = textStr.indexOf(searchStr, startIndex)) > -1) {
-             let isMatch = true;
-             if (wholeWord) {
-                const charBefore = index > 0 ? text[index - 1] : ' ';
-                const charAfter = index + query.length < text.length ? text[index + query.length] : ' ';
-                const isWordBoundary = (c) => /[\s\.,!\?;:()\[\]"']/.test(c) || c === ' ' || c === '\u00A0';
-
-                if (!isWordBoundary(charBefore) || !isWordBoundary(charAfter)) {
-                   isMatch = false;
-                }
-             }
-
-             if (isMatch) {
-               results.push({ node, index, length: query.length });
-             }
+             results.push({ node, index, length: query.length });
              startIndex = index + query.length;
            }
         });
@@ -80,21 +67,48 @@ export function setupFindReplacePlugin(editor) {
         return results;
       };
 
-      const highlightResult = (index) => {
-         if (results.length === 0 || index < 0 || index >= results.length) return;
-
-         const result = results[index];
-         const range = document.createRange();
-         range.setStart(result.node, result.index);
-         range.setEnd(result.node, result.index + result.length);
+      const highlightResult = (index, selectAll = false) => {
+         if (results.length === 0) return;
 
          const sel = window.getSelection();
          sel.removeAllRanges();
-         sel.addRange(range);
 
-         // Scroll into view
-         if (result.node.parentElement && typeof result.node.parentElement.scrollIntoView === 'function') {
-            result.node.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+         if (selectAll) {
+             // Add all ranges to selection
+             results.forEach(res => {
+                 // Check validity
+                 if (res.node.parentNode && res.node.nodeValue.length >= res.index + res.length) {
+                     const range = document.createRange();
+                     try {
+                         range.setStart(res.node, res.index);
+                         range.setEnd(res.node, res.index + res.length);
+                         sel.addRange(range);
+                     } catch(e) {}
+                 }
+             });
+
+             // Scroll to the first one
+             const first = results[0];
+             if (first && first.node.parentElement && typeof first.node.parentElement.scrollIntoView === 'function') {
+                 first.node.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+             }
+         } else {
+             if (index < 0 || index >= results.length) return;
+             const result = results[index];
+
+             if (!result.node.parentNode || result.node.nodeValue.length < result.index + result.length) return;
+
+             const range = document.createRange();
+             try {
+                 range.setStart(result.node, result.index);
+                 range.setEnd(result.node, result.index + result.length);
+                 sel.addRange(range);
+
+                 // Scroll into view
+                 if (result.node.parentElement && typeof result.node.parentElement.scrollIntoView === 'function') {
+                    result.node.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                 }
+             } catch(e) {}
          }
       };
 
@@ -141,7 +155,7 @@ export function setupFindReplacePlugin(editor) {
         </div>
         <div class="penman-modal-checkbox-group">
           <label><input type="checkbox" id="fr-match-case"> Match case</label>
-          <label><input type="checkbox" id="fr-whole-word"> Whole words</label>
+          <label><input type="checkbox" id="fr-all-words"> All words</label>
         </div>
       `;
 
@@ -155,12 +169,12 @@ export function setupFindReplacePlugin(editor) {
           { text: 'Next', id: 'fr-btn-next', align: 'left', disabled: true, onClick: () => {
              if (results.length === 0) return;
              currentIndex = (currentIndex + 1) % results.length;
-             highlightResult(currentIndex);
+             highlightResult(currentIndex, cbAllWords.checked);
           }},
           { text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true, onClick: () => {
              if (results.length === 0) return;
              currentIndex = (currentIndex - 1 + results.length) % results.length;
-             highlightResult(currentIndex);
+             highlightResult(currentIndex, cbAllWords.checked);
           }},
           { text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right', onClick: () => {
              editor.selection.restore();
@@ -209,7 +223,7 @@ export function setupFindReplacePlugin(editor) {
       const inputFind = elModal.querySelector('#fr-find');
       const inputReplace = elModal.querySelector('#fr-replace');
       const cbMatchCase = elModal.querySelector('#fr-match-case');
-      const cbWholeWord = elModal.querySelector('#fr-whole-word');
+      const cbAllWords = elModal.querySelector('#fr-all-words');
 
       const btnFind = elModal.querySelector('#fr-btn-find');
       const btnReplace = elModal.querySelector('#fr-btn-replace');
@@ -226,10 +240,10 @@ export function setupFindReplacePlugin(editor) {
       };
 
       executeSearch = () => {
-         performSearch(inputFind.value, cbMatchCase.checked, cbWholeWord.checked);
+         performSearch(inputFind.value, cbMatchCase.checked);
          if (results.length > 0) {
             currentIndex = 0;
-            highlightResult(currentIndex);
+            highlightResult(currentIndex, cbAllWords.checked);
          } else {
             currentIndex = -1;
             editor.selection.restore(); // Ensure caret doesn't get lost
@@ -237,6 +251,12 @@ export function setupFindReplacePlugin(editor) {
          }
          updateButtonsState();
       };
+
+      cbAllWords.addEventListener('change', () => {
+         if (results.length > 0) {
+            highlightResult(currentIndex, cbAllWords.checked);
+         }
+      });
 
       // Auto-trigger search if input is pre-filled
       if (inputFind.value) {
