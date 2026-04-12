@@ -127,26 +127,26 @@ export function setupFindReplacePlugin(editor) {
           .find-replace-footer button { padding: 6px 10px; font-size: 13px; white-space: nowrap; }
         </style>
         <div class="find-replace-row">
-          <input type="text" id="fr-find" placeholder="متن مورد نظر...">
-          <label for="fr-find">جست‌وجو</label>
+          <input type="text" id="fr-find" placeholder="Find text...">
+          <label for="fr-find">Find</label>
         </div>
         <div class="find-replace-row">
-          <input type="text" id="fr-replace" placeholder="متن جایگزین...">
-          <label for="fr-replace">جایگزین کردن با</label>
+          <input type="text" id="fr-replace" placeholder="Replace with...">
+          <label for="fr-replace">Replace with</label>
         </div>
         <div class="find-replace-options">
-          <label><input type="checkbox" id="fr-match-case"> حساس به حروف کوچک و بزرگ</label>
-          <label><input type="checkbox" id="fr-whole-word"> همه کلمه‌ها</label>
+          <label><input type="checkbox" id="fr-match-case"> Match case</label>
+          <label><input type="checkbox" id="fr-whole-word"> Whole words</label>
         </div>
         <div class="find-replace-footer">
           <div class="find-replace-footer-left">
-            <button class="penman-btn" id="fr-btn-next" disabled>بعدی</button>
-            <button class="penman-btn" id="fr-btn-prev" disabled>قبلی</button>
+            <button class="penman-btn" id="fr-btn-next" disabled>Next</button>
+            <button class="penman-btn" id="fr-btn-prev" disabled>Previous</button>
           </div>
           <div class="find-replace-footer-right">
-            <button class="penman-btn" id="fr-btn-replace-all" disabled>جایگزین کردن همه</button>
-            <button class="penman-btn" id="fr-btn-replace" disabled>جایگزین کردن</button>
-            <button class="penman-btn penman-btn-primary" id="fr-btn-find">جست‌وجو</button>
+            <button class="penman-btn" id="fr-btn-replace-all" disabled>Replace all</button>
+            <button class="penman-btn" id="fr-btn-replace" disabled>Replace</button>
+            <button class="penman-btn penman-btn-primary" id="fr-btn-find">Find</button>
           </div>
         </div>
       `;
