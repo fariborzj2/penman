@@ -50,7 +50,7 @@ export function setupRemoveFormatPlugin(editor) {
 
   editor.ui.registry.addButton('removeformat', {
     text: 'Clear Formatting',
-    icon: 'removeformat',
+
     onAction: () => {
       editor.execCommand('CLEAR_FORMATTING');
     }
