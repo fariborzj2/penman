@@ -2,13 +2,21 @@ import { setupLinkPlugin } from './LinkPlugin.js';
 import { setupFormatPlugin } from './FormatPlugin.js';
 import { setupListPlugin } from './ListPlugin.js';
 import { setupBlockTypePlugin } from './BlockTypePlugin.js';
+import { setupFontSizePlugin } from './FontSizePlugin.js';
+import { setupUnlinkPlugin } from './UnlinkPlugin.js';
+import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
+import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
 
 export const PluginManager = {
   plugins: {
     'link': setupLinkPlugin,
     'format': setupFormatPlugin,
     'list': setupListPlugin,
-    'blocktype': setupBlockTypePlugin
+    'blocktype': setupBlockTypePlugin,
+    'fontsize': setupFontSizePlugin,
+    'unlink': setupUnlinkPlugin,
+    'removeformat': setupRemoveFormatPlugin,
+    'hr': setupHorizontalRulePlugin
   },
 
   /**
