@@ -1,14 +1,31 @@
 export function setupFindReplacePlugin(editor) {
-  editor.ui.registry.addButton('findreplace', {
-    text: 'Find and Replace',
-    icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
-    onAction: () => {
-      editor.selection.save();
+  let activeModal = null;
 
-      // State
-      let results = [];
-      let currentIndex = -1;
-      let originalHtml = editor.getContent();
+  const openFindReplace = () => {
+    if (activeModal) {
+      // If modal is already open, focus it and skip opening another one
+      const inputFind = activeModal.modalElement.querySelector('#fr-find');
+      if (inputFind) inputFind.focus();
+      return;
+    }
+
+    // Capture current selection to auto-fill the 'Find' input
+    let initialFindText = '';
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
+        // Simple heuristic: if selected text isn't excessively long and spans one block
+        const text = sel.toString().trim();
+        if (text && text.length < 150 && !text.includes('\n')) {
+             initialFindText = text;
+        }
+    }
+
+    editor.selection.save();
+
+    // State
+    let results = [];
+    let currentIndex = -1;
+    let originalHtml = editor.getContent();
 
       // Find function
       const performSearch = (query, matchCase, wholeWord) => {
@@ -115,7 +132,7 @@ export function setupFindReplacePlugin(editor) {
 
       const modalHtml = `
         <div class="penman-modal-form-row">
-          <input type="text" id="fr-find" placeholder="Find text...">
+          <input type="text" id="fr-find" placeholder="Find text..." value="${initialFindText.replace(/"/g, '&quot;')}">
           <label for="fr-find">Find</label>
         </div>
         <div class="penman-modal-form-row">
@@ -157,19 +174,35 @@ export function setupFindReplacePlugin(editor) {
              }
           }},
           { text: 'Replace all', id: 'fr-btn-replace-all', align: 'right', disabled: true, onClick: () => {
-             if (results.length === 0) return;
-             const replacement = inputReplace.value;
-             editor.history.takeSnapshot();
-             for (let i = results.length - 1; i >= 0; i--) {
-                 doReplaceAt(i, replacement);
-             }
-             executeSearch();
+              if (results.length === 0) return;
+              const replacement = inputReplace.value;
+              if (editor.history && typeof editor.history.takeSnapshot === 'function') {
+                  editor.history.takeSnapshot();
+              }
+
+              // Reverse iterate through results and modify text directly on nodes to maintain validity
+              for (let i = results.length - 1; i >= 0; i--) {
+                  const res = results[i];
+                  if (res.node && res.node.parentNode) {
+                      const nodeText = res.node.nodeValue;
+                      // Ensure index is valid
+                      if (res.index >= 0 && res.index + res.length <= nodeText.length) {
+                          const before = nodeText.substring(0, res.index);
+                          const after = nodeText.substring(res.index + res.length);
+                          res.node.nodeValue = before + replacement + after;
+                      }
+                  }
+              }
+              executeSearch();
           }}
         ],
         onCancel: () => {
+          activeModal = null;
           editor.selection.restore();
         }
       });
+
+      activeModal = modal;
 
       // Bind logic
       const elModal = modal.modalElement;
@@ -204,6 +237,27 @@ export function setupFindReplacePlugin(editor) {
          }
          updateButtonsState();
       };
+
+      // Auto-trigger search if input is pre-filled
+      if (inputFind.value) {
+         executeSearch();
+      }
+  };
+
+  editor.ui.registry.addButton('findreplace', {
+    text: 'Find and Replace',
+    icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>',
+    onAction: openFindReplace
+  });
+
+  // Setup Keyboard Shortcut Ctrl+F / Cmd+F
+  editor.editableArea.addEventListener('keydown', (e) => {
+    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    const isFind = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey;
+
+    if (isFind) {
+      e.preventDefault();
+      openFindReplace();
     }
   });
 }

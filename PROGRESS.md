@@ -112,3 +112,9 @@
 - **توضیحات:** بر اساس درخواست کاربر، کدهای Modal برای پشتیبانی از آرایه `buttons` ارتقا یافت تا بتوان دکمه‌های با عملکردهای سفارشی و چیدمان‌های انعطاف‌پذیر به آن تزریق کرد. کامپوننت `FindReplacePlugin` نیز برای استفاده از این سیستم ریفکتور شد و inline `<style>`ها و استایل‌های مشترک به `Modal.js` اضافه شد.
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: ریفکتور Modal.js برای افزودن `options.buttons` و استایل‌های فرم پایه. ریفکتور `FindReplacePlugin` به منظور سازگاری با سیستم جدید به جای استفاده از `hideFooter`.
+### فاز Fix Bugs افزونه Find and Replace
+- **وضعیت:** کامل (Completed)
+- **درصد پیشرفت:** 100%
+- **توضیحات:** برطرف کردن سه باگ مربوط به پلاگین. ۱. دکمه Replace All الان بدون محدودیت در طول یا جایگزین کردن تکراری کار می‌کند و روی TextNode ها Reverse Iterate میکند. ۲. باز کردن دیالوگ، بر اساس selection فعلی به طور هوشمند اینپوت Find را پر می‌کند. ۳. کلیدهای Command/Ctrl+F الان برای باز کردن منو فعال شده و دیالوگ های تکراری را باز نمی‌کنند.
+- **بخش ثبت تغییرات (Change Log):**
+  - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: Fix `Replace All` behavior, auto-fill input based on user's content selection, handle Ctrl+F shortcuts, and corresponding strict unit tests.
