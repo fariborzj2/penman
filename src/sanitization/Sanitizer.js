@@ -13,7 +13,11 @@ export class Sanitizer {
       'ol': [],
       'li': [],
       'br': [],
-      'span': ['style', 'id'] // Added id and style for marker retention
+      'span': ['style', 'id'], // Added id and style for marker retention and font-size
+      'hr': [],
+      'mark': [],
+      's': [],
+      'strike': []
     };
   }
 
