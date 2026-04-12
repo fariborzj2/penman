@@ -74,8 +74,12 @@ export class Editor extends EventEmitter {
     this.container.className = 'penman-wrapper';
     this.container.setAttribute('dir', this.options.direction);
     this.container.lang = this.options.lang;
-    this.container.style.height = `${this.options.height}px`;
-    this.container.style.minHeight = '200px';
+
+    // Create main container
+    this.mainContainer = document.createElement('div');
+    this.mainContainer.className = 'penman-main';
+    this.mainContainer.style.height = `${this.options.height}px`;
+    this.mainContainer.style.minHeight = '200px';
 
     // Create editable area
     this.editableArea = document.createElement('div');
@@ -98,11 +102,10 @@ export class Editor extends EventEmitter {
     this.footer.appendChild(this.footerStats);
 
     // Append elements
-    this.container.appendChild(this.footer);
-    this.container.appendChild(this.editableArea);
+    this.mainContainer.appendChild(this.editableArea);
+    this.mainContainer.appendChild(this.footer);
 
-    // Move footer below editable area
-    this.container.appendChild(this.footer);
+    this.container.appendChild(this.mainContainer);
 
     this.textarea.parentNode.insertBefore(this.container, this.textarea);
   }

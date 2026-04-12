@@ -11,6 +11,12 @@
   color: #222f3e;
   display: flex;
   flex-direction: column;
+}
+
+.penman-main {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
   resize: vertical;
   overflow: hidden;
 }

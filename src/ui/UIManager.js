@@ -70,8 +70,8 @@ export class UIManager {
       }
     });
 
-    // Inject toolbar above editable area
-    this.editor.container.insertBefore(this.toolbarElement, this.editor.editableArea);
+    // Inject toolbar above main container
+    this.editor.container.insertBefore(this.toolbarElement, this.editor.mainContainer);
 
     // Bind event to update active states
     this.editor.on('selectionChange', () => this._updateButtonStates());
