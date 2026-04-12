@@ -6,6 +6,7 @@ import { setupFontSizePlugin } from './FontSizePlugin.js';
 import { setupUnlinkPlugin } from './UnlinkPlugin.js';
 import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
 import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
+import { setupFindReplacePlugin } from './FindReplacePlugin.js';
 
 export const PluginManager = {
   plugins: {
@@ -16,7 +17,8 @@ export const PluginManager = {
     'fontsize': setupFontSizePlugin,
     'unlink': setupUnlinkPlugin,
     'removeformat': setupRemoveFormatPlugin,
-    'hr': setupHorizontalRulePlugin
+    'hr': setupHorizontalRulePlugin,
+    'findreplace': setupFindReplacePlugin
   },
 
   /**

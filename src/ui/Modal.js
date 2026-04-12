@@ -7,11 +7,13 @@ export class Modal {
    * @param {Function} [options.onCancel] - Callback when the modal is closed without submitting.
    * @param {string} [options.submitText='OK'] - Text for the submit button
    * @param {string} [options.cancelText='Cancel'] - Text for the cancel button
+   * @param {boolean} [options.hideFooter=false] - Whether to hide the default footer
    */
   constructor(options) {
     this.options = {
       submitText: 'OK',
       cancelText: 'Cancel',
+      hideFooter: false,
       ...options
     };
 
@@ -38,16 +40,18 @@ export class Modal {
     body.className = 'penman-modal-body';
     body.innerHTML = this.options.body || '';
 
-    const footer = document.createElement('div');
-    footer.className = 'penman-modal-footer';
-    footer.innerHTML = `
-      <button class="penman-btn penman-modal-btn-cancel" type="button">${this.options.cancelText}</button>
-      <button class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${this.options.submitText}</button>
-    `;
-
     this.modalElement.appendChild(header);
     this.modalElement.appendChild(body);
-    this.modalElement.appendChild(footer);
+
+    if (!this.options.hideFooter) {
+      const footer = document.createElement('div');
+      footer.className = 'penman-modal-footer';
+      footer.innerHTML = `
+        <button class="penman-btn penman-modal-btn-cancel" type="button">${this.options.cancelText}</button>
+        <button class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${this.options.submitText}</button>
+      `;
+      this.modalElement.appendChild(footer);
+    }
 
     this.overlay.appendChild(this.modalElement);
   }
@@ -65,8 +69,8 @@ export class Modal {
       this.close();
     };
 
-    closeBtn.addEventListener('click', closeHandler);
-    cancelBtn.addEventListener('click', closeHandler);
+    if (closeBtn) closeBtn.addEventListener('click', closeHandler);
+    if (cancelBtn) cancelBtn.addEventListener('click', closeHandler);
 
     // Close on overlay click
     this.overlay.addEventListener('click', (e) => {
@@ -78,23 +82,25 @@ export class Modal {
       }
     });
 
-    submitBtn.addEventListener('click', (e) => {
-      e.preventDefault();
+    if (submitBtn) {
+      submitBtn.addEventListener('click', (e) => {
+        e.preventDefault();
 
-      // Collect input data from modal body
-      const inputs = this.modalElement.querySelectorAll('input, select, textarea');
-      const data = {};
-      inputs.forEach(input => {
-        if (input.name) {
-          data[input.name] = input.value;
+        // Collect input data from modal body
+        const inputs = this.modalElement.querySelectorAll('input, select, textarea');
+        const data = {};
+        inputs.forEach(input => {
+          if (input.name) {
+            data[input.name] = input.value;
+          }
+        });
+
+        if (typeof this.options.onSubmit === 'function') {
+          this.options.onSubmit(data);
         }
+        this.close();
       });
-
-      if (typeof this.options.onSubmit === 'function') {
-        this.options.onSubmit(data);
-      }
-      this.close();
-    });
+    }
   }
 
   _injectStyles() {
