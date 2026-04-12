@@ -78,8 +78,9 @@ export class Modal {
              }
          });
 
-         footer.appendChild(leftGroup);
          footer.appendChild(rightGroup);
+         footer.appendChild(leftGroup);
+        
          // Modify footer to act as a split container if left group has items
          if (leftGroup.childNodes.length > 0) {
              footer.style.justifyContent = 'space-between';
@@ -205,6 +206,7 @@ export class Modal {
         padding: 10px 15px;
         border-top: 1px solid #eee;
         display: flex;
+        flex-wrap: wrap;
         justify-content: flex-end;
         gap: 10px;
       }
@@ -233,8 +235,7 @@ export class Modal {
       }
       .penman-modal-form-row label {
         width: 120px;
-        text-align: right;
-        margin-left: 10px;
+        margin-right: 10px;
         white-space: nowrap;
       }
       .penman-modal-form-row input[type="text"],
@@ -248,7 +249,6 @@ export class Modal {
         display: flex;
         gap: 15px;
         margin-bottom: 20px;
-        flex-direction: row-reverse;
       }
       .penman-modal-checkbox-group label {
         display: flex;
