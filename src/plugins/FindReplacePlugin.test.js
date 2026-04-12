@@ -48,6 +48,45 @@ describe('FindReplacePlugin', () => {
     expect(overlay.querySelector('#fr-replace')).not.toBeNull();
   });
 
+  it('should open a modal when Ctrl+F is pressed', () => {
+    const event = new KeyboardEvent('keydown', { key: 'f', ctrlKey: true });
+    editor.editableArea.dispatchEvent(event);
+
+    const overlay = document.querySelector('.penman-modal-overlay');
+    expect(overlay).not.toBeNull();
+  });
+
+  it('should auto-fill find input if text is selected', () => {
+    editor.setContent('<p>Select this text</p>');
+
+    // Mock getSelection
+    let originalGetSelection = window.getSelection;
+    window.getSelection = () => ({
+      rangeCount: 1,
+      isCollapsed: false,
+      toString: () => 'Select this text',
+      getRangeAt: () => ({
+          cloneRange: () => ({ insertNode: () => {}, collapse: () => {}, setStart: () => {}, setEnd: () => {} }),
+          commonAncestorContainer: editor.editableArea,
+          startContainer: editor.editableArea,
+          endContainer: editor.editableArea,
+          startOffset: 0,
+          endOffset: 0
+      }),
+      removeAllRanges: () => {},
+      addRange: () => {}
+    });
+
+    const action = editor.ui.registry.buttons['findreplace'].onAction;
+    action();
+
+    const overlay = document.querySelector('.penman-modal-overlay');
+    const inputFind = overlay.querySelector('#fr-find');
+    expect(inputFind.value).toBe('Select this text');
+
+    window.getSelection = originalGetSelection;
+  });
+
   it('should execute search and enable secondary buttons when results are found', () => {
     editor.setContent('<p>Hello world. Welcome to the world of testing.</p>');
     const action = editor.ui.registry.buttons['findreplace'].onAction;
@@ -99,5 +138,43 @@ describe('FindReplacePlugin', () => {
     expect(editor.getContent()).not.toContain('world');
 
     document.execCommand = originalExecCommand;
+  });
+
+  it('should replace all instances without skipping or crashing', () => {
+    editor.setContent('<p>a a a a a</p>');
+    const action = editor.ui.registry.buttons['findreplace'].onAction;
+    action();
+
+    const overlay = document.querySelector('.penman-modal-overlay');
+    const inputFind = overlay.querySelector('#fr-find');
+    const inputReplace = overlay.querySelector('#fr-replace');
+    const btnFind = overlay.querySelector('#fr-btn-find');
+    const btnReplaceAll = overlay.querySelector('#fr-btn-replace-all');
+
+    inputFind.value = 'a';
+    inputReplace.value = 'b';
+    btnFind.click();
+    btnReplaceAll.click();
+
+    expect(editor.getContent().replace(/<span[^>]*><\/span>/g, '')).toBe('<p>b b b b b</p>');
+  });
+
+  it('should handle replace all with a replacement that includes the search term (stress test)', () => {
+    editor.setContent('<p>cat dog cat</p>');
+    const action = editor.ui.registry.buttons['findreplace'].onAction;
+    action();
+
+    const overlay = document.querySelector('.penman-modal-overlay');
+    const inputFind = overlay.querySelector('#fr-find');
+    const inputReplace = overlay.querySelector('#fr-replace');
+    const btnFind = overlay.querySelector('#fr-btn-find');
+    const btnReplaceAll = overlay.querySelector('#fr-btn-replace-all');
+
+    inputFind.value = 'cat';
+    inputReplace.value = 'catman';
+    btnFind.click();
+    btnReplaceAll.click();
+
+    expect(editor.getContent().replace(/<span[^>]*><\/span>/g, '')).toBe('<p>catman dog catman</p>');
   });
 });
