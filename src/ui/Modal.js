@@ -8,12 +8,14 @@ export class Modal {
    * @param {string} [options.submitText='OK'] - Text for the submit button
    * @param {string} [options.cancelText='Cancel'] - Text for the cancel button
    * @param {boolean} [options.hideFooter=false] - Whether to hide the default footer
+   * @param {Array} [options.buttons] - Custom buttons config [{text, id, classNames, onClick, align}]
    */
   constructor(options) {
     this.options = {
       submitText: 'OK',
       cancelText: 'Cancel',
       hideFooter: false,
+      buttons: null,
       ...options
     };
 
@@ -46,10 +48,51 @@ export class Modal {
     if (!this.options.hideFooter) {
       const footer = document.createElement('div');
       footer.className = 'penman-modal-footer';
-      footer.innerHTML = `
-        <button class="penman-btn penman-modal-btn-cancel" type="button">${this.options.cancelText}</button>
-        <button class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${this.options.submitText}</button>
-      `;
+
+      if (this.options.buttons && Array.isArray(this.options.buttons)) {
+         // Custom buttons setup
+         const leftGroup = document.createElement('div');
+         leftGroup.className = 'penman-modal-footer-left';
+         const rightGroup = document.createElement('div');
+         rightGroup.className = 'penman-modal-footer-right';
+
+         this.options.buttons.forEach(btnConfig => {
+             const btn = document.createElement('button');
+             btn.type = 'button';
+             btn.className = `penman-btn ${btnConfig.classNames || ''}`;
+             if (btnConfig.id) btn.id = btnConfig.id;
+             btn.innerText = btnConfig.text;
+             if (btnConfig.disabled) btn.disabled = true;
+
+             if (btnConfig.onClick) {
+                 btn.addEventListener('click', (e) => {
+                     e.preventDefault();
+                     btnConfig.onClick(e, this);
+                 });
+             }
+
+             if (btnConfig.align === 'left') {
+                 leftGroup.appendChild(btn);
+             } else {
+                 rightGroup.appendChild(btn);
+             }
+         });
+
+         footer.appendChild(leftGroup);
+         footer.appendChild(rightGroup);
+         // Modify footer to act as a split container if left group has items
+         if (leftGroup.childNodes.length > 0) {
+             footer.style.justifyContent = 'space-between';
+         }
+
+      } else {
+          // Default buttons setup
+          footer.innerHTML = `
+            <button class="penman-btn penman-modal-btn-cancel" type="button">${this.options.cancelText}</button>
+            <button class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${this.options.submitText}</button>
+          `;
+      }
+
       this.modalElement.appendChild(footer);
     }
 
@@ -176,6 +219,44 @@ export class Modal {
         background: #007bff;
         color: white;
         border-color: #007bff;
+      }
+      .penman-modal-footer-left, .penman-modal-footer-right {
+        display: flex;
+        gap: 8px;
+      }
+
+      /* Generalized structural layout classes for forms inside Modals */
+      .penman-modal-form-row {
+        display: flex;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .penman-modal-form-row label {
+        width: 120px;
+        text-align: right;
+        margin-left: 10px;
+        white-space: nowrap;
+      }
+      .penman-modal-form-row input[type="text"],
+      .penman-modal-form-row input[type="url"],
+      .penman-modal-form-row select {
+        flex: 1;
+        padding: 6px;
+        box-sizing: border-box;
+      }
+      .penman-modal-checkbox-group {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 20px;
+        flex-direction: row-reverse;
+      }
+      .penman-modal-checkbox-group label {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        cursor: pointer;
+        white-space: nowrap;
+        font-size: 14px;
       }
     `;
     document.head.appendChild(style);

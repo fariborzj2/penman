@@ -114,47 +114,58 @@ export function setupFindReplacePlugin(editor) {
       };
 
       const modalHtml = `
-        <style>
-          .find-replace-row { display: flex; align-items: center; margin-bottom: 10px; }
-          .find-replace-row label { width: 120px; text-align: right; margin-left: 10px; white-space: nowrap; }
-          .find-replace-row input[type="text"] { flex: 1; padding: 6px; box-sizing: border-box; }
-
-          .find-replace-options { display: flex; gap: 15px; margin-bottom: 20px; flex-direction: row-reverse; }
-          .find-replace-options label { display: flex; align-items: center; gap: 5px; cursor: pointer; white-space: nowrap; font-size: 14px; }
-
-          .find-replace-footer { display: flex; justify-content: space-between; border-top: 1px solid #eee; padding-top: 15px; margin-top: 10px; margin-left: -5px; margin-right: -5px;}
-          .find-replace-footer-left, .find-replace-footer-right { display: flex; gap: 5px; }
-          .find-replace-footer button { padding: 6px 10px; font-size: 13px; white-space: nowrap; }
-        </style>
-        <div class="find-replace-row">
+        <div class="penman-modal-form-row">
           <input type="text" id="fr-find" placeholder="Find text...">
           <label for="fr-find">Find</label>
         </div>
-        <div class="find-replace-row">
+        <div class="penman-modal-form-row">
           <input type="text" id="fr-replace" placeholder="Replace with...">
           <label for="fr-replace">Replace with</label>
         </div>
-        <div class="find-replace-options">
+        <div class="penman-modal-checkbox-group">
           <label><input type="checkbox" id="fr-match-case"> Match case</label>
           <label><input type="checkbox" id="fr-whole-word"> Whole words</label>
         </div>
-        <div class="find-replace-footer">
-          <div class="find-replace-footer-left">
-            <button class="penman-btn" id="fr-btn-next" disabled>Next</button>
-            <button class="penman-btn" id="fr-btn-prev" disabled>Previous</button>
-          </div>
-          <div class="find-replace-footer-right">
-            <button class="penman-btn" id="fr-btn-replace-all" disabled>Replace all</button>
-            <button class="penman-btn" id="fr-btn-replace" disabled>Replace</button>
-            <button class="penman-btn penman-btn-primary" id="fr-btn-find">Find</button>
-          </div>
-        </div>
       `;
+
+      let updateButtonsState;
+      let executeSearch;
 
       const modal = editor.ui.createModal({
         title: 'Find and Replace',
         body: modalHtml,
-        hideFooter: true,
+        buttons: [
+          { text: 'Next', id: 'fr-btn-next', align: 'left', disabled: true, onClick: () => {
+             if (results.length === 0) return;
+             currentIndex = (currentIndex + 1) % results.length;
+             highlightResult(currentIndex);
+          }},
+          { text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true, onClick: () => {
+             if (results.length === 0) return;
+             currentIndex = (currentIndex - 1 + results.length) % results.length;
+             highlightResult(currentIndex);
+          }},
+          { text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right', onClick: () => {
+             editor.selection.restore();
+             executeSearch();
+          }},
+          { text: 'Replace', id: 'fr-btn-replace', align: 'right', disabled: true, onClick: () => {
+             if (results.length === 0) return;
+             const replacement = inputReplace.value;
+             if (doReplace(replacement)) {
+                 executeSearch();
+             }
+          }},
+          { text: 'Replace all', id: 'fr-btn-replace-all', align: 'right', disabled: true, onClick: () => {
+             if (results.length === 0) return;
+             const replacement = inputReplace.value;
+             editor.history.takeSnapshot();
+             for (let i = results.length - 1; i >= 0; i--) {
+                 doReplaceAt(i, replacement);
+             }
+             executeSearch();
+          }}
+        ],
         onCancel: () => {
           editor.selection.restore();
         }
@@ -173,7 +184,7 @@ export function setupFindReplacePlugin(editor) {
       const btnNext = elModal.querySelector('#fr-btn-next');
       const btnPrev = elModal.querySelector('#fr-btn-prev');
 
-      const updateButtonsState = () => {
+      updateButtonsState = () => {
          const hasResults = results.length > 0;
          btnReplace.disabled = !hasResults;
          btnReplaceAll.disabled = !hasResults;
@@ -181,7 +192,7 @@ export function setupFindReplacePlugin(editor) {
          btnPrev.disabled = !hasResults;
       };
 
-      const executeSearch = () => {
+      executeSearch = () => {
          performSearch(inputFind.value, cbMatchCase.checked, cbWholeWord.checked);
          if (results.length > 0) {
             currentIndex = 0;
@@ -193,50 +204,6 @@ export function setupFindReplacePlugin(editor) {
          }
          updateButtonsState();
       };
-
-      btnFind.addEventListener('click', () => {
-         editor.selection.restore();
-         executeSearch();
-      });
-
-      btnNext.addEventListener('click', () => {
-         if (results.length === 0) return;
-         currentIndex = (currentIndex + 1) % results.length;
-         highlightResult(currentIndex);
-      });
-
-      btnPrev.addEventListener('click', () => {
-         if (results.length === 0) return;
-         currentIndex = (currentIndex - 1 + results.length) % results.length;
-         highlightResult(currentIndex);
-      });
-
-      btnReplace.addEventListener('click', () => {
-         if (results.length === 0) return;
-
-         const replacement = inputReplace.value;
-         if (doReplace(replacement)) {
-             // After replacing, the DOM has changed. Re-run search
-             executeSearch();
-         }
-      });
-
-      btnReplaceAll.addEventListener('click', () => {
-         if (results.length === 0) return;
-         const replacement = inputReplace.value;
-
-         editor.history.takeSnapshot(); // Group replace all
-
-         // Iterate backwards to ensure DOM modifications at the end of the text
-         // do not invalidate the ranges and offsets of the matches before them.
-         for (let i = results.length - 1; i >= 0; i--) {
-             doReplaceAt(i, replacement);
-         }
-
-         executeSearch(); // re-eval search after all replacements
-      });
-
-      // Close modal gracefully, we handle it natively or through Modal's internal events
     }
   });
 }
