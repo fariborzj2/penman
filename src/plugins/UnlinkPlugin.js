@@ -50,7 +50,7 @@ export function setupUnlinkPlugin(editor) {
 
   editor.ui.registry.addButton('unlink', {
     text: 'Unlink',
-    icon: 'unlink',
+
     onAction: () => {
       editor.execCommand('REMOVE_LINK');
     }
