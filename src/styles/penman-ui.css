@@ -191,3 +191,13 @@
   font-family: monospace;
   color: #0052cc;
 }
+
+.penman-table-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 0 10px 10px;
+}
+.penman-grid-cell {
+  aspect-ratio: 1/1;
+}

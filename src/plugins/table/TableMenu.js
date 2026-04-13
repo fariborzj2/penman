@@ -8,10 +8,10 @@ export class TableMenu {
   }
 
   getHTML() {
-    let gridHTML = '<div class="penman-table-grid" style="display: grid; grid-template-columns: repeat(10, 15px); gap: 2px; padding: 10px;">';
+    let gridHTML = '<div class="penman-table-grid">';
     for (let r = 0; r < 10; r++) {
       for (let c = 0; c < 10; c++) {
-        gridHTML += `<div class="penman-grid-cell" data-row="${r + 1}" data-col="${c + 1}" style="width: 15px; height: 15px; border: 1px solid #ccc; cursor: pointer; background: #fff;"></div>`;
+        gridHTML += `<div class="penman-grid-cell" data-row="${r + 1}" data-col="${c + 1}" style="border: 1px solid #ccc; cursor: pointer; background: #fff;"></div>`;
       }
     }
     gridHTML += '</div>';
