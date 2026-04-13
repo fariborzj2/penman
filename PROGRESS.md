@@ -134,3 +134,5 @@
 - **توضیحات:** افزونه `table` همراه با `TableGrid`، `TableSelectionManager` و `TableTransaction` در هسته ادیتور پیاده‌سازی و یکپارچه شد. دکمه افزونه در نوار ابزار ظاهر شده و تست‌ها اجرا و با موفقیت پاس شدند. Playwright برای تایید ظاهر روی مرورگر استفاده گردید.
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: پیاده سازی TableTransaction جهت rollback کردن خطاهای یکپارچگی، ذخیره Merge Descriptor و جایگزینی execCommand با Range API. تمام ۸۱ تست JSDOM Pass شد.
+
+- **[$(date +'%Y-%m-%d %H:%M')]** Fixed native Selection loss during Table cell formatting by updating HistoryManager snapshot cleanup to use restore(). Implemented fully transactional Table Properties UI (Width, Border, Alignment) with a robust undo/redo state preservation and accompanying E2E test coverage.

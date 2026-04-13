@@ -96,7 +96,56 @@ export class TableMenu {
       });
     });
 
+
+    const tablePropItem = Array.from(dropdownElement.querySelectorAll('.penman-menu-item')).find(el => el.textContent.includes('Table properties'));
+    if (tablePropItem) {
+        tablePropItem.addEventListener('click', () => {
+            const tableNode = selectionManager.activeTableNode;
+            if (!tableNode) return;
+
+            const currentWidth = tableNode.style.width || '';
+            const currentBorder = tableNode.getAttribute('border') || '';
+            const currentAlign = tableNode.style.marginLeft === 'auto' ? (tableNode.style.marginRight === 'auto' ? 'center' : 'right') : 'left';
+
+            this.editor.ui.createModal({
+                title: 'Table Properties',
+                body: `
+                    <div class="penman-modal-form-row">
+                        <label>Width:</label>
+                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Border:</label>
+                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Alignment:</label>
+                        <select name="textAlign">
+                            <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
+                            <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
+                            <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
+                        </select>
+                    </div>
+                `,
+                onSubmit: (data) => {
+
+                    const propsToSet = {};
+                    if (data.width !== undefined) propsToSet.width = data.width;
+                    if (data.border !== undefined) propsToSet.border = data.border;
+                    if (data.textAlign !== undefined) propsToSet.textAlign = data.textAlign;
+
+                    this.editor.commands.execute('SET_TABLE_PROPERTIES', { properties: propsToSet });
+
+                }
+            });
+
+            const instance = dropdownElement.closest('.penman-dropdown').__dropdownInstance;
+            if(instance) instance.close();
+        });
+    }
+
     const deleteBtn = dropdownElement.querySelector('[data-cmd="table_delete"]');
+
     deleteBtn.addEventListener('click', () => {
        const tableNode = selectionManager.activeTableNode;
        if (tableNode) {
