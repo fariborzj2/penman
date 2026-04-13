@@ -247,6 +247,48 @@ export class TableTransaction {
     return true;
   }
 
+  setTableProperty(property, value) {
+    if (!this.table) return false;
+
+    if (property === 'border') {
+       if (value) this.table.setAttribute('border', value);
+       else this.table.removeAttribute('border');
+    } else if (property === 'borderColor') {
+       if (value) this.table.setAttribute('bordercolor', value);
+       else this.table.removeAttribute('bordercolor');
+    } else if (property === 'cellPadding') {
+       if (value) this.table.setAttribute('cellpadding', value);
+       else this.table.removeAttribute('cellpadding');
+    } else if (property === 'cellSpacing') {
+       if (value) this.table.setAttribute('cellspacing', value);
+       else this.table.removeAttribute('cellspacing');
+    } else if (property === 'dir') {
+       if (value) this.table.setAttribute('dir', value);
+       else this.table.removeAttribute('dir');
+    } else if (property === 'width') {
+       this.table.style.width = value;
+    } else if (property === 'padding') {
+       this.table.style.padding = value;
+    } else if (property === 'margin') {
+       this.table.style.margin = value;
+    } else if (property === 'backgroundColor') {
+       this.table.style.backgroundColor = value;
+    } else if (property === 'textAlign') {
+       if (value === 'center') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = 'auto';
+       } else if (value === 'right') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = '0';
+       } else {
+           this.table.style.marginLeft = '0';
+           this.table.style.marginRight = 'auto';
+       }
+    }
+
+    return true;
+  }
+
   deleteTable() {
      if (this.table && this.table.parentNode) {
          const p = document.createElement('p');
