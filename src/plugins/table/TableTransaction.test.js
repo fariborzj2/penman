@@ -44,14 +44,15 @@ describe('TableTransaction', () => {
 
     const activeTable = editorMock.editableArea.querySelector('table');
     const tdsRow1 = activeTable.querySelectorAll('tr')[0].querySelectorAll('td');
-    expect(tdsRow1.length).toBe(2);
+    // One td was removed, so there should be 1 td left with colspan=2
+    expect(tdsRow1.length).toBe(1);
 
     const anchor = activeTable.querySelector('[data-cell-id="1"]');
     expect(anchor.getAttribute('colspan')).toBe('2');
 
+    // The absorbed cell should no longer be in the DOM
     const absorbed = activeTable.querySelector('[data-cell-id="2"]');
-    expect(absorbed.getAttribute('data-merged')).toBe('true');
-    expect(absorbed.style.visibility).toBe('hidden');
+    expect(absorbed).toBeNull();
   });
 
   it('should reject invalid merge rectangles', () => {
@@ -74,7 +75,7 @@ describe('TableTransaction', () => {
      expect(anchor.getAttribute('colspan')).toBeNull();
 
      const absorbed = activeTable2.querySelector('[data-cell-id="4"]');
-     expect(absorbed.getAttribute('data-merged')).toBeNull();
+     expect(absorbed).not.toBeNull();
   });
 
   it('should add row correctly', () => {
