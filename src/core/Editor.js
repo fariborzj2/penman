@@ -192,6 +192,70 @@ export class Editor extends EventEmitter {
         this.history.redo();
       }
 
+      // 1.a Table Breakout Logic
+      if ((e.key === 'Enter' || e.key === 'ArrowUp') && !e.shiftKey) {
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
+
+        const range = sel.getRangeAt(0);
+        let node = sel.anchorNode;
+
+        // Find if we are inside a table cell
+        let td = null;
+        let curr = node;
+        while (curr && curr !== this.editableArea) {
+            if (curr.tagName && (curr.tagName.toLowerCase() === 'td' || curr.tagName.toLowerCase() === 'th')) {
+                td = curr;
+                break;
+            }
+            curr = curr.parentNode;
+        }
+
+        if (td) {
+            const table = td.closest('table');
+            if (table) {
+                // Check if table is the very first element in the editor
+                if (this.editableArea.firstElementChild === table) {
+                    // Check if we are in the first row of the table
+                    const tbody = table.querySelector('tbody') || table;
+                    const firstRow = tbody.querySelector('tr');
+
+                    if (firstRow && firstRow.contains(td)) {
+                        // Check if cursor is at the very beginning of the cell content
+                        // Meaning there is no text before the cursor in this cell
+                        const preRange = document.createRange();
+                        preRange.selectNodeContents(td);
+                        preRange.setEnd(range.startContainer, range.startOffset);
+                        const textBeforeCursor = preRange.cloneContents().textContent;
+
+                        if (textBeforeCursor.length === 0) {
+                            e.preventDefault();
+
+                            // Create a new paragraph and insert it BEFORE the table
+                            const p = document.createElement('p');
+                            p.innerHTML = '<br>';
+                            this.editableArea.insertBefore(p, table);
+
+                            // Move cursor to the new paragraph
+                            sel.removeAllRanges();
+                            const newRange = document.createRange();
+                            newRange.setStart(p, 0);
+                            newRange.collapse(true);
+                            sel.addRange(newRange);
+
+                            if (this.history) {
+                              this.history.pushImmediate();
+                            }
+                            this.emit('change', this.getContent());
+                            this._syncToTextarea();
+                            return; // Stop further Enter key processing
+                        }
+                    }
+                }
+            }
+        }
+      }
+
       // Enter key fix for blocks
       if (e.key === 'Enter' && !e.shiftKey) {
         const sel = window.getSelection();
