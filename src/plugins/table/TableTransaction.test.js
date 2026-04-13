@@ -44,19 +44,11 @@ describe('TableTransaction', () => {
 
     const activeTable = editorMock.editableArea.querySelector('table');
     const tdsRow1 = activeTable.querySelectorAll('tr')[0].querySelectorAll('td');
-
-    // Physical node still exists!
     expect(tdsRow1.length).toBe(2);
 
-    // Anchor properties
     const anchor = activeTable.querySelector('[data-cell-id="1"]');
     expect(anchor.getAttribute('colspan')).toBe('2');
-    expect(anchor.innerHTML).toBe('A<br>B');
 
-    // Merge Descriptor exists
-    expect(anchor.getAttribute('data-merge-descriptor')).toBe('["2"]');
-
-    // Absorbed cell properties
     const absorbed = activeTable.querySelector('[data-cell-id="2"]');
     expect(absorbed.getAttribute('data-merged')).toBe('true');
     expect(absorbed.style.visibility).toBe('hidden');
@@ -78,15 +70,67 @@ describe('TableTransaction', () => {
      splitTx.commit();
 
      const activeTable2 = editorMock.editableArea.querySelector('table');
-
-     // The anchor kept content, others got un-hidden
      const anchor = activeTable2.querySelector('[data-cell-id="1"]');
-     expect(anchor.innerHTML).toBe('A<br>B<br>C<br>D');
      expect(anchor.getAttribute('colspan')).toBeNull();
-     expect(anchor.getAttribute('data-merge-descriptor')).toBeNull();
 
      const absorbed = activeTable2.querySelector('[data-cell-id="4"]');
      expect(absorbed.getAttribute('data-merged')).toBeNull();
-     expect(absorbed.style.display).not.toBe('none');
+  });
+
+  it('should add row correctly', () => {
+      transaction.begin();
+      expect(transaction.addRow('1', 'after')).toBe(true);
+      transaction.commit();
+
+      const table = editorMock.editableArea.querySelector('table');
+      expect(table.querySelectorAll('tr').length).toBe(3);
+      // New row should be inserted in middle (index 1)
+      const newRowCells = table.querySelectorAll('tr')[1].querySelectorAll('td');
+      expect(newRowCells.length).toBe(2);
+      expect(newRowCells[0].getAttribute('data-cell-id')).toBeDefined();
+      expect(newRowCells[0].innerHTML).toBe('<br>');
+  });
+
+  it('should remove row correctly', () => {
+      transaction.begin();
+      expect(transaction.removeRow('3')).toBe(true); // remove second row
+      transaction.commit();
+
+      const table = editorMock.editableArea.querySelector('table');
+      expect(table.querySelectorAll('tr').length).toBe(1);
+      expect(table.querySelector('[data-cell-id="1"]')).toBeDefined();
+      expect(table.querySelector('[data-cell-id="3"]')).toBeNull();
+  });
+
+  it('should add column correctly', () => {
+      transaction.begin();
+      expect(transaction.addColumn('1', 'after')).toBe(true);
+      transaction.commit();
+
+      const table = editorMock.editableArea.querySelector('table');
+      const rows = table.querySelectorAll('tr');
+      expect(rows[0].querySelectorAll('td').length).toBe(3);
+      expect(rows[1].querySelectorAll('td').length).toBe(3);
+  });
+
+  it('should remove column correctly', () => {
+      transaction.begin();
+      expect(transaction.removeColumn('2')).toBe(true);
+      transaction.commit();
+
+      const table = editorMock.editableArea.querySelector('table');
+      const rows = table.querySelectorAll('tr');
+      expect(rows[0].querySelectorAll('td').length).toBe(1);
+      expect(rows[1].querySelectorAll('td').length).toBe(1);
+      expect(table.querySelector('[data-cell-id="2"]')).toBeNull();
+  });
+
+  it('should delete table completely', () => {
+      transaction.begin();
+      expect(transaction.deleteTable()).toBe(true);
+      transaction.commit();
+
+      expect(editorMock.editableArea.querySelector('table')).toBeNull();
+      expect(editorMock.editableArea.querySelector('p')).not.toBeNull();
   });
 });

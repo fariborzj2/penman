@@ -44,6 +44,8 @@ export class Dropdown {
     this.element.appendChild(this.buttonElement);
     this.element.appendChild(this.panelElement);
 
+    this.element.__dropdownInstance = this; // Expose instance
+
     this.buttonElement.addEventListener('click', this.toggle);
   }
 
