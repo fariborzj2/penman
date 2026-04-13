@@ -16,7 +16,7 @@ export class ColorPicker {
 
     // A small standard palette
     this.palette = [
-      '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
+      'transparent', '#000000', '#434343', '#666666', '#999999', '#b7b7b7', '#cccccc', '#d9d9d9', '#efefef', '#f3f3f3', '#ffffff',
       '#980000', '#ff0000', '#ff9900', '#ffff00', '#00ff00', '#00ffff', '#4a86e8', '#0000ff', '#9900ff', '#ff00ff',
       '#e6b8af', '#f4cccc', '#fce5cd', '#fff2cc', '#d9ead3', '#d0e0e3', '#c9daf8', '#cfe2f3', '#d9d2e9', '#ead1dc',
       '#dd7e6b', '#ea9999', '#f9cb9c', '#ffe599', '#b6d7a8', '#a2c4c9', '#a4c2f4', '#9fc5e8', '#b4a7d6', '#d5a6bd',
@@ -68,7 +68,13 @@ export class ColorPicker {
 
     // Bind hex input
     hexInput.addEventListener('input', (e) => {
-        let val = e.target.value.trim();
+        let val = e.target.value.trim().toLowerCase();
+
+        if (val === 'transparent') {
+            this.setColor(val, true);
+            return;
+        }
+
         if (!val.startsWith('#')) val = '#' + val;
 
         // Simple hex validation
@@ -125,6 +131,23 @@ export class ColorPicker {
         border-radius: 2px;
         cursor: pointer;
         padding: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .penman-color-picker-swatch[data-color="transparent"] {
+        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
+        background-size: 6px 6px;
+        background-position: 0 0, 0 3px, 3px -3px, -3px 0px;
+      }
+      .penman-color-picker-swatch[data-color="transparent"]::after {
+         content: '';
+         position: absolute;
+         top: 50%;
+         left: -2px;
+         right: -2px;
+         height: 2px;
+         background: red;
+         transform: translateY(-50%) rotate(45deg);
       }
       .penman-color-picker-swatch:hover {
         border: 1px solid #000;
