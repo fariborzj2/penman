@@ -1,0 +1,59 @@
+/**
+ * @vitest-environment jsdom
+ */
+
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { FloatingUI } from './FloatingUI.js';
+
+describe('FloatingUI', () => {
+  let floatingUI;
+  let mockEditor;
+  let container;
+
+  beforeEach(() => {
+    mockEditor = {};
+    container = document.createElement('div');
+    document.body.appendChild(container);
+    floatingUI = new FloatingUI(mockEditor);
+  });
+
+  afterEach(() => {
+    floatingUI.destroy();
+    document.body.removeChild(container);
+  });
+
+  it('should mount with content', () => {
+    floatingUI.mount('<button>Test</button>');
+    expect(floatingUI.element).not.toBeNull();
+    expect(floatingUI.element.innerHTML).toBe('<button>Test</button>');
+    expect(floatingUI.element.style.display).toBe('none'); // Initially hidden before update
+    expect(floatingUI.isVisible).toBe(true);
+  });
+
+  it('should hide and show', () => {
+    floatingUI.mount('<p>A</p>');
+    const anchor = document.createElement('div');
+    anchor.getBoundingClientRect = () => ({ top: 10, bottom: 20, left: 10, right: 20, width: 10, height: 10 });
+    floatingUI.setAnchor(anchor);
+
+    expect(floatingUI.element.style.display).toBe('block');
+
+    floatingUI.hide();
+    expect(floatingUI.element.style.display).toBe('none');
+    expect(floatingUI.isVisible).toBe(false);
+
+    floatingUI.show();
+    expect(floatingUI.element.style.display).toBe('block');
+    expect(floatingUI.isVisible).toBe(true);
+  });
+
+  it('should destroy and remove from DOM', () => {
+    floatingUI.mount('<p>A</p>');
+    const el = floatingUI.element;
+    expect(document.body.contains(el)).toBe(true);
+
+    floatingUI.destroy();
+    expect(document.body.contains(el)).toBe(false);
+    expect(floatingUI.element).toBeNull();
+  });
+});
