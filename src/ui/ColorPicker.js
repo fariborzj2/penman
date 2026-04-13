@@ -59,7 +59,7 @@ export class ColorPicker {
 
       btn.addEventListener('click', (e) => {
           e.preventDefault();
-          this.setColor(color, true);
+          this.setColor(color, true, true);
       });
     });
 
@@ -71,7 +71,7 @@ export class ColorPicker {
         let val = e.target.value.trim().toLowerCase();
 
         if (val === 'transparent') {
-            this.setColor(val, true);
+            this.setColor(val, true, false);
             return;
         }
 
@@ -79,7 +79,14 @@ export class ColorPicker {
 
         // Simple hex validation
         if (/^#[0-9A-F]{6}$/i.test(val) || /^#[0-9A-F]{3}$/i.test(val)) {
-            this.setColor(val, true);
+            this.setColor(val, true, false);
+        }
+    });
+
+    hexInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.setColor(this.currentColor, true, true);
         }
     });
 
@@ -161,7 +168,7 @@ export class ColorPicker {
     return this.currentColor;
   }
 
-  setColor(hex, triggerChange = false) {
+  setColor(hex, triggerChange = false, final = true) {
     this.currentColor = hex;
 
     const hexInput = this.element.querySelector('.penman-color-picker-hex');
@@ -170,7 +177,7 @@ export class ColorPicker {
     }
 
     if (triggerChange && typeof this.onChange === 'function') {
-        this.onChange(this.currentColor);
+        this.onChange(this.currentColor, final);
     }
   }
 
