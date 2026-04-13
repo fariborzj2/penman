@@ -85,6 +85,10 @@ export class TableMenu {
       cell.addEventListener('click', (e) => {
         const r = parseInt(e.target.getAttribute('data-row'), 10);
         const c = parseInt(e.target.getAttribute('data-col'), 10);
+
+        // Ensure the selection is restored before inserting the table HTML
+        this.editor.selection.restore();
+
         this.editor.execCommand('INSERT_TABLE', { rows: r, cols: c });
         // Close dropdown natively
         const instance = dropdownElement.closest('.penman-dropdown').__dropdownInstance;
