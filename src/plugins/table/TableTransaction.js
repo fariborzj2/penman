@@ -129,6 +129,7 @@ export class TableTransaction {
     const anchorNode = anchorGridCell.domNode;
     let newContentFragment = document.createDocumentFragment();
     const absorbedIds = [];
+    const absorbedData = [];
 
     cellIds.forEach(id => {
        if (id !== anchorGridCell.id) {
@@ -143,39 +144,35 @@ export class TableTransaction {
                    }
                }
 
-               gridCell.domNode.setAttribute('data-merged', 'true');
-               gridCell.domNode.setAttribute('aria-hidden', 'true');
-
-               gridCell.domNode.style.width = '0px';
-               gridCell.domNode.style.height = '0px';
-               gridCell.domNode.style.padding = '0px';
-               gridCell.domNode.style.border = 'none';
-               gridCell.domNode.style.fontSize = '0px';
-               gridCell.domNode.style.lineHeight = '0px';
-               gridCell.domNode.style.color = 'transparent';
-               gridCell.domNode.style.overflow = 'hidden';
-               gridCell.domNode.style.visibility = 'hidden';
-
-               gridCell.domNode.removeAttribute('rowspan');
-               gridCell.domNode.removeAttribute('colspan');
+               // Store original grid position before removing so we can restore it exactly
+               absorbedData.push({
+                   id: id,
+                   r: gridCell.rowIndex,
+                   c: gridCell.colIndex,
+                   rs: gridCell.rowSpan,
+                   cs: gridCell.colSpan
+               });
 
                absorbedIds.push(id);
+
+               // PHYSICALLY REMOVE NODE FROM DOM
+               gridCell.domNode.remove();
            }
        }
     });
 
     anchorNode.appendChild(newContentFragment);
 
-    if (absorbedIds.length > 0) {
+    if (absorbedData.length > 0) {
        const existingDescriptor = anchorNode.getAttribute('data-merge-descriptor');
-       let finalIds = absorbedIds;
+       let finalData = absorbedData;
        if (existingDescriptor) {
            try {
                const parsed = JSON.parse(existingDescriptor);
-               finalIds = finalIds.concat(parsed);
+               finalData = finalData.concat(parsed);
            } catch(e){}
        }
-       anchorNode.setAttribute('data-merge-descriptor', JSON.stringify(finalIds));
+       anchorNode.setAttribute('data-merge-descriptor', JSON.stringify(finalData));
     }
 
     const newRowSpan = (box.maxRow - box.minRow + 1);
@@ -198,81 +195,54 @@ export class TableTransaction {
     const descriptorStr = anchorNode.getAttribute('data-merge-descriptor');
     if (!descriptorStr) return false;
 
-    let absorbedIds = [];
+    let absorbedData = [];
     try {
-        absorbedIds = JSON.parse(descriptorStr);
+        absorbedData = JSON.parse(descriptorStr);
     } catch (e) {
         return false;
     }
 
-    absorbedIds.forEach(id => {
-        const targetGridCell = this.grid.getCellById(id);
-        if (targetGridCell && targetGridCell.domNode) {
-            const td = targetGridCell.domNode;
-            td.removeAttribute('data-merged');
-            td.removeAttribute('aria-hidden');
+    const rows = Array.from(this.table.querySelectorAll('tr'));
 
-            td.style.width = '';
-            td.style.height = '';
-            td.style.padding = '';
-            td.style.border = '';
-            td.style.fontSize = '';
-            td.style.lineHeight = '';
-            td.style.color = '';
-            td.style.overflow = '';
-            td.style.visibility = '';
+    // Sort to handle row order nicely
+    absorbedData.sort((a, b) => {
+        if (a.r !== b.r) return a.r - b.r;
+        return a.c - b.c;
+    });
 
-            if (!td.innerHTML.trim()) td.innerHTML = '<br>';
+    absorbedData.forEach(data => {
+        const tr = rows[data.r];
+        if (tr) {
+            const td = document.createElement('td');
+            td.setAttribute('data-cell-id', data.id);
+            if (data.rs > 1) td.setAttribute('rowspan', data.rs);
+            if (data.cs > 1) td.setAttribute('colspan', data.cs);
+            td.style.border = anchorNode.style.border || '1px solid #ccc';
+            td.style.padding = anchorNode.style.padding || '5px';
+            td.innerHTML = '<br>';
+
+            // Re-insert logic based on the original grid colIndex relative to existing cells in that row
+            let inserted = false;
+            const currentCells = Array.from(tr.querySelectorAll('td, th'));
+            for (let i = 0; i < currentCells.length; i++) {
+                const cell = currentCells[i];
+                const cId = cell.getAttribute('data-cell-id');
+                const gCell = this.grid.getCellById(cId);
+                if (gCell && gCell.colIndex > data.c) {
+                    tr.insertBefore(td, cell);
+                    inserted = true;
+                    break;
+                }
+            }
+            if (!inserted) {
+                tr.appendChild(td);
+            }
         }
     });
 
     anchorNode.removeAttribute('rowspan');
     anchorNode.removeAttribute('colspan');
     anchorNode.removeAttribute('data-merge-descriptor');
-
-    return true;
-  }
-
-
-
-  setTableProperty(property, value) {
-    if (!this.table) return false;
-
-    if (property === 'border') {
-       if (value) this.table.setAttribute('border', value);
-       else this.table.removeAttribute('border');
-    } else if (property === 'borderColor') {
-       if (value) this.table.setAttribute('bordercolor', value);
-       else this.table.removeAttribute('bordercolor');
-    } else if (property === 'cellPadding') {
-       if (value) this.table.setAttribute('cellpadding', value);
-       else this.table.removeAttribute('cellpadding');
-    } else if (property === 'cellSpacing') {
-       if (value) this.table.setAttribute('cellspacing', value);
-       else this.table.removeAttribute('cellspacing');
-    } else if (property === 'dir') {
-       if (value) this.table.setAttribute('dir', value);
-       else this.table.removeAttribute('dir');
-    } else if (property === 'width') {
-       this.table.style.width = value;
-    } else if (property === 'padding') {
-       this.table.style.padding = value;
-    } else if (property === 'margin') {
-       this.table.style.margin = value;
-    } else if (property === 'backgroundColor') {
-       this.table.style.backgroundColor = value;
-    } else if (property === 'textAlign') {
-       if (value === 'center') {
-           this.table.style.marginLeft = 'auto';
-           this.table.style.marginRight = 'auto';
-       } else if (value === 'right') {
-           this.table.style.marginLeft = 'auto';
-           this.table.style.marginRight = '0';
-       } else {
-           this.table.style.marginLeft = '0';
-           this.table.style.marginRight = 'auto';
-       }
-    }
 
     return true;
   }
