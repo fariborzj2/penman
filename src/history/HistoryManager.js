@@ -35,7 +35,7 @@ export class HistoryManager {
 
     // We clean up the markers immediately from the live DOM after capturing
     // so the user doesn't see them or get weird artifacts if they type
-    this.editor.selection._removeMarkers();
+    this.editor.selection.restore();
 
     return { html };
   }

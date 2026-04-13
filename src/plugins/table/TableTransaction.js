@@ -14,6 +14,8 @@ export class TableTransaction {
     // However, since rollback is only an ERROR state (validation failed), `innerHTML` restoration is an acceptable tradeoff
     // to avoid massive complexity. The key is that successful COMMIT does NOT do innerHTML replacement!
     this._snapshotInnerHTML = null;
+    this._snapshotStyle = null;
+    this._snapshotBorder = null;
   }
 
   begin() {
@@ -22,6 +24,8 @@ export class TableTransaction {
 
     // Buffer snapshot for rollback only. We will mutate this.table directly.
     this._snapshotInnerHTML = this.table.innerHTML;
+    this._snapshotStyle = this.table.getAttribute('style');
+    this._snapshotBorder = this.table.getAttribute('border');
 
     // Grid alignment calculation based on CURRENT DOM state
     this.grid = new TableGrid(this.table);
@@ -40,9 +44,7 @@ export class TableTransaction {
        }
     }
 
-    if (this.editor.history) {
-      this.editor.history.pushImmediate();
-    }
+
 
     // Cleanup
     this.table = null;
@@ -68,6 +70,16 @@ export class TableTransaction {
     if (this.table && this._snapshotInnerHTML !== null) {
         // Rollback restores the table's interior if we corrupted it during a failed mutation.
         this.table.innerHTML = this._snapshotInnerHTML;
+    if (this._snapshotStyle !== null) {
+        this.table.setAttribute('style', this._snapshotStyle);
+    } else {
+        this.table.removeAttribute('style');
+    }
+    if (this._snapshotBorder !== null) {
+        this.table.setAttribute('border', this._snapshotBorder);
+    } else {
+        this.table.removeAttribute('border');
+    }
     }
     this.table = null;
     this.grid = null;
@@ -189,6 +201,45 @@ export class TableTransaction {
     anchorNode.removeAttribute('rowspan');
     anchorNode.removeAttribute('colspan');
     anchorNode.removeAttribute('data-merge-descriptor');
+
+    return true;
+  }
+
+
+
+  setTableProperty(property, value) {
+    if (!this.table) return false;
+
+    // We only mutate the table properties
+    if (property === 'border') {
+       if (value) {
+           this.table.setAttribute('border', value);
+       } else {
+           this.table.removeAttribute('border');
+       }
+    } else if (property === 'width') {
+       this.table.style.width = value;
+    } else if (property === 'padding') {
+       // Since padding typically applies to cells, we might need to handle this differently
+       // But for now, just style the table or add a class.
+       this.table.style.padding = value;
+    } else if (property === 'margin') {
+       this.table.style.margin = value;
+    } else if (property === 'backgroundColor') {
+       this.table.style.backgroundColor = value;
+    } else if (property === 'textAlign') {
+       // Typically alignment of table itself uses margins like auto for center
+       if (value === 'center') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = 'auto';
+       } else if (value === 'right') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = '0';
+       } else {
+           this.table.style.marginLeft = '0';
+           this.table.style.marginRight = 'auto';
+       }
+    }
 
     return true;
   }
