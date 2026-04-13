@@ -250,18 +250,48 @@ export class TableTransaction {
   setTableProperty(property, value) {
     if (!this.table) return false;
 
+    const cells = Array.from(this.table.querySelectorAll('td, th'));
+
     if (property === 'border') {
-       if (value) this.table.setAttribute('border', value);
-       else this.table.removeAttribute('border');
+       if (value) {
+           this.table.setAttribute('border', value);
+           // Also apply border width to cells
+           cells.forEach(cell => cell.style.borderWidth = value + 'px');
+       } else {
+           this.table.removeAttribute('border');
+           cells.forEach(cell => cell.style.borderWidth = '0px');
+       }
     } else if (property === 'borderColor') {
-       if (value) this.table.setAttribute('bordercolor', value);
-       else this.table.removeAttribute('bordercolor');
+       if (value) {
+           this.table.setAttribute('bordercolor', value);
+           this.table.style.borderColor = value;
+           // Apply border color to cells
+           cells.forEach(cell => cell.style.borderColor = value);
+       } else {
+           this.table.removeAttribute('bordercolor');
+           this.table.style.borderColor = '';
+           cells.forEach(cell => cell.style.borderColor = '');
+       }
     } else if (property === 'cellPadding') {
-       if (value) this.table.setAttribute('cellpadding', value);
-       else this.table.removeAttribute('cellpadding');
+       if (value) {
+           this.table.setAttribute('cellpadding', value);
+           // Apply padding to cells directly
+           cells.forEach(cell => cell.style.padding = value + 'px');
+       } else {
+           this.table.removeAttribute('cellpadding');
+           cells.forEach(cell => cell.style.padding = '0px');
+       }
     } else if (property === 'cellSpacing') {
-       if (value) this.table.setAttribute('cellspacing', value);
-       else this.table.removeAttribute('cellspacing');
+       if (value) {
+           this.table.setAttribute('cellspacing', value);
+           // cellspacing requires border-collapse to be separate
+           this.table.style.borderCollapse = 'separate';
+           this.table.style.borderSpacing = value + 'px';
+       } else {
+           this.table.removeAttribute('cellspacing');
+           this.table.style.borderCollapse = 'collapse';
+           this.table.style.borderSpacing = '0px';
+       }
     } else if (property === 'dir') {
        if (value) this.table.setAttribute('dir', value);
        else this.table.removeAttribute('dir');
@@ -337,6 +367,17 @@ export class TableTransaction {
             const td = document.createElement('td');
             td.setAttribute('data-cell-id', TableGrid.generateCellId());
             td.innerHTML = '<br>';
+
+            // inherit properties
+            const tableBorder = this.table.getAttribute('border') || '1';
+            const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
+            const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
+
+            td.style.borderWidth = tableBorder + 'px';
+            td.style.borderStyle = 'solid';
+            td.style.borderColor = tableBorderColor;
+            td.style.padding = tableCellPadding + 'px';
+
             newTr.appendChild(td);
             newCellCount++;
         }
@@ -443,6 +484,15 @@ export class TableTransaction {
              td.setAttribute('data-cell-id', TableGrid.generateCellId());
              td.innerHTML = '<br>';
 
+             const tableBorder = this.table.getAttribute('border') || '1';
+             const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
+             const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
+
+             td.style.borderWidth = tableBorder + 'px';
+             td.style.borderStyle = 'solid';
+             td.style.borderColor = tableBorderColor;
+             td.style.padding = tableCellPadding + 'px';
+
              const tr = this.table.querySelectorAll('tr')[r];
              if (tr) {
                  let insertBeforeNode = null;
@@ -466,6 +516,193 @@ export class TableTransaction {
      }
 
      return true;
+  }
+
+  removeColumn(anchorCellId) {
+     const gridCell = this.grid.getCellById(anchorCellId);
+     if (!gridCell) return false;
+
+     const cols = this.grid.grid[0].length;
+     if (cols <= 1) return false;
+
+     const colIndex = gridCell.colIndex;
+     const rowsCount = this.grid.grid.length;
+
+     for (let r = 0; r < rowsCount; r++) {
+         const cellInfo = this.grid.grid[r][colIndex];
+         if (!cellInfo) continue;
+
+         const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+         const masterCell = this.grid.getCellById(effectiveId);
+
+         if (masterCell) {
+             if (masterCell.colSpan > 1) {
+                 if (masterCell.rowIndex === r) {
+                     masterCell.domNode.setAttribute('colspan', masterCell.colSpan - 1);
+                 }
+             } else {
+                 if (masterCell.isReal) {
+                     masterCell.domNode.remove();
+                 }
+             }
+         }
+     }
+     return true;
+  }
+
+  setTableProperty(property, value) {
+    if (!this.table) return false;
+
+    const cells = Array.from(this.table.querySelectorAll('td, th'));
+
+    if (property === 'border') {
+       if (value) {
+           this.table.setAttribute('border', value);
+           // Also apply border width to cells
+           cells.forEach(cell => cell.style.borderWidth = value + 'px');
+       } else {
+           this.table.removeAttribute('border');
+           cells.forEach(cell => cell.style.borderWidth = '0px');
+       }
+    } else if (property === 'borderColor') {
+       if (value) {
+           this.table.setAttribute('bordercolor', value);
+           this.table.style.borderColor = value;
+           // Apply border color to cells
+           cells.forEach(cell => cell.style.borderColor = value);
+       } else {
+           this.table.removeAttribute('bordercolor');
+           this.table.style.borderColor = '';
+           cells.forEach(cell => cell.style.borderColor = '');
+       }
+    } else if (property === 'cellPadding') {
+       if (value) {
+           this.table.setAttribute('cellpadding', value);
+           // Apply padding to cells directly
+           cells.forEach(cell => cell.style.padding = value + 'px');
+       } else {
+           this.table.removeAttribute('cellpadding');
+           cells.forEach(cell => cell.style.padding = '0px');
+       }
+    } else if (property === 'cellSpacing') {
+       if (value) {
+           this.table.setAttribute('cellspacing', value);
+           // cellspacing requires border-collapse to be separate
+           this.table.style.borderCollapse = 'separate';
+           this.table.style.borderSpacing = value + 'px';
+       } else {
+           this.table.removeAttribute('cellspacing');
+           this.table.style.borderCollapse = 'collapse';
+           this.table.style.borderSpacing = '0px';
+       }
+    } else if (property === 'dir') {
+       if (value) this.table.setAttribute('dir', value);
+       else this.table.removeAttribute('dir');
+    } else if (property === 'width') {
+       this.table.style.width = value;
+    } else if (property === 'padding') {
+       this.table.style.padding = value;
+    } else if (property === 'margin') {
+       this.table.style.margin = value;
+    } else if (property === 'backgroundColor') {
+       this.table.style.backgroundColor = value;
+    } else if (property === 'textAlign') {
+       if (value === 'center') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = 'auto';
+       } else if (value === 'right') {
+           this.table.style.marginLeft = 'auto';
+           this.table.style.marginRight = '0';
+       } else {
+           this.table.style.marginLeft = '0';
+           this.table.style.marginRight = 'auto';
+       }
+    }
+
+    return true;
+  }
+
+  deleteTable() {
+     if (this.table && this.table.parentNode) {
+         const p = document.createElement('p');
+         p.innerHTML = '<br>';
+         this.table.parentNode.replaceChild(p, this.table);
+         // Mark as completely deleted so commit doesn't fail Grid checks
+         this.table = p;
+     }
+     return true;
+  }
+
+  addRow(anchorCellId, position = 'after') {
+    const gridCell = this.grid.getCellById(anchorCellId);
+    if (!gridCell) return false;
+
+    const rowIndex = position === 'after' ? gridCell.rowIndex + gridCell.rowSpan - 1 : gridCell.rowIndex;
+
+    const tbody = this.table.querySelector('tbody') || this.table;
+    const existingRows = Array.from(tbody.querySelectorAll('tr'));
+
+    const newTr = document.createElement('tr');
+
+    let newCellCount = 0;
+    const cols = this.grid.grid[0].length;
+
+    for (let c = 0; c < cols; c++) {
+        const cellInfo = this.grid.grid[rowIndex][c];
+
+        let needsNewCell = true;
+
+        if (cellInfo) {
+           const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+           const masterCell = this.grid.getCellById(effectiveId);
+
+           if (masterCell) {
+              if (masterCell.rowIndex < rowIndex && (masterCell.rowIndex + masterCell.rowSpan - 1) >= rowIndex) {
+                  if (masterCell.colIndex === c) {
+                      masterCell.domNode.setAttribute('rowspan', masterCell.rowSpan + 1);
+                  }
+                  needsNewCell = false;
+              }
+           }
+        }
+
+        if (needsNewCell) {
+            const td = document.createElement('td');
+            td.setAttribute('data-cell-id', TableGrid.generateCellId());
+            td.innerHTML = '<br>';
+
+            // inherit properties
+            const tableBorder = this.table.getAttribute('border') || '1';
+            const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
+            const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
+
+            td.style.borderWidth = tableBorder + 'px';
+            td.style.borderStyle = 'solid';
+            td.style.borderColor = tableBorderColor;
+            td.style.padding = tableCellPadding + 'px';
+
+            newTr.appendChild(td);
+            newCellCount++;
+        }
+    }
+
+    if (position === 'after') {
+        const targetRowNode = existingRows[rowIndex];
+        if (targetRowNode && targetRowNode.nextSibling) {
+            targetRowNode.parentNode.insertBefore(newTr, targetRowNode.nextSibling);
+        } else {
+            tbody.appendChild(newTr);
+        }
+    } else {
+        const targetRowNode = existingRows[rowIndex];
+        if (targetRowNode) {
+            targetRowNode.parentNode.insertBefore(newTr, targetRowNode);
+        } else {
+            tbody.appendChild(newTr);
+        }
+    }
+
+    return true;
   }
 
   removeColumn(anchorCellId) {
