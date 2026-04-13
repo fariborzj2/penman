@@ -49,6 +49,9 @@ export class TableMenu {
   }
 
   bindEvents(dropdownElement, selectionManager) {
+    if (dropdownElement.__eventsBound) return;
+    dropdownElement.__eventsBound = true;
+
     const gridCells = dropdownElement.querySelectorAll('.penman-grid-cell');
     const label = dropdownElement.querySelector('.penman-grid-label');
 

@@ -86,9 +86,17 @@ export class FloatingUI {
 
     const floatingRect = this.element.getBoundingClientRect();
 
-    // Calculate initial position (bottom-center of anchor)
-    let top = rect.bottom + this.options.offset + window.scrollY;
-    let left = rect.left + (rect.width / 2) - (floatingRect.width / 2) + window.scrollX;
+    // Calculate initial position
+    let top, left;
+
+    if (this.options.placement === 'top') {
+        top = rect.top - floatingRect.height - this.options.offset + window.scrollY;
+    } else {
+        // default bottom
+        top = rect.bottom + this.options.offset + window.scrollY;
+    }
+
+    left = rect.left + (rect.width / 2) - (floatingRect.width / 2) + window.scrollX;
 
     // Collision handling (Viewport)
     const viewportWidth = window.innerWidth;
@@ -101,11 +109,23 @@ export class FloatingUI {
       left = window.scrollX + viewportWidth - floatingRect.width - this.options.offset;
     }
 
-    // Prevent vertical overflow
-    // If it goes below the screen, place it above the anchor
-    if (rect.bottom + floatingRect.height + this.options.offset > viewportHeight &&
-        rect.top - floatingRect.height - this.options.offset > 0) {
-       top = rect.top - floatingRect.height - this.options.offset + window.scrollY;
+    // Prevent vertical overflow / Flip logic
+    if (this.options.placement === 'top') {
+        // If it goes above the screen, place it below the anchor
+        if (top < window.scrollY && rect.bottom + floatingRect.height + this.options.offset <= window.scrollY + viewportHeight) {
+            top = rect.bottom + this.options.offset + window.scrollY;
+            this.element.classList.add('penman-floating-flipped');
+        } else {
+            this.element.classList.remove('penman-floating-flipped');
+        }
+    } else {
+        // If it goes below the screen, place it above the anchor
+        if (top + floatingRect.height > window.scrollY + viewportHeight && rect.top - floatingRect.height - this.options.offset >= window.scrollY) {
+            top = rect.top - floatingRect.height - this.options.offset + window.scrollY;
+            this.element.classList.add('penman-floating-flipped');
+        } else {
+            this.element.classList.remove('penman-floating-flipped');
+        }
     }
 
     this.element.style.top = `${top}px`;

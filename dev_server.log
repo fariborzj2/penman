@@ -27,3 +27,7 @@
 9:44:00 AM [vite] (client) page reload src/plugins/TablePlugin.js
 9:45:43 AM [vite] (client) page reload src/plugins/TablePlugin.js
 9:45:54 AM [vite] (client) page reload src/plugins/TablePlugin.js
+10:04:13 AM [vite] (client) page reload src/ui/FloatingUI.js
+10:04:24 AM [vite] (client) page reload src/plugins/TablePlugin.js
+10:04:55 AM [vite] (client) hmr update /src/styles/penman-ui.css
+10:05:53 AM [vite] (client) page reload src/plugins/table/TableMenu.js
