@@ -7,41 +7,47 @@ export class TableTransaction {
     this.table = null;
     this.grid = null;
 
-    // Partial staging buffer - we clone into memory for the transaction
-    this._stagedClone = null;
-    this._stagedGrid = null;
+    // Instead of cloning the DOM, we record the HTML snapshot of the table content
+    // and explicitly rollback just its innerHTML. The <table data-table-id="..."> node stays intact natively.
+    // This allows event listeners on the table element itself to survive, but interior ones will be wiped ONLY on rollback.
+    // Actually, to preserve pure DOM identity, rollback should use a mutation array.
+    // However, since rollback is only an ERROR state (validation failed), `innerHTML` restoration is an acceptable tradeoff
+    // to avoid massive complexity. The key is that successful COMMIT does NOT do innerHTML replacement!
+    this._snapshotInnerHTML = null;
   }
 
   begin() {
     this.table = this.editor.editableArea.querySelector(`table[data-table-id="${this.tableId}"]`);
     if (!this.table) return false;
 
-    // Use a staging clone for the transaction mutations
-    this._stagedClone = this.table.cloneNode(true);
-    this._stagedGrid = new TableGrid(this._stagedClone);
+    // Buffer snapshot for rollback only. We will mutate this.table directly.
+    this._snapshotInnerHTML = this.table.innerHTML;
+
+    // Grid alignment calculation based on CURRENT DOM state
+    this.grid = new TableGrid(this.table);
     return true;
   }
 
   commit() {
-    if (!this.table || !this._stagedClone) return false;
+    if (!this.table) return false;
 
-    // Final Integrity Check on the staged clone
-    const finalGrid = new TableGrid(this._stagedClone);
-    if (!this._isGridValid(finalGrid)) {
-        console.warn('Penman Editor: TableTransaction rolled back due to Grid Integrity Failure.');
-        return this.rollback();
+    if (this.table.tagName === 'TABLE') {
+       // Real-time Integrity Check on the mutated DOM
+       const finalGrid = new TableGrid(this.table);
+       if (!this._isGridValid(finalGrid)) {
+           console.warn('Penman Editor: TableTransaction rolled back due to Grid Integrity Failure.');
+           return this.rollback();
+       }
     }
-
-    // Atomic DOM replacement
-    this.table.parentNode.replaceChild(this._stagedClone, this.table);
 
     if (this.editor.history) {
       this.editor.history.pushImmediate();
     }
 
+    // Cleanup
     this.table = null;
-    this._stagedClone = null;
-    this._stagedGrid = null;
+    this.grid = null;
+    this._snapshotInnerHTML = null;
 
     this.editor.emit('change', this.editor.getContent());
     return true;
@@ -59,22 +65,25 @@ export class TableTransaction {
   }
 
   rollback() {
-    // Simply discard the staging clone. True atomicity.
+    if (this.table && this._snapshotInnerHTML !== null) {
+        // Rollback restores the table's interior if we corrupted it during a failed mutation.
+        this.table.innerHTML = this._snapshotInnerHTML;
+    }
     this.table = null;
-    this._stagedClone = null;
-    this._stagedGrid = null;
+    this.grid = null;
+    this._snapshotInnerHTML = null;
     return false;
   }
 
   mergeCells(cellIds) {
-    if (!this._stagedGrid.isPerfectRectangle(cellIds)) {
+    if (!this.grid.isPerfectRectangle(cellIds)) {
         return false;
     }
 
-    const box = this._stagedGrid.getSelectionBoundingBox(cellIds);
+    const box = this.grid.getSelectionBoundingBox(cellIds);
     if (!box) return false;
 
-    const anchorGridCell = this._stagedGrid.grid[box.minRow][box.minCol];
+    const anchorGridCell = this.grid.grid[box.minRow][box.minCol];
     if (!anchorGridCell || !anchorGridCell.isReal) return false;
 
     const anchorNode = anchorGridCell.domNode;
@@ -83,7 +92,7 @@ export class TableTransaction {
 
     cellIds.forEach(id => {
        if (id !== anchorGridCell.id) {
-           const gridCell = this._stagedGrid.getCellById(id);
+           const gridCell = this.grid.getCellById(id);
            if (gridCell && gridCell.isReal) {
                const content = gridCell.domNode.innerHTML.trim();
                if (content && content !== '<br>') {
@@ -93,16 +102,10 @@ export class TableTransaction {
                        newContentFragment.appendChild(gridCell.domNode.firstChild);
                    }
                }
-               // Strict Exclusion: We do NOT use display: none here anymore
-               // because that was reviewed as dangerous for selection mapping.
-               // Actually, `aria-hidden` and specific dataset flags handle it.
+
                gridCell.domNode.setAttribute('data-merged', 'true');
                gridCell.domNode.setAttribute('aria-hidden', 'true');
 
-               // But CSS needs *something* to hide it. We will rely on our global
-               // CSS to style `td[data-merged="true"]` minimally so it doesn't break layout
-               // WITHOUT removing it from flow completely in a way that breaks Range logic.
-               // e.g. width:0, height:0, padding:0, border:0, color: transparent, line-height:0.
                gridCell.domNode.style.width = '0px';
                gridCell.domNode.style.height = '0px';
                gridCell.domNode.style.padding = '0px';
@@ -111,7 +114,7 @@ export class TableTransaction {
                gridCell.domNode.style.lineHeight = '0px';
                gridCell.domNode.style.color = 'transparent';
                gridCell.domNode.style.overflow = 'hidden';
-               gridCell.domNode.style.visibility = 'hidden'; // Visibility hidden keeps the box footprint 0 but preserves selection logic better than display:none
+               gridCell.domNode.style.visibility = 'hidden';
 
                gridCell.domNode.removeAttribute('rowspan');
                gridCell.domNode.removeAttribute('colspan');
@@ -123,7 +126,6 @@ export class TableTransaction {
 
     anchorNode.appendChild(newContentFragment);
 
-    // Write Merge Descriptor for exact deterministic split
     if (absorbedIds.length > 0) {
        const existingDescriptor = anchorNode.getAttribute('data-merge-descriptor');
        let finalIds = absorbedIds;
@@ -149,7 +151,7 @@ export class TableTransaction {
   }
 
   splitCell(cellId) {
-    const gridCell = this._stagedGrid.getCellById(cellId);
+    const gridCell = this.grid.getCellById(cellId);
     if (!gridCell || !gridCell.isReal) return false;
 
     const anchorNode = gridCell.domNode;
@@ -163,15 +165,13 @@ export class TableTransaction {
         return false;
     }
 
-    // Restore attributes of exactly the nodes in descriptor
     absorbedIds.forEach(id => {
-        const targetGridCell = this._stagedGrid.getCellById(id);
+        const targetGridCell = this.grid.getCellById(id);
         if (targetGridCell && targetGridCell.domNode) {
             const td = targetGridCell.domNode;
             td.removeAttribute('data-merged');
             td.removeAttribute('aria-hidden');
 
-            // Revert layout hacks
             td.style.width = '';
             td.style.height = '';
             td.style.padding = '';
@@ -191,5 +191,216 @@ export class TableTransaction {
     anchorNode.removeAttribute('data-merge-descriptor');
 
     return true;
+  }
+
+  deleteTable() {
+     if (this.table && this.table.parentNode) {
+         const p = document.createElement('p');
+         p.innerHTML = '<br>';
+         this.table.parentNode.replaceChild(p, this.table);
+         // Mark as completely deleted so commit doesn't fail Grid checks
+         this.table = p;
+     }
+     return true;
+  }
+
+  addRow(anchorCellId, position = 'after') {
+    const gridCell = this.grid.getCellById(anchorCellId);
+    if (!gridCell) return false;
+
+    const rowIndex = position === 'after' ? gridCell.rowIndex + gridCell.rowSpan - 1 : gridCell.rowIndex;
+
+    const tbody = this.table.querySelector('tbody') || this.table;
+    const existingRows = Array.from(tbody.querySelectorAll('tr'));
+
+    const newTr = document.createElement('tr');
+
+    let newCellCount = 0;
+    const cols = this.grid.grid[0].length;
+
+    for (let c = 0; c < cols; c++) {
+        const cellInfo = this.grid.grid[rowIndex][c];
+
+        let needsNewCell = true;
+
+        if (cellInfo) {
+           const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+           const masterCell = this.grid.getCellById(effectiveId);
+
+           if (masterCell) {
+              if (masterCell.rowIndex < rowIndex && (masterCell.rowIndex + masterCell.rowSpan - 1) >= rowIndex) {
+                  if (masterCell.colIndex === c) {
+                      masterCell.domNode.setAttribute('rowspan', masterCell.rowSpan + 1);
+                  }
+                  needsNewCell = false;
+              }
+           }
+        }
+
+        if (needsNewCell) {
+            const td = document.createElement('td');
+            td.setAttribute('data-cell-id', TableGrid.generateCellId());
+            td.innerHTML = '<br>';
+            newTr.appendChild(td);
+            newCellCount++;
+        }
+    }
+
+    if (position === 'after') {
+        const targetRowNode = existingRows[rowIndex];
+        if (targetRowNode && targetRowNode.nextSibling) {
+            targetRowNode.parentNode.insertBefore(newTr, targetRowNode.nextSibling);
+        } else {
+            tbody.appendChild(newTr);
+        }
+    } else {
+        const targetRowNode = existingRows[rowIndex];
+        if (targetRowNode) {
+            targetRowNode.parentNode.insertBefore(newTr, targetRowNode);
+        } else {
+            tbody.appendChild(newTr);
+        }
+    }
+
+    return true;
+  }
+
+  removeRow(anchorCellId) {
+     const gridCell = this.grid.getCellById(anchorCellId);
+     if (!gridCell) return false;
+
+     const rowIndex = gridCell.rowIndex;
+     const tbody = this.table.querySelector('tbody') || this.table;
+     const existingRows = Array.from(tbody.querySelectorAll('tr'));
+
+     if (existingRows.length <= 1) return false;
+
+     const targetRowNode = existingRows[rowIndex];
+     if (!targetRowNode) return false;
+
+     const cols = this.grid.grid[0].length;
+
+     for (let c = 0; c < cols; c++) {
+         const cellInfo = this.grid.grid[rowIndex][c];
+         if (!cellInfo) continue;
+
+         const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+         const masterCell = this.grid.getCellById(effectiveId);
+
+         if (masterCell && masterCell.rowSpan > 1) {
+             if (masterCell.colIndex === c) {
+                 masterCell.domNode.setAttribute('rowspan', masterCell.rowSpan - 1);
+
+                 if (masterCell.rowIndex === rowIndex) {
+                     const nextRow = existingRows[rowIndex + 1];
+                     if (nextRow) {
+                         let insertBeforeNode = null;
+                         for(let scanCol = c + 1; scanCol < cols; scanCol++) {
+                            const scanGridCell = this.grid.grid[rowIndex + 1][scanCol];
+                            if (scanGridCell && scanGridCell.isReal && scanGridCell.rowIndex === rowIndex + 1) {
+                                insertBeforeNode = scanGridCell.domNode;
+                                break;
+                            }
+                         }
+                         if (insertBeforeNode) {
+                             nextRow.insertBefore(masterCell.domNode, insertBeforeNode);
+                         } else {
+                             nextRow.appendChild(masterCell.domNode);
+                         }
+                     }
+                 }
+             }
+         }
+     }
+
+     targetRowNode.remove();
+     return true;
+  }
+
+  addColumn(anchorCellId, position = 'after') {
+     const gridCell = this.grid.getCellById(anchorCellId);
+     if (!gridCell) return false;
+
+     const colIndex = position === 'after' ? gridCell.colIndex + gridCell.colSpan - 1 : gridCell.colIndex;
+     const rowsCount = this.grid.grid.length;
+
+     for (let r = 0; r < rowsCount; r++) {
+         const cellInfo = this.grid.grid[r][colIndex];
+         let needsNewCell = true;
+
+         if (cellInfo) {
+             const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+             const masterCell = this.grid.getCellById(effectiveId);
+
+             if (masterCell) {
+                 if (masterCell.colIndex < colIndex && (masterCell.colIndex + masterCell.colSpan - 1) >= colIndex) {
+                     if (masterCell.rowIndex === r) {
+                        masterCell.domNode.setAttribute('colspan', masterCell.colSpan + 1);
+                     }
+                     needsNewCell = false;
+                 }
+             }
+         }
+
+         if (needsNewCell) {
+             const td = document.createElement('td');
+             td.setAttribute('data-cell-id', TableGrid.generateCellId());
+             td.innerHTML = '<br>';
+
+             const tr = this.table.querySelectorAll('tr')[r];
+             if (tr) {
+                 let insertBeforeNode = null;
+                 const insertPos = position === 'after' ? colIndex + 1 : colIndex;
+
+                 for(let scanCol = insertPos; scanCol < this.grid.grid[0].length; scanCol++) {
+                     const scanGridCell = this.grid.grid[r][scanCol];
+                     if (scanGridCell && scanGridCell.isReal && scanGridCell.rowIndex === r) {
+                         insertBeforeNode = scanGridCell.domNode;
+                         break;
+                     }
+                 }
+
+                 if (insertBeforeNode) {
+                     tr.insertBefore(td, insertBeforeNode);
+                 } else {
+                     tr.appendChild(td);
+                 }
+             }
+         }
+     }
+
+     return true;
+  }
+
+  removeColumn(anchorCellId) {
+     const gridCell = this.grid.getCellById(anchorCellId);
+     if (!gridCell) return false;
+
+     const cols = this.grid.grid[0].length;
+     if (cols <= 1) return false;
+
+     const colIndex = gridCell.colIndex;
+     const rowsCount = this.grid.grid.length;
+
+     for (let r = 0; r < rowsCount; r++) {
+         const cellInfo = this.grid.grid[r][colIndex];
+         if (!cellInfo) continue;
+
+         const effectiveId = cellInfo.isReal ? cellInfo.id : cellInfo.masterCellId;
+         const masterCell = this.grid.getCellById(effectiveId);
+
+         if (masterCell) {
+             if (masterCell.colSpan > 1) {
+                 if (masterCell.rowIndex === r) {
+                     masterCell.domNode.setAttribute('colspan', masterCell.colSpan - 1);
+                 }
+             } else {
+                 if (masterCell.isReal) {
+                     masterCell.domNode.remove();
+                 }
+             }
+         }
+     }
+     return true;
   }
 }

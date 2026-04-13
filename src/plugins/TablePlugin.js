@@ -3,6 +3,8 @@ import { TableSelectionManager } from './table/TableSelectionManager.js';
 import { FloatingUI } from '../ui/FloatingUI.js';
 import { TableGrid } from './table/TableGrid.js';
 
+import { TableMenu } from './table/TableMenu.js';
+
 export function setupTablePlugin(editor) {
   // 1. Setup Selection Manager
   const selectionManager = new TableSelectionManager(editor);
@@ -70,13 +72,28 @@ export function setupTablePlugin(editor) {
   });
 
   // 3. UI Buttons (Toolbar)
-  editor.ui.registry.addButton('table', {
-      text: 'Table',
+  const tableMenu = new TableMenu(editor);
+
+  editor.ui.registry.addDropdown('table', {
+      text: '', // No text, just icon as per standard toolbars
       icon: '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v3h6V6H5zm8 0v3h6V6h-6zm-8 5v3h6v-3H5zm8 0v3h6v-3h-6zm-8 5v3h6v-3H5zm8 0v3h6v-3h-6z"/></svg>',
-      onAction: () => {
-          editor.execCommand('INSERT_TABLE', { rows: 3, cols: 3 });
+      content: tableMenu.getHTML(),
+      onOpen: (dropdown) => {
+          tableMenu.bindEvents(dropdown.panelElement, selectionManager);
+          // Disable "Delete Table" if no table is active
+          const deleteBtn = dropdown.panelElement.querySelector('[data-cmd="table_delete"]');
+          if (selectionManager.activeTableNode) {
+              deleteBtn.style.opacity = '1';
+              deleteBtn.style.pointerEvents = 'auto';
+          } else {
+              deleteBtn.style.opacity = '0.5';
+              deleteBtn.style.pointerEvents = 'none';
+          }
       }
   });
+
+  // Attach TableTransaction class to DELETE_TABLE command definition to access it inside the menu
+  editor.commands.commands['DELETE_TABLE'] = { txClass: TableTransaction };
 
   // 4. Intercept Formatting Commands for Cell Selection
   const originalExec = editor.execCommand.bind(editor);
@@ -90,7 +107,101 @@ export function setupTablePlugin(editor) {
       originalExec(cmd, value);
   };
 
-  // 5. Event Listeners for Selection and Floating UI
+  // 5. Setup more commands for rows/columns
+  editor.commands.register('ADD_ROW', {
+      execute: (editor, { position = 'after' } = {}) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+          const tableId = tableNode.getAttribute('data-table-id');
+          const cellIds = selectionManager.getSelectedCellIds();
+          if (cellIds.length === 0) return;
+
+          const tx = new TableTransaction(editor, tableId);
+          if (tx.begin()) {
+              if (tx.addRow(cellIds[0], position)) {
+                  tx.commit();
+              } else {
+                  tx.rollback();
+              }
+          }
+      }
+  });
+
+  editor.commands.register('REMOVE_ROW', {
+      execute: (editor) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+          const tableId = tableNode.getAttribute('data-table-id');
+          const cellIds = selectionManager.getSelectedCellIds();
+          if (cellIds.length === 0) return;
+
+          const tx = new TableTransaction(editor, tableId);
+          if (tx.begin()) {
+              if (tx.removeRow(cellIds[0])) {
+                  tx.commit();
+              } else {
+                  tx.rollback();
+              }
+          }
+      }
+  });
+
+  editor.commands.register('ADD_COLUMN', {
+      execute: (editor, { position = 'after' } = {}) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+          const tableId = tableNode.getAttribute('data-table-id');
+          const cellIds = selectionManager.getSelectedCellIds();
+          if (cellIds.length === 0) return;
+
+          const tx = new TableTransaction(editor, tableId);
+          if (tx.begin()) {
+              if (tx.addColumn(cellIds[0], position)) {
+                  tx.commit();
+              } else {
+                  tx.rollback();
+              }
+          }
+      }
+  });
+
+  editor.commands.register('REMOVE_COLUMN', {
+      execute: (editor) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+          const tableId = tableNode.getAttribute('data-table-id');
+          const cellIds = selectionManager.getSelectedCellIds();
+          if (cellIds.length === 0) return;
+
+          const tx = new TableTransaction(editor, tableId);
+          if (tx.begin()) {
+              if (tx.removeColumn(cellIds[0])) {
+                  tx.commit();
+              } else {
+                  tx.rollback();
+              }
+          }
+      }
+  });
+
+  editor.commands.register('SET_CELL_PROPERTY', {
+      execute: (editor, { property, value }) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+          const cellIds = selectionManager.getSelectedCellIds();
+          if (cellIds.length === 0) return;
+
+          cellIds.forEach(id => {
+              const cell = tableNode.querySelector(`[data-cell-id="${id}"]`);
+              if (cell) {
+                  if (property === 'backgroundColor') cell.style.backgroundColor = value;
+              }
+          });
+          editor.emit('change', editor.getContent());
+      }
+  });
+
+  // 6. Event Listeners for Selection and Floating UI
   let isDragging = false;
   let dragStartCellId = null;
 
@@ -175,41 +286,82 @@ export function setupTablePlugin(editor) {
   function createFloatingUI() {
      floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
      const html = `
-        <div class="penman-table-toolbar" style="background: white; border: 1px solid #ccc; padding: 4px; border-radius: 4px; display: flex; gap: 4px; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-           <button type="button" class="penman-btn penman-btn-table-merge" title="Merge Cells" style="padding: 2px 6px;">M</button>
-           <button type="button" class="penman-btn penman-btn-table-split" title="Split Cell" style="padding: 2px 6px;">S</button>
+        <div class="penman-table-toolbar" style="background: white; border: 1px solid #e0e0e0; padding: 4px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
+           <!-- Arrow Tail -->
+           <div style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
+           <div style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
+
+           <button type="button" class="penman-btn penman-btn-table-prop" title="Table Properties" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+           </button>
+           <button type="button" class="penman-btn penman-btn-del-table" title="Delete Table" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
+           </button>
+
+           <span style="width: 1px; height: 16px; background: #e0e0e0; margin: 0 2px;"></span>
+
+           <button type="button" class="penman-btn penman-btn-add-row" title="Add Row Below" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="12" y1="12" x2="12" y2="18"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+           </button>
+           <button type="button" class="penman-btn penman-btn-remove-row" title="Delete Row" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+           </button>
+
+           <span style="width: 1px; height: 16px; background: #e0e0e0; margin: 0 2px;"></span>
+
+           <button type="button" class="penman-btn penman-btn-add-col" title="Add Column Right" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="15" y1="9" x2="15" y2="15"></line><line x1="12" y1="12" x2="18" y2="12"></line></svg>
+           </button>
+           <button type="button" class="penman-btn penman-btn-remove-col" title="Delete Column" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="12" y1="12" x2="18" y2="12"></line></svg>
+           </button>
         </div>
      `;
      floatingUI.mount(html);
 
      // Bind buttons
-     floatingUI.element.querySelector('.penman-btn-table-merge').addEventListener('mousedown', (e) => {
+     const tablePropBtn = floatingUI.element.querySelector('.penman-btn-table-prop');
+     if(tablePropBtn) {
+         tablePropBtn.addEventListener('mousedown', (e) => {
+             e.preventDefault();
+         });
+     }
+
+     floatingUI.element.querySelector('.penman-btn-add-row').addEventListener('mousedown', (e) => {
          e.preventDefault();
-         editor.execCommand('MERGE_CELLS');
+         editor.execCommand('ADD_ROW', { position: 'after' });
      });
 
-     floatingUI.element.querySelector('.penman-btn-table-split').addEventListener('mousedown', (e) => {
+     floatingUI.element.querySelector('.penman-btn-remove-row').addEventListener('mousedown', (e) => {
          e.preventDefault();
-         editor.execCommand('SPLIT_CELL');
+         editor.execCommand('REMOVE_ROW');
+     });
+
+     floatingUI.element.querySelector('.penman-btn-add-col').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         editor.execCommand('ADD_COLUMN', { position: 'after' });
+     });
+
+     floatingUI.element.querySelector('.penman-btn-remove-col').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         editor.execCommand('REMOVE_COLUMN');
+     });
+
+     floatingUI.element.querySelector('.penman-btn-del-table').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         const tableNode = selectionManager.activeTableNode;
+         if (tableNode) {
+             const tx = new TableTransaction(editor, tableNode.getAttribute('data-table-id'));
+             if (tx.begin()) {
+                 tx.deleteTable();
+                 tx.commit();
+                 selectionManager.clearSelection();
+             }
+         }
      });
   }
 
   function updateFloatingUIButtons(anchorCell) {
-      if (!floatingUI) return;
-      const cellIds = selectionManager.getSelectedCellIds();
-      const mergeBtn = floatingUI.element.querySelector('.penman-btn-table-merge');
-      const splitBtn = floatingUI.element.querySelector('.penman-btn-table-split');
-
-      // Merge active only if > 1 selected
-      mergeBtn.disabled = cellIds.length < 2;
-
-      // Split active only if 1 selected and it has span > 1
-      if (cellIds.length === 1 && anchorCell) {
-         const rs = parseInt(anchorCell.getAttribute('rowspan') || '1', 10);
-         const cs = parseInt(anchorCell.getAttribute('colspan') || '1', 10);
-         splitBtn.disabled = (rs <= 1 && cs <= 1);
-      } else {
-         splitBtn.disabled = true;
-      }
+      // Nothing needs updating dynamically in this simplified layout unless required
   }
 }

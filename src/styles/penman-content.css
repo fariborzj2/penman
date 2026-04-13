@@ -70,3 +70,37 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* Table Styles */
+.penman-editor-area table {
+  border-collapse: collapse;
+  width: 100%;
+  margin-bottom: 1em;
+}
+
+.penman-editor-area td,
+.penman-editor-area th {
+  border: 1px solid #ccc;
+  padding: 8px;
+  min-width: 20px;
+  position: relative;
+}
+
+.penman-cell-selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: -2px;
+  background-color: rgba(59, 130, 246, 0.1);
+}
+
+.penman-cell-handle-tl, .penman-cell-handle-tr, .penman-cell-handle-bl, .penman-cell-handle-br {
+  position: absolute;
+  width: 6px;
+  height: 6px;
+  background-color: #3b82f6;
+  z-index: 2;
+}
+
+.penman-cell-handle-tl { top: -3px; left: -3px; }
+.penman-cell-handle-tr { top: -3px; right: -3px; }
+.penman-cell-handle-bl { bottom: -3px; left: -3px; }
+.penman-cell-handle-br { bottom: -3px; right: -3px; }

@@ -58,3 +58,41 @@
 - برای هر سلولِ درون CellSelection، یک `Range` مجازی روی محتوای آن سلول (از ابتدا تا انتهای TextNode ها) ایجاد می‌شود.
 - قالب‌بندی با استخراج (extractContents) و کپسوله کردن (Wrap) درون تگ مربوطه (مثل `<strong>`) فقط در داخل همان رنج اعمال می‌شود.
 - از `document.execCommand` مطلقاً استفاده نخواهد شد. این تضمین می‌کند که تگ‌ها با هم Overlap نکرده و DOM به شکل پایدار و کنترل شده جهش کند.
+
+---
+
+## 6. مشخصات دستورات (Command System)
+
+تمامی این دستورات به عنوان توابع اتمیک داخل `TableTransaction.commit()` بسته‌بندی می‌شوند:
+- `INSERT_TABLE(rows: number, cols: number, withHeader: boolean)`
+- `DELETE_TABLE(tableId: string)`
+- `ADD_ROW(tableId: string, anchorCellId: string, position: 'before' | 'after')`
+- `REMOVE_ROW(tableId: string, anchorCellId: string)`
+- `ADD_COLUMN(tableId: string, anchorCellId: string, position: 'before' | 'after')`
+- `REMOVE_COLUMN(tableId: string, anchorCellId: string)`
+- `MERGE_CELLS(tableId: string, cellIds: string[])`
+- `SPLIT_CELL(tableId: string, cellId: string)`
+- `SET_TABLE_PROPERTY(tableId: string, property: string, value: string)`
+- `SET_CELL_PROPERTY(tableId: string, cellIds: string[], property: string, value: string)`
+
+---
+
+## 7. رابط کاربری (User Interface)
+
+### الف) منوی اصلی درج جدول (Insert Table Menu)
+- **منوی اصلی:** یک Dropdown با شبکه‌ی ۱۰x۱۰ (Grid Selector). با حرکت ماوس روی خانه‌ها (Hover)، ابعاد به صورت زنده نمایش داده شده (مثلاً ۴x۴) و با کلیک، جدول با ابعاد مشخص درج می‌شود.
+- **گزینه‌های زیرمنو (Submenu Items):** (اگر جدولی از قبل انتخاب شده باشد، این منو تغییر حالت می‌دهد)
+  - **سلول (Cell):** ادغام (Merge) و تقسیم (Split).
+  - **ردیف (Row):** درج در بالا (Insert Row Before)، درج در پایین (Insert Row After) و حذف ردیف (Delete Row).
+  - **ستون (Column):** درج در چپ (Insert Col Before)، درج در راست (Insert Col After) و حذف ستون (Delete Col).
+- **بخش تنظیمات نهایی:**
+  - ویژگی‌های جدول (Table Properties): مدال یا منو برای تنظیم Border, Padding و عرض جدول.
+  - حذف جدول (Delete Table).
+
+### ب) ابزار شناور متنی (Contextual Floating Toolbar)
+یک مینی‌تولبار (Mini Toolbar) که با ورود فوکوس به جدول یا رفتن ماوس روی جدول در بالا یا کنار آن ظاهر می‌شود. (پیاده‌سازی شده با `FloatingUI.js`)
+شامل گزینه‌های دسترسی سریع:
+- **درج ردیف در پایین (Add Row After)**: آیکون + افقی.
+- **درج ستون در سمت راست (Add Col After)**: آیکون + عمودی.
+- **تنظیمات استایل (Background Color)**: انتخاب رنگ پس‌زمینه ردیف/سلول (مثلاً برای Header).
+- **حذف جدول (Delete Table)**: آیکون سطل زباله (Trash icon).
