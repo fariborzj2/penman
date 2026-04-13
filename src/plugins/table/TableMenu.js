@@ -24,17 +24,38 @@ export class TableMenu {
         </div>
         <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
         <div class="penman-table-menu-list" style="color: #333;">
-          <div class="penman-menu-item" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
-             Cell <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
-          <div class="penman-menu-item" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
-             Row <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
-          <div class="penman-menu-item" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; justify-content: space-between; font-size: 14px;">
-             Column <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
-          </div>
+
+          <!-- CELL -->
+          <details class="penman-menu-item-cell">
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Cell</summary>
+            <div style="padding-left: 20px; font-size: 13px;">
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="MERGE_CELLS" style="padding: 6px; cursor: pointer;">Merge cells</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="SPLIT_CELL" style="padding: 6px; cursor: pointer;">Split cell</div>
+            </div>
+          </details>
+
+          <!-- ROW -->
+          <details class="penman-menu-item-row">
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Row</summary>
+            <div style="padding-left: 20px; font-size: 13px;">
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_BEFORE" style="padding: 6px; cursor: pointer;">Insert row before</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_AFTER" style="padding: 6px; cursor: pointer;">Insert row after</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_ROW" style="padding: 6px; cursor: pointer;">Delete row</div>
+            </div>
+          </details>
+
+          <!-- COLUMN -->
+          <details class="penman-menu-item-column">
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Column</summary>
+            <div style="padding-left: 20px; font-size: 13px;">
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_BEFORE" style="padding: 6px; cursor: pointer;">Insert column before</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_AFTER" style="padding: 6px; cursor: pointer;">Insert column after</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_COLUMN" style="padding: 6px; cursor: pointer;">Delete column</div>
+            </div>
+          </details>
+
           <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
-          <div class="penman-menu-item" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #777;">
+          <div class="penman-menu-item penman-menu-item-props" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #777;">
             Table properties
           </div>
           <div class="penman-menu-item penman-cmd-trigger" data-cmd="table_delete" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
@@ -100,45 +121,7 @@ export class TableMenu {
     const tablePropItem = Array.from(dropdownElement.querySelectorAll('.penman-menu-item')).find(el => el.textContent.includes('Table properties'));
     if (tablePropItem) {
         tablePropItem.addEventListener('click', () => {
-            const tableNode = selectionManager.activeTableNode;
-            if (!tableNode) return;
-
-            const currentWidth = tableNode.style.width || '';
-            const currentBorder = tableNode.getAttribute('border') || '';
-            const currentAlign = tableNode.style.marginLeft === 'auto' ? (tableNode.style.marginRight === 'auto' ? 'center' : 'right') : 'left';
-
-            this.editor.ui.createModal({
-                title: 'Table Properties',
-                body: `
-                    <div class="penman-modal-form-row">
-                        <label>Width:</label>
-                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Border:</label>
-                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Alignment:</label>
-                        <select name="textAlign">
-                            <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
-                            <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
-                            <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
-                        </select>
-                    </div>
-                `,
-                onSubmit: (data) => {
-
-                    const propsToSet = {};
-                    if (data.width !== undefined) propsToSet.width = data.width;
-                    if (data.border !== undefined) propsToSet.border = data.border;
-                    if (data.textAlign !== undefined) propsToSet.textAlign = data.textAlign;
-
-                    this.editor.commands.execute('SET_TABLE_PROPERTIES', { properties: propsToSet });
-
-                }
-            });
-
+            this.editor.commands.execute('OPEN_TABLE_PROPERTIES_MODAL');
             const instance = dropdownElement.closest('.penman-dropdown').__dropdownInstance;
             if(instance) instance.close();
         });
@@ -158,6 +141,35 @@ export class TableMenu {
        }
        const instance = dropdownElement.closest('.penman-dropdown').__dropdownInstance;
        if(instance) instance.close();
+    });
+
+
+    // Bind subitems
+    const subitems = dropdownElement.querySelectorAll('.penman-menu-subitem');
+    subitems.forEach(item => {
+        item.addEventListener('mouseover', () => item.style.backgroundColor = '#f5f5f5');
+        item.addEventListener('mouseout', () => item.style.backgroundColor = 'transparent');
+
+        item.addEventListener('click', (e) => {
+            const cmd = e.target.getAttribute('data-cmd');
+            if (!cmd) return;
+
+            // Map the detailed UI commands to the engine commands
+            if (cmd === 'ADD_ROW_BEFORE') {
+                this.editor.commands.execute('ADD_ROW', { position: 'before' });
+            } else if (cmd === 'ADD_ROW_AFTER') {
+                this.editor.commands.execute('ADD_ROW', { position: 'after' });
+            } else if (cmd === 'ADD_COLUMN_BEFORE') {
+                this.editor.commands.execute('ADD_COLUMN', { position: 'before' });
+            } else if (cmd === 'ADD_COLUMN_AFTER') {
+                this.editor.commands.execute('ADD_COLUMN', { position: 'after' });
+            } else {
+                this.editor.commands.execute(cmd);
+            }
+
+            const instance = dropdownElement.closest('.penman-dropdown').__dropdownInstance;
+            if(instance) instance.close();
+        });
     });
 
     // Add hover states for menu items
