@@ -7,6 +7,7 @@ import { setupUnlinkPlugin } from './UnlinkPlugin.js';
 import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
 import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
 import { setupFindReplacePlugin } from './FindReplacePlugin.js';
+import { setupTablePlugin } from './TablePlugin.js';
 
 export const PluginManager = {
   plugins: {
@@ -18,7 +19,8 @@ export const PluginManager = {
     'unlink': setupUnlinkPlugin,
     'removeformat': setupRemoveFormatPlugin,
     'hr': setupHorizontalRulePlugin,
-    'findreplace': setupFindReplacePlugin
+    'findreplace': setupFindReplacePlugin,
+    'table': setupTablePlugin
   },
 
   /**

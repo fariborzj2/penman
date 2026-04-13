@@ -1,0 +1,12 @@
+
+> penman-editor@0.1.0 dev
+> vite
+
+
+  VITE v8.0.8  ready in 367 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+7:34:51 AM [vite] (client) page reload index.html
+7:42:42 AM [vite] (client) page reload src/plugins/table/TableSelectionManager.js
+7:43:18 AM [vite] (client) page reload src/plugins/table/TableTransaction.js
