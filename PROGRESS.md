@@ -136,3 +136,4 @@
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: پیاده سازی TableTransaction جهت rollback کردن خطاهای یکپارچگی، ذخیره Merge Descriptor و جایگزینی execCommand با Range API. تمام ۸۱ تست JSDOM Pass شد.
 
 - **[$(date +'%Y-%m-%d %H:%M')]** Fixed native Selection loss during Table cell formatting by updating HistoryManager snapshot cleanup to use restore(). Implemented fully transactional Table Properties UI (Width, Border, Alignment) with a robust undo/redo state preservation and accompanying E2E test coverage.
+- **[$(date +'%Y-%m-%d %H:%M')]** Fixed Table UI state detection to persist selection on dropdown interactions. Implemented contextual submenus for Rows, Columns, and Cells. Added Merge/Split capabilities alongside background-color pickers to the Table floating UI. Expanded Table Properties via an XSS-safe abstracted modal, including comprehensive attributes (border color, dir, padding, spacing). Ensured consistent base table generation styling.

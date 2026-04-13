@@ -6,19 +6,96 @@ import { TableGrid } from './table/TableGrid.js';
 import { TableMenu } from './table/TableMenu.js';
 
 export function setupTablePlugin(editor) {
+
+  function escapeHTML(str) {
+      if (!str) return '';
+      return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+
+  editor.commands.register('OPEN_TABLE_PROPERTIES_MODAL', {
+      execute: (editor) => {
+          const tableNode = selectionManager.activeTableNode;
+          if (!tableNode) return;
+
+          const currentWidth = escapeHTML(tableNode.style.width || '');
+          const currentBorder = escapeHTML(tableNode.getAttribute('border') || '');
+          const currentBorderColor = escapeHTML(tableNode.getAttribute('bordercolor') || '');
+          const currentCellPadding = escapeHTML(tableNode.getAttribute('cellpadding') || '');
+          const currentCellSpacing = escapeHTML(tableNode.getAttribute('cellspacing') || '');
+          const currentDir = escapeHTML(tableNode.getAttribute('dir') || '');
+          const currentAlign = escapeHTML(tableNode.style.marginLeft === 'auto' ? (tableNode.style.marginRight === 'auto' ? 'center' : 'right') : 'left');
+
+          editor.ui.createModal({
+              title: 'Table Properties',
+              body: `
+                  <div class="penman-modal-form-row">
+                      <label>Width:</label>
+                      <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Border:</label>
+                      <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Border Color:</label>
+                      <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="e.g. #000 or red">
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Cell Padding:</label>
+                      <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="e.g. 5">
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Cell Spacing:</label>
+                      <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="e.g. 0">
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Direction:</label>
+                      <select name="dir">
+                          <option value="" ${!currentDir ? 'selected' : ''}>Default</option>
+                          <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>LTR</option>
+                          <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>RTL</option>
+                      </select>
+                  </div>
+                  <div class="penman-modal-form-row">
+                      <label>Alignment:</label>
+                      <select name="textAlign">
+                          <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
+                          <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
+                          <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
+                      </select>
+                  </div>
+              `,
+              onSubmit: (data) => {
+                  const propsToSet = {};
+                  if (data.width !== undefined) propsToSet.width = data.width;
+                  if (data.border !== undefined) propsToSet.border = data.border;
+                  if (data.borderColor !== undefined) propsToSet.borderColor = data.borderColor;
+                  if (data.cellPadding !== undefined) propsToSet.cellPadding = data.cellPadding;
+                  if (data.cellSpacing !== undefined) propsToSet.cellSpacing = data.cellSpacing;
+                  if (data.dir !== undefined) propsToSet.dir = data.dir;
+                  if (data.textAlign !== undefined) propsToSet.textAlign = data.textAlign;
+
+                  editor.commands.execute('SET_TABLE_PROPERTIES', { properties: propsToSet });
+              }
+          });
+      }
+  });
+
   // 1. Setup Selection Manager
   const selectionManager = new TableSelectionManager(editor);
+  editor.tableSelectionManager = selectionManager;
   let floatingUI = null;
 
   // 2. Setup Commands
   editor.commands.register('INSERT_TABLE', {
     execute: (editor, { rows = 2, cols = 2 } = {}) => {
       const tableId = 't-' + Math.random().toString(36).substr(2, 9);
-      let html = `<table data-table-id="${tableId}" border="1" style="width: 100%; border-collapse: collapse;"><tbody>`;
+      let html = `<table data-table-id="${tableId}" border="1" bordercolor="#ccc" style="width: 100%; border-collapse: collapse; border-style: solid;"><tbody>`;
       for(let r=0; r<rows; r++) {
          html += `<tr>`;
          for(let c=0; c<cols; c++) {
-             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}"><br></td>`;
+             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border: 1px solid #ccc; padding: 5px;"><br></td>`;
          }
          html += `</tr>`;
       }
@@ -83,15 +160,30 @@ export function setupTablePlugin(editor) {
           editor.selection.save();
 
           tableMenu.bindEvents(dropdown.panelElement, selectionManager);
-          // Disable "Delete Table" if no table is active
-          const deleteBtn = dropdown.panelElement.querySelector('[data-cmd="table_delete"]');
-          if (selectionManager.activeTableNode) {
-              deleteBtn.style.opacity = '1';
-              deleteBtn.style.pointerEvents = 'auto';
-          } else {
-              deleteBtn.style.opacity = '0.5';
-              deleteBtn.style.pointerEvents = 'none';
-          }
+
+          // Disable context-sensitive buttons if no table is active
+          const isTableActive = !!selectionManager.activeTableNode;
+
+          const itemsToToggle = [
+              '[data-cmd="table_delete"]',
+              '.penman-menu-item-cell',
+              '.penman-menu-item-row',
+              '.penman-menu-item-column',
+              '.penman-menu-item-props'
+          ];
+
+          itemsToToggle.forEach(selector => {
+              const el = dropdown.panelElement.querySelector(selector);
+              if (el) {
+                  if (isTableActive) {
+                      el.style.opacity = '1';
+                      el.style.pointerEvents = 'auto';
+                  } else {
+                      el.style.opacity = '0.5';
+                      el.style.pointerEvents = 'none';
+                  }
+              }
+          });
       },
       onClose: () => {
           editor.selection.clearSaved();
@@ -280,13 +372,18 @@ export function setupTablePlugin(editor) {
      if (selectionManager.isCellSelectionActive) return; // Ignore if we are doing multi-cell
 
      const sel = window.getSelection();
-     if (!sel || sel.rangeCount === 0) {
-         if (floatingUI) floatingUI.hide();
-         return;
-     }
+
+     // CRITICAL FIX: If we lose focus from the editor (e.g., clicking the toolbar), we should NOT wipe the table state.
+     // Dropdowns and UI buttons need this state to know what to operate on.
+     if (!sel || sel.rangeCount === 0) return;
 
      const node = sel.anchorNode;
      if (!node) return;
+
+     // Ensure we are inside the editable area
+     if (!editor.editableArea.contains(node)) {
+         return;
+     }
 
      const td = (node.nodeType === Node.TEXT_NODE ? node.parentNode : node).closest('td, th');
      if (td) {
@@ -334,6 +431,18 @@ export function setupTablePlugin(editor) {
                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
            </button>
 
+
+           <button type="button" class="penman-btn penman-btn-merge-cells" title="Merge Cells" style="padding: 4px; display:none; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6H4z"/><path d="M14 14h6v6h-6z"/><path d="M4 4h16v6H4z"/></svg>
+           </button>
+           <button type="button" class="penman-btn penman-btn-split-cell" title="Split Cell" style="padding: 4px; display:none; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M12 4v16"/><path d="M4 12h16"/></svg>
+           </button>
+
+           <div class="penman-btn-bg-color-wrapper" style="position:relative; display:flex;">
+               <input type="color" class="penman-btn-bg-color-picker" title="Background Color" style="width: 26px; height: 26px; padding: 0; border: none; cursor: pointer; background: transparent; border-radius: 4px;" value="#ffffff">
+           </div>
+
            <span style="width: 1px; height: 16px; background: #e0e0e0; margin: 0 2px;"></span>
 
            <button type="button" class="penman-btn penman-btn-add-row" title="Add Row Below" style="padding: 4px; display:flex; align-items:center; color: #111827;">
@@ -363,49 +472,30 @@ export function setupTablePlugin(editor) {
              e.preventDefault();
          });
          tablePropBtn.addEventListener('click', (e) => {
-            const tableNode = selectionManager.activeTableNode;
-            if (!tableNode) return;
-
-            const currentWidth = tableNode.style.width || '';
-            const currentBorder = tableNode.getAttribute('border') || '';
-            const currentAlign = tableNode.style.marginLeft === 'auto' ? (tableNode.style.marginRight === 'auto' ? 'center' : 'right') : 'left';
-
-            editor.ui.createModal({
-                title: 'Table Properties',
-                body: `
-                    <div class="penman-modal-form-row">
-                        <label>Width:</label>
-                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Border:</label>
-                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Alignment:</label>
-                        <select name="textAlign">
-                            <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
-                            <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
-                            <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
-                        </select>
-                    </div>
-                `,
-                onSubmit: (data) => {
-
-                    // Collect properties to set
-                    const propsToSet = {};
-                    if (data.width !== undefined) propsToSet.width = data.width;
-                    if (data.border !== undefined) propsToSet.border = data.border;
-                    if (data.textAlign !== undefined) propsToSet.textAlign = data.textAlign;
-
-                    editor.commands.execute('SET_TABLE_PROPERTIES', { properties: propsToSet });
-
-                }
-            });
-            if (floatingUI) floatingUI.hide();
+             e.preventDefault();
+             editor.commands.execute('OPEN_TABLE_PROPERTIES_MODAL');
+             if (floatingUI) floatingUI.hide();
          });
      }
 
+
+
+     floatingUI.element.querySelector('.penman-btn-merge-cells').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         editor.commands.execute('MERGE_CELLS');
+     });
+
+     floatingUI.element.querySelector('.penman-btn-split-cell').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         editor.commands.execute('SPLIT_CELL');
+     });
+
+     const colorPicker = floatingUI.element.querySelector('.penman-btn-bg-color-picker');
+     if (colorPicker) {
+         colorPicker.addEventListener('change', (e) => {
+             editor.commands.execute('SET_CELL_PROPERTY', { property: 'backgroundColor', value: e.target.value });
+         });
+     }
 
      floatingUI.element.querySelector('.penman-btn-add-row').addEventListener('mousedown', (e) => {
          e.preventDefault();
@@ -442,6 +532,32 @@ export function setupTablePlugin(editor) {
   }
 
   function updateFloatingUIButtons(anchorCell) {
-      // Nothing needs updating dynamically in this simplified layout unless required
+      if (!floatingUI) return;
+      const mergeBtn = floatingUI.element.querySelector('.penman-btn-merge-cells');
+      const splitBtn = floatingUI.element.querySelector('.penman-btn-split-cell');
+
+      if (!mergeBtn || !splitBtn) return;
+
+      if (selectionManager.selectedCellIds.length > 1) {
+          mergeBtn.style.display = 'flex';
+          splitBtn.style.display = 'none';
+      } else {
+          mergeBtn.style.display = 'none';
+          // Check if the single selected cell is merged
+          let isMerged = false;
+          if (anchorCell && (anchorCell.getAttribute('colspan') || anchorCell.getAttribute('rowspan'))) {
+              isMerged = true;
+          }
+          if (isMerged) {
+              splitBtn.style.display = 'flex';
+          } else {
+              splitBtn.style.display = 'none';
+          }
+      }
+
+      const colorPicker = floatingUI.element.querySelector('.penman-btn-bg-color-picker');
+      if (colorPicker && anchorCell) {
+          // Attempt to get the current background color to prepopulate the picker
+      }
   }
 }

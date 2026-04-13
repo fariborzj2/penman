@@ -15,6 +15,10 @@ export class TableTransaction {
     // to avoid massive complexity. The key is that successful COMMIT does NOT do innerHTML replacement!
     this._snapshotInnerHTML = null;
     this._snapshotStyle = null;
+    this._snapshotBorderColor = null;
+    this._snapshotCellPadding = null;
+    this._snapshotCellSpacing = null;
+    this._snapshotDir = null;
     this._snapshotBorder = null;
   }
 
@@ -25,6 +29,10 @@ export class TableTransaction {
     // Buffer snapshot for rollback only. We will mutate this.table directly.
     this._snapshotInnerHTML = this.table.innerHTML;
     this._snapshotStyle = this.table.getAttribute('style');
+    this._snapshotBorderColor = this.table.getAttribute('bordercolor');
+    this._snapshotCellPadding = this.table.getAttribute('cellpadding');
+    this._snapshotCellSpacing = this.table.getAttribute('cellspacing');
+    this._snapshotDir = this.table.getAttribute('dir');
     this._snapshotBorder = this.table.getAttribute('border');
 
     // Grid alignment calculation based on CURRENT DOM state
@@ -79,6 +87,26 @@ export class TableTransaction {
         this.table.setAttribute('border', this._snapshotBorder);
     } else {
         this.table.removeAttribute('border');
+    }
+    if (this._snapshotBorderColor !== null) {
+        this.table.setAttribute('bordercolor', this._snapshotBorderColor);
+    } else {
+        this.table.removeAttribute('bordercolor');
+    }
+    if (this._snapshotCellPadding !== null) {
+        this.table.setAttribute('cellpadding', this._snapshotCellPadding);
+    } else {
+        this.table.removeAttribute('cellpadding');
+    }
+    if (this._snapshotCellSpacing !== null) {
+        this.table.setAttribute('cellspacing', this._snapshotCellSpacing);
+    } else {
+        this.table.removeAttribute('cellspacing');
+    }
+    if (this._snapshotDir !== null) {
+        this.table.setAttribute('dir', this._snapshotDir);
+    } else {
+        this.table.removeAttribute('dir');
     }
     }
     this.table = null;
@@ -210,25 +238,30 @@ export class TableTransaction {
   setTableProperty(property, value) {
     if (!this.table) return false;
 
-    // We only mutate the table properties
     if (property === 'border') {
-       if (value) {
-           this.table.setAttribute('border', value);
-       } else {
-           this.table.removeAttribute('border');
-       }
+       if (value) this.table.setAttribute('border', value);
+       else this.table.removeAttribute('border');
+    } else if (property === 'borderColor') {
+       if (value) this.table.setAttribute('bordercolor', value);
+       else this.table.removeAttribute('bordercolor');
+    } else if (property === 'cellPadding') {
+       if (value) this.table.setAttribute('cellpadding', value);
+       else this.table.removeAttribute('cellpadding');
+    } else if (property === 'cellSpacing') {
+       if (value) this.table.setAttribute('cellspacing', value);
+       else this.table.removeAttribute('cellspacing');
+    } else if (property === 'dir') {
+       if (value) this.table.setAttribute('dir', value);
+       else this.table.removeAttribute('dir');
     } else if (property === 'width') {
        this.table.style.width = value;
     } else if (property === 'padding') {
-       // Since padding typically applies to cells, we might need to handle this differently
-       // But for now, just style the table or add a class.
        this.table.style.padding = value;
     } else if (property === 'margin') {
        this.table.style.margin = value;
     } else if (property === 'backgroundColor') {
        this.table.style.backgroundColor = value;
     } else if (property === 'textAlign') {
-       // Typically alignment of table itself uses margins like auto for center
        if (value === 'center') {
            this.table.style.marginLeft = 'auto';
            this.table.style.marginRight = 'auto';
