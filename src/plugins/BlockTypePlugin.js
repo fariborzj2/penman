@@ -16,6 +16,132 @@ export function setupBlockTypePlugin(editor) {
   // Track the current active block type based on the selection
   let currentBlockType = blockTypes[0].name;
 
+  // Normalizes a CSS style key to valid camelCase
+  const normalizeStyleKey = (key) => {
+    // Basic camelCase conversion for kebab-case (if needed)
+    const camelKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+
+    // Test if key exists on empty style object
+    const el = document.createElement('div');
+    if (camelKey in el.style) {
+      return camelKey;
+    }
+
+    // Some common fixes
+    if (camelKey.toLowerCase() === 'background') return 'background';
+    if (camelKey.toLowerCase() === 'color') return 'color';
+    if (camelKey.toLowerCase() === 'borderright') return 'borderRight';
+    if (camelKey.toLowerCase() === 'borderleft') return 'borderLeft';
+    if (camelKey.toLowerCase() === 'bordertop') return 'borderTop';
+    if (camelKey.toLowerCase() === 'borderbottom') return 'borderBottom';
+    if (camelKey.toLowerCase() === 'padding') return 'padding';
+    if (camelKey.toLowerCase() === 'margin') return 'margin';
+
+    // If still invalid, ignore
+    return null;
+  };
+
+  // Safely applies styles
+  const applyStyles = (element, styles) => {
+    if (!styles || typeof styles !== 'object') return;
+    for (const [key, value] of Object.entries(styles)) {
+      const normalKey = normalizeStyleKey(key);
+      if (normalKey) {
+        try {
+          element.style[normalKey] = value;
+        } catch (e) {
+          // silently ignore invalid values
+        }
+      }
+    }
+  };
+
+  // Register the SET_BLOCK_TYPE command
+  editor.commands.register('SET_BLOCK_TYPE', {
+    execute: (ed, blockDef) => {
+      // 1. Find all block-level elements currently selected
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+
+      const range = sel.getRangeAt(0);
+
+      // Before formatting, let's just use execCommand
+      document.execCommand('formatBlock', false, blockDef.cmd);
+
+      // Now find all affected blocks in the selection to apply styles/classes
+      // To do this reliably, we should use TreeWalker on the selection range.
+      const selAfter = window.getSelection();
+      if (!selAfter || selAfter.rangeCount === 0) return;
+      const rangeAfter = selAfter.getRangeAt(0);
+
+      const blocksToStyle = [];
+
+      // Find all top-level blocks in the editable area that intersect the selection
+      Array.from(editor.editableArea.children).forEach(child => {
+         const nodeRange = document.createRange();
+         nodeRange.selectNodeContents(child);
+         // Check if child intersects with the range
+         const intersects = rangeAfter.compareBoundaryPoints(Range.END_TO_START, nodeRange) === -1 &&
+                            rangeAfter.compareBoundaryPoints(Range.START_TO_END, nodeRange) === 1;
+
+        if (intersects || selAfter.containsNode(child, true)) {
+           if (child.tagName && child.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
+             blocksToStyle.push(child);
+           }
+        }
+      });
+
+      // If selection was collapsed, the above might not catch it if containsNode fails.
+      if (blocksToStyle.length === 0) {
+         let node = selAfter.anchorNode;
+         if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+         while (node && node !== editor.editableArea) {
+           if (node.tagName && node.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
+             blocksToStyle.push(node);
+             break;
+           }
+           node = node.parentNode;
+         }
+      }
+
+      // Apply class and styles
+      blocksToStyle.forEach(block => {
+        // Find existing block types to remove their classes (prevent style pollution)
+        // Only remove classes that match any of our configured blockTypes
+        const blockTypeClasses = blockTypes.map(b => b.class).filter(c => c);
+        blockTypeClasses.forEach(c => {
+          block.classList.remove(c);
+        });
+
+        // Remove only known blockType editorStyles to prevent wiping custom user inline styles
+        // However, standard formatBlock usually creates a fresh element without old inline styles anyway.
+        // We will just clear styles defined in any blockType's editorStyle, then apply the new one.
+        const allEditorStyleKeys = new Set();
+        blockTypes.forEach(b => {
+          if (b.editorStyle) {
+            Object.keys(b.editorStyle).forEach(k => allEditorStyleKeys.add(normalizeStyleKey(k)));
+          }
+        });
+
+        allEditorStyleKeys.forEach(k => {
+          if (k && block.style[k] !== undefined) {
+            block.style[k] = '';
+          }
+        });
+
+        // Apply new class
+        if (blockDef.class) {
+          block.classList.add(blockDef.class);
+        }
+
+        // Apply new styles
+        if (blockDef.editorStyle) {
+          applyStyles(block, blockDef.editorStyle);
+        }
+      });
+    }
+  });
+
   // The rendering function for the dropdown content
   const renderDropdownContent = () => {
     const container = document.createElement('div');
@@ -70,6 +196,11 @@ export function setupBlockTypePlugin(editor) {
              if (level === 6) innerTag.style.fontSize = '0.67em';
           }
 
+          // Apply optionStyle if available
+          if (block.optionStyle) {
+            applyStyles(innerTag, block.optionStyle);
+          }
+
           item.appendChild(innerTag);
 
           if (block.name === currentBlockType) {
@@ -82,11 +213,11 @@ export function setupBlockTypePlugin(editor) {
 
           item.addEventListener('click', (e) => {
             e.preventDefault();
-            // Execute the command without clearing selection markers here,
-            // the command manager takes care of selection internally.
-            editor.execCommand('formatBlock', block.cmd);
 
-            // Trigger outside click to close the dropdown (or we could expose close on dropdown instance)
+            // Execute our new custom command
+            editor.execCommand('SET_BLOCK_TYPE', block);
+
+            // Trigger outside click to close the dropdown
             document.body.click();
           });
 
@@ -115,13 +246,9 @@ export function setupBlockTypePlugin(editor) {
     text: 'Paragraph', // Default label
     render: renderDropdownContent,
     onOpen: () => {
-      // Save selection when opening to maintain it during search/interaction
       editor.selection.save();
     },
     onClose: () => {
-      // Clean up markers if we close without changing
-      // Note: If formatBlock was executed, the command manager already handled markers,
-      // but clearSaved is safe to call anyway.
       editor.selection.clearSaved();
     }
   });
@@ -138,22 +265,38 @@ export function setupBlockTypePlugin(editor) {
     }
 
     // Find the closest block element within the editor
-    let activeTag = 'p'; // default
+    let activeTag = 'p';
+    let activeClass = '';
+
     while (node && node !== editor.editableArea && node.parentNode) {
       const tagName = node.tagName ? node.tagName.toLowerCase() : '';
-      const match = blockTypes.find(b => b.cmd === tagName);
+
+      // Instead of just finding by tag, try finding exact match with class first
+      let match = null;
+
+      if (node.className) {
+         match = blockTypes.find(b => b.cmd === tagName && b.class === node.className);
+      }
+
+      if (!match) {
+         match = blockTypes.find(b => b.cmd === tagName && !b.class);
+      }
+
       if (match) {
         activeTag = tagName;
+        activeClass = node.className || '';
         break;
       }
       node = node.parentNode;
     }
 
-    const activeBlock = blockTypes.find(b => b.cmd === activeTag) || blockTypes[0];
+    let activeBlock = blockTypes.find(b => b.cmd === activeTag && (b.class || '') === activeClass);
+    if (!activeBlock) {
+      activeBlock = blockTypes.find(b => b.cmd === activeTag && !b.class) || blockTypes[0];
+    }
 
     if (currentBlockType !== activeBlock.name) {
       currentBlockType = activeBlock.name;
-      // Find the dropdown button and update its text
       const btn = editor.container.querySelector('.penman-btn-blocktype');
       if (btn) {
         btn.textContent = currentBlockType;

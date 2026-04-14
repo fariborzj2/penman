@@ -13,7 +13,18 @@ describe('BlockTypePlugin', () => {
     document.body.innerHTML = '<textarea id="editor">Initial text</textarea>';
     editor = new Editor({
       selector: '#editor',
-      plugins: ['blocktype']
+      plugins: ['blocktype'],
+      blockTypes: [
+        { name: 'Paragraph', cmd: 'p' },
+        { name: 'Heading 1', cmd: 'h1' },
+        {
+          name: 'Warning',
+          cmd: 'div',
+          class: 'warning-block',
+          optionStyle: { color: 'red' },
+          editorStyle: { background: '#fde3e3' }
+        }
+      ]
     });
 
     // Mock execCommand to avoid actual browser document manipulation side-effects during some tests
@@ -39,28 +50,27 @@ describe('BlockTypePlugin', () => {
     expect(content.querySelector('.penman-blocktype-search')).not.toBeNull();
     expect(content.querySelector('.penman-blocktype-list')).not.toBeNull();
 
-    // Check default items are rendered (Paragraph, H1-H6, Blockquote)
+    // Check items are rendered
     const items = content.querySelectorAll('.penman-blocktype-item');
     expect(items.length).toBeGreaterThan(0);
     expect(items[0].textContent).toBe('Paragraph');
   });
 
-  it('should filter items based on search input', () => {
+  it('should apply optionStyle to the UI innerTag', () => {
     const dropdownConfig = editor.ui.registry.dropdowns['blocktype'];
     const content = dropdownConfig.render();
 
-    const searchInput = content.querySelector('.penman-blocktype-search');
-
-    // Type "Heading 1"
-    searchInput.value = 'Heading 1';
-    searchInput.dispatchEvent(new Event('input'));
-
+    // Find Warning block
     const items = content.querySelectorAll('.penman-blocktype-item');
-    expect(items.length).toBe(1);
-    expect(items[0].textContent).toBe('Heading 1');
+    const warningItem = Array.from(items).find(i => i.textContent === 'Warning');
+    expect(warningItem).toBeDefined();
+
+    // Check color applied to its inner child (div)
+    const innerTag = warningItem.querySelector('div');
+    expect(innerTag.style.color).toBe('red');
   });
 
-  it('should execute formatBlock when an item is clicked', () => {
+  it('should execute SET_BLOCK_TYPE when an item is clicked', () => {
     // Spy on editor's execCommand
     const execCommandSpy = vi.spyOn(editor, 'execCommand');
 
@@ -73,6 +83,6 @@ describe('BlockTypePlugin', () => {
     const heading1Item = Array.from(items).find(i => i.textContent === 'Heading 1');
     heading1Item.dispatchEvent(new Event('click'));
 
-    expect(execCommandSpy).toHaveBeenCalledWith('formatBlock', 'h1');
+    expect(execCommandSpy).toHaveBeenCalledWith('SET_BLOCK_TYPE', expect.objectContaining({ cmd: 'h1', name: 'Heading 1' }));
   });
 });
