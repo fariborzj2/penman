@@ -70,7 +70,7 @@ export function setupFindReplacePlugin(editor) {
 
       const startMap = this.mapping[globalStart];
       const startNode = startMap.node;
-      const startOffset = startMap.offset;
+      let startOffset = startMap.offset;
 
       const endGlobalIndex = globalStart + matchLength - 1;
       if (endGlobalIndex >= this.mapping.length) return null;
@@ -99,6 +99,9 @@ export function setupFindReplacePlugin(editor) {
       if (startNode && endNode) {
          const range = document.createRange();
          try {
+             // Safe bound check for JSDOM strictly
+             startOffset = Math.min(startOffset, startNode.nodeValue.length);
+             endOffset = Math.min(endOffset, endNode.nodeValue.length);
              range.setStart(startNode, startOffset);
              range.setEnd(endNode, endOffset);
              return range;
@@ -114,10 +117,12 @@ export function setupFindReplacePlugin(editor) {
         if (this.mapping.length === 0) return null;
         if (globalOffset >= this.mapping.length) {
             const last = this.mapping[this.mapping.length - 1];
-            return { node: last.node, offset: last.node.nodeValue.length };
+            // Ensure offset is bounded by nodeValue length to avoid JSDOM IndexSizeError
+            return { node: last.node, offset: Math.min(last.node.nodeValue.length, globalOffset - last.globalOffset + last.offset) };
         }
         const map = this.mapping[globalOffset];
-        return { node: map.node, offset: map.offset };
+        // Ensure the returned offset is within the bounds of the node
+        return { node: map.node, offset: Math.min(map.node.nodeValue.length, map.offset) };
     }
   }
 
@@ -202,11 +207,24 @@ export function setupFindReplacePlugin(editor) {
             const range = mapper.getRangeForMatch(result.globalStart, result.length);
 
             if (range) {
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-                document.execCommand('insertText', false, replacement);
-                return true;
+                if (range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE) {
+                    const node = range.startContainer;
+                    const text = node.nodeValue;
+                    node.nodeValue = text.substring(0, range.startOffset) + replacement + text.substring(range.endOffset);
+                    return true;
+                } else {
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+
+                    try {
+                        range.deleteContents();
+                        range.insertNode(document.createTextNode(replacement));
+                        return true;
+                    } catch(e) {
+                        console.warn('Find and Replace native DOM split failed', e);
+                    }
+                }
             }
          }
          return false;
@@ -284,10 +302,12 @@ export function setupFindReplacePlugin(editor) {
                     sel.removeAllRanges();
                     const marker = finalMapper.resolveGlobalOffsetToNative(originalStart + replacement.length);
                     if (marker) {
+                    try {
                         const range = document.createRange();
                         range.setStart(marker.node, marker.offset);
                         range.collapse(true);
                         sel.addRange(range);
+                    } catch(e) {}
                     }
                     editor.selection.save();
                 }
