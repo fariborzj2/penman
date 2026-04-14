@@ -2,12 +2,91 @@ import { GallerySystem } from './gallery/index.js';
 import { insertImageFromURL, uploadImageCommand, pasteImageHandler, dropImageHandler } from './commands/index.js';
 import { handleCaptionKeyDown, handleCaptionPaste, handleCaptionBlur, setupAlignmentObserver, setFigureAlignment } from './rendering/index.js';
 import { TrustLevel } from './security/index.js';
+import { FloatingUI } from '../../ui/FloatingUI.js';
 
 export function setupImagePlugin(editor) {
   const root = editor.editableArea;
 
   // 1. Setup DOM Observers
   setupAlignmentObserver(root);
+
+  // Floating UI for Images
+  let floatingUI = null;
+
+  function createFloatingUI() {
+    floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
+    const html = `
+      <div class="penman-image-toolbar" style="background: white; border: 1px solid #e0e0e0; padding: 4px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
+        <!-- Arrow Tail -->
+        <div class="penman-floating-tail-inner" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
+        <div class="penman-floating-tail-outer" style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
+
+        <button type="button" class="penman-btn penman-btn-align-left" title="Align Left" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="15" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <button type="button" class="penman-btn penman-btn-align-center" title="Align Center" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <button type="button" class="penman-btn penman-btn-align-right" title="Align Right" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+        <button type="button" class="penman-btn penman-btn-del-image" title="Delete Image" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
+        </button>
+      </div>
+    `;
+    floatingUI.mount(html);
+
+    // Event listeners for buttons
+    floatingUI.element.querySelector('.penman-btn-align-left').addEventListener('click', (e) => {
+       e.preventDefault();
+       if (floatingUI.anchorNode) {
+          editor.image.setAlignment(floatingUI.anchorNode, 'left');
+          floatingUI.update();
+       }
+    });
+
+    floatingUI.element.querySelector('.penman-btn-align-center').addEventListener('click', (e) => {
+       e.preventDefault();
+       if (floatingUI.anchorNode) {
+          editor.image.setAlignment(floatingUI.anchorNode, 'center');
+          floatingUI.update();
+       }
+    });
+
+    floatingUI.element.querySelector('.penman-btn-align-right').addEventListener('click', (e) => {
+       e.preventDefault();
+       if (floatingUI.anchorNode) {
+          editor.image.setAlignment(floatingUI.anchorNode, 'right');
+          floatingUI.update();
+       }
+    });
+
+    floatingUI.element.querySelector('.penman-btn-del-image').addEventListener('click', (e) => {
+       e.preventDefault();
+       if (floatingUI.anchorNode) {
+          // Trigger a history snapshot before removal as per standard operations
+          editor.history.takeSnapshot();
+          floatingUI.anchorNode.remove();
+          editor.emit('change');
+          floatingUI.hide();
+       }
+    });
+  }
+
+  root.addEventListener('click', (e) => {
+      const figure = e.target.closest('figure.penman-image');
+      if (figure) {
+          if (!floatingUI) createFloatingUI();
+          floatingUI.setAnchor(figure);
+          floatingUI.show();
+      } else {
+          if (floatingUI) floatingUI.hide();
+      }
+  });
+
+  // End of Floating UI logic
+
 
   // 2. Setup Event Listeners
   root.addEventListener('keydown', (e) => {
@@ -126,8 +205,10 @@ export function setupImagePlugin(editor) {
 
             <div class="penman-image-tab-content" id="penman-tab-gallery">
               <div style="padding: 0 15px 15px">
-                <div style="text-align: center; color: #666; padding: 20px;">
-                  <p>Gallery is empty or not configured.</p>
+                <div class="penman-gallery-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto;">
+                  <div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;" class="penman-gallery-empty">
+                    <p>Loading gallery...</p>
+                  </div>
                 </div>
               </div>
               <div class="penman-modal-footer">
@@ -149,6 +230,58 @@ export function setupImagePlugin(editor) {
             contents.forEach(c => c.classList.remove('active'));
             tab.classList.add('active');
             elModal.querySelector('#penman-tab-' + tab.dataset.tab).classList.add('active');
+        // Gallery Loading Logic
+        tab.addEventListener('click', () => {
+          if (tab.dataset.tab === 'gallery') {
+            const galleryContainer = elModal.querySelector('.penman-gallery-container');
+            const sources = editor.image.gallery.getRegisteredSources();
+            
+            if (sources.length === 0) {
+              galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>No gallery sources registered.</p></div>';
+              return;
+            }
+
+            // For simplicity in this base implementation, we load the first ready source
+            const sourceInfo = sources[0];
+            
+            editor.image.gallery.getSource(sourceInfo.id).then(source => {
+                source.list().then(res => {
+                    if (res && res.items && res.items.length > 0) {
+                        galleryContainer.innerHTML = ''; // clear loading
+                        res.items.forEach(item => {
+                            const imgDiv = document.createElement('div');
+                            imgDiv.style.cursor = 'pointer';
+                            imgDiv.style.border = '2px solid transparent';
+                            imgDiv.style.borderRadius = '4px';
+                            imgDiv.style.overflow = 'hidden';
+                            imgDiv.style.height = '100px';
+                            imgDiv.style.position = 'relative';
+                            
+                            imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" style="width:100%; height:100%; object-fit:cover;" title="${item.title || ''}">`;
+                            
+                            imgDiv.addEventListener('mouseover', () => imgDiv.style.borderColor = '#007bff');
+                            imgDiv.addEventListener('mouseout', () => imgDiv.style.borderColor = 'transparent');
+                            
+                            imgDiv.addEventListener('click', () => {
+                                // Trust level is inherited from the source definition (Trust Immutability Rule)
+                                editor.image.insertFromURL(item.url, item.title || '');
+                                modal.close();
+                            });
+                            
+                            galleryContainer.appendChild(imgDiv);
+                        });
+                    } else {
+                         galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>Gallery is empty.</p></div>';
+                    }
+                }).catch(err => {
+                    galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error loading gallery: ${err.message}</p></div>`;
+                });
+            }).catch(err => {
+                galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error initializing gallery source: ${err.message}</p></div>`;
+            });
+          }
+        });
+
           });
         });
 
