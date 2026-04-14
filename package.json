@@ -32,5 +32,10 @@
   "bugs": {
     "url": "https://github.com/fariborzj2/penman/issues"
   },
-  "homepage": "https://github.com/fariborzj2/penman#readme"
+  "homepage": "https://github.com/fariborzj2/penman#readme",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "multer": "^2.1.1"
+  }
 }

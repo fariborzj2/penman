@@ -44,15 +44,6 @@
 
     // Initialize the editor
     penman.init({
-      imageUploadFn: async (file) => {
-        // Mock upload function for testing
-        return new Promise((resolve) => {
-           setTimeout(() => {
-              const objectUrl = URL.createObjectURL(file);
-              resolve({ url: objectUrl, alt: file.name });
-           }, 1500);
-        });
-      },
       selector: '#myTextarea',
       lang: 'fa',
       direction: 'rtl',
@@ -69,7 +60,23 @@
           class: 'warning-block',
           optionStyle: { color: '#c73a3a', background: '#fde3e3', fontWeight: 'bold' , borderRight: '2px solid #c73a3a' }
         }
-      ]
+      ],
+      imageUploadFn: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await fetch('/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        return {
+          url: data.url,
+          alt: file.name
+        };
+      }
     });
 
     const instance = penman.get('#myTextarea');
