@@ -103,31 +103,34 @@ describe('FindReplacePlugin', () => {
     expect(btnReplace.disabled).toBe(false);
   });
 
-  it('should replace text correctly', () => {
-    // Mock execCommand for JSDOM
+    // Mock execCommand for JSDOM globally for these tests since replace-all uses it
     let originalExecCommand = document.execCommand;
-    document.execCommand = function(cmd, showUI, value) {
-        if (cmd === 'insertHTML') {
-            const selection = window.getSelection();
-            if (selection.rangeCount > 0) {
-                const range = selection.getRangeAt(0);
-                // JSDOM has bugs with range.deleteContents() causing DOMException
-                // if it spans certain text boundaries in mocked environments.
-                // Instead, we manually replace text node value if it's a simple text selection
-                const node = range.startContainer;
-                if (node.nodeType === 3) {
-                    const text = node.nodeValue;
-                    node.nodeValue = text.substring(0, range.startOffset) + value + text.substring(range.endOffset);
-                    return true;
+    beforeEach(() => {
+        document.execCommand = function(cmd, showUI, value) {
+            if (cmd === 'insertHTML') {
+                const selection = window.getSelection();
+                if (selection.rangeCount > 0) {
+                    const range = selection.getRangeAt(0);
+                    const node = range.startContainer;
+                    if (node.nodeType === 3 && range.startContainer === range.endContainer) {
+                        const text = node.nodeValue;
+                        node.nodeValue = text.substring(0, range.startOffset) + value + text.substring(range.endOffset);
+                        return true;
+                    }
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(value));
                 }
-
-                range.deleteContents();
-                range.insertNode(document.createTextNode(value));
+                return true;
             }
-            return true;
-        }
-        return originalExecCommand(cmd, showUI, value);
-    };
+            return originalExecCommand(cmd, showUI, value);
+        };
+    });
+
+    afterEach(() => {
+        document.execCommand = originalExecCommand;
+    });
+
+  it('should replace text correctly', () => {
 
     editor.setContent('<p>Hello world.</p>');
     const action = editor.ui.registry.buttons['findreplace'].onAction;
@@ -147,7 +150,6 @@ describe('FindReplacePlugin', () => {
     expect(editor.getContent()).toContain('Penman');
     expect(editor.getContent()).not.toContain('world');
 
-    document.execCommand = originalExecCommand;
   });
 
   it('should replace all instances without skipping or crashing', () => {

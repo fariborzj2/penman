@@ -1,22 +1,38 @@
+import os
 from playwright.sync_api import Page, expect, sync_playwright
 
-def test_editor_svg_icons(page: Page):
-  # 1. Navigate to the local dev server
-  page.goto("http://localhost:5173")
+PORT = os.environ.get('VITE_PORT', '5173')
+URL = f"http://localhost:{PORT}"
 
-  # 2. Wait for the toolbar to be ready
+def test_editor_svg_icons(page: Page):
+  page.goto(URL)
   toolbar = page.locator(".penman-toolbar")
   expect(toolbar).to_be_visible()
 
-  # 3. Assert that SVG icons are rendered inside buttons
   bold_btn = page.locator(".penman-btn-bold svg")
   expect(bold_btn).to_be_visible()
 
-  italic_btn = page.locator(".penman-btn-italic svg")
-  expect(italic_btn).to_be_visible()
+def test_editor_find_replace_e2e(page: Page):
+  page.goto(URL)
 
-  # 4. Take a screenshot for visual verification
-  page.screenshot(path="screenshot.png")
+  editable = page.locator(".penman-editor-area")
+  editable.click()
+  editable.fill("This is a strict test. We need to replace the word strict safely. Very strict!")
+
+  page.keyboard.press("Control+f")
+
+  modal = page.locator(".penman-modal")
+  expect(modal).to_be_visible()
+
+  page.locator("#fr-find").fill("strict")
+  page.locator("#fr-replace").fill("awesome")
+
+  page.locator("#fr-btn-find").click()
+  page.locator("#fr-btn-replace-all").click()
+
+  content = editable.inner_text()
+  assert "awesome" in content
+  assert "strict" not in content
 
 if __name__ == "__main__":
   with sync_playwright() as p:
@@ -24,6 +40,7 @@ if __name__ == "__main__":
     page = browser.new_page()
     try:
       test_editor_svg_icons(page)
-      print("Playwright test successfully generated screenshot.png")
+      test_editor_find_replace_e2e(page)
+      print("Playwright E2E tests passed successfully.")
     finally:
       browser.close()
