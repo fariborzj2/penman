@@ -40,40 +40,40 @@ export function pasteImageHandler(editor, event, uploadFn) {
     const images = doc.querySelectorAll('img');
 
     if (images.length > 0) {
-      // If there's an image, let's let the default paste handler do its job IF it's handled by Sanitizer?
-      // Spec says: "If clipboardData.getData('text/html') contains <img>: Extract src, validate, insert as URL. Drop invalid tags."
-      // This implies we handle it explicitly.
-      // Actually, if we intercept, we prevent the rest of the HTML from pasting.
-      // Wait, standard paste might include text AND images. If we prevent default, text is lost unless we parse and paste all.
-      // The spec says "If clipboardData.getData('text/html') contains <img>: Extract src, validate, insert as URL. Drop invalid tags."
-      // Let's intercept only if the ONLY content is images, or we can just extract the first image.
+      // We must prevent default to stop the native paste from double-inserting or causing race conditions
+      // with our manual DOM modification logic.
+      event.preventDefault();
 
-      // We will parse the src and execute insertImageFromURL for each valid image, but we shouldn't ruin normal text paste.
-      // If we intercept, we must return true.
-      // But standard Sanitizer already handles 'img' tags?
-      // Wait, let's look at Sanitizer.js from Memory. `this.allowedTags` does NOT include 'img'.
-      // So Sanitizer unwraps 'img' tags!
-      // This means standard paste drops images entirely!
-      // Therefore, we MUST extract them here.
+      // For a perfectly safe fallback: Extract images, insert them sequentially, and also
+      // paste the rest of the valid HTML using standard execCommand if needed.
+      // But spec just says: "Extract src, validate, insert as URL. Drop invalid tags."
+      // Let's insert the text and the images manually to preserve structure without racing.
 
-      // For simplicity in a strict environment, if there are images, we extract them.
+      // A more robust way to keep the text is to allow the editor's Sanitizer to run,
+      // but since we prevented default, we can just insert the clean text first, then images.
+
+      const cleanText = doc.body.textContent || clipboardData.getData('text/plain') || '';
+
+      // 1. Insert text (if any)
+      if (cleanText.trim().length > 0) {
+          document.execCommand('insertText', false, cleanText);
+      }
+
+      // 2. Insert extracted images synchronously
       images.forEach(img => {
         const src = img.getAttribute('src');
         if (src) {
           try {
             // Validate and insert
-            // Note: Since this is an interception, we should probably prevent default
-            insertImageFromURL(editor, { url: src, alt: img.getAttribute('alt') || '' });
+            // Using UNTRUSTED by default since it's pasted from arbitrary source
+            insertImageFromURL(editor, { url: src, alt: img.getAttribute('alt') || '', trustLevel: 'UNTRUSTED' });
           } catch (e) {
             // Drop invalid tags silently
           }
         }
       });
-      // We do NOT prevent default here, so the rest of the text still pastes through the standard Sanitizer!
-      // Or if we must, we return false.
-      // Wait: if we don't prevent default, the images are dropped by Sanitizer (which is correct), but the text remains!
-      // And we inserted the images manually! This perfectly fulfills "Extract src, validate, insert as URL. Drop invalid tags."
-      return false;
+
+      return true;
     }
   }
 
