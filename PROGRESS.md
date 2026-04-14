@@ -147,3 +147,10 @@
 - **توضیحات:** مستند مشخصات معماری افزونه تصویر و گالری در `docs/19-image-plugin-spec.md` اضافه شد.
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: مستندات و مشخصات مربوط به پلاگین جدید Image Plugin شامل یکپارچه‌سازی با سیستم‌های آپلود، مدیریت گالری، رندرینگ، تست و UI اضافه شدند.
+
+### فاز 3، 4 و 5 افزونه تصویر (Image Plugin)
+- **وضعیت:** کامل (Completed)
+- **درصد پیشرفت:** 100%
+- **توضیحات:** افزونه `image` به صورت کاملا معماری شده و جدا شده بر اساس مستند `docs/19-image-plugin-spec.md` شامل Pipeline آپلود، رویدادها، و Model Selection ایمن (با پشتیبانی از Trust Boundary و Mutation Atomic Law) پیاده سازی شد. این پلاگین در هسته ویرایشگر توسط PluginManager رجیستر شد.
+- **بخش ثبت تغییرات (Change Log):**
+  - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: پیاده‌سازی کامل ImagePlugin بر پایه Vanilla JS، مدل ثبت Snapshots، ایجاد DOM ایمن (فقط با createElement) و State Machine برای pipeline آپلود. تست‌های JSDOM اجرا و پاس شدند (تست‌های Memory Issue نیز رفع شد).

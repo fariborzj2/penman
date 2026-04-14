@@ -8,6 +8,7 @@ import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
 import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
 import { setupFindReplacePlugin } from './FindReplacePlugin.js';
 import { setupTablePlugin } from './TablePlugin.js';
+import { setupImagePlugin } from './ImagePlugin/index.js';
 
 export const PluginManager = {
   plugins: {
@@ -20,7 +21,8 @@ export const PluginManager = {
     'removeformat': setupRemoveFormatPlugin,
     'hr': setupHorizontalRulePlugin,
     'findreplace': setupFindReplacePlugin,
-    'table': setupTablePlugin
+    'table': setupTablePlugin,
+    'image': setupImagePlugin
   },
 
   /**
