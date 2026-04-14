@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Editor } from '../core/Editor.js';
+import { Editor } from '../../core/Editor.js';
 import { setupBlockTypePlugin } from './BlockTypePlugin.js';
 
 describe('BlockTypePlugin', () => {
@@ -55,18 +55,17 @@ describe('BlockTypePlugin', () => {
     expect(items[0].textContent).toBe('Paragraph');
   });
 
-  it('should apply optionStyle to the UI innerTag', () => {
+  it('should apply optionStyle to the item container', () => {
     const dropdownConfig = editor.ui.registry.dropdowns['blocktype'];
     const content = dropdownConfig.render();
-
+    
     // Find Warning block
     const items = content.querySelectorAll('.penman-blocktype-item');
     const warningItem = Array.from(items).find(i => i.textContent === 'Warning');
     expect(warningItem).toBeDefined();
-
-    // Check color applied to its inner child (div)
-    const innerTag = warningItem.querySelector('div');
-    expect(innerTag.style.color).toBe('red');
+    
+    // Check color applied to the item container
+    expect(warningItem.style.color).toBe('red');
   });
 
   it('should execute SET_BLOCK_TYPE when an item is clicked', () => {

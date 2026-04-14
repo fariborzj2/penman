@@ -7,6 +7,15 @@
 4. Click the "Paragraph" (or active block type) button in the toolbar to open the searchable list.
 5. Select a block type from the list to apply it to the current cursor position.
 
+## Configuration and Features
+
+The user can customize the allowed block types when initializing the editor. Each block type now supports the following properties:
+
+- **name**: The label displayed in the dropdown menu.  
+- **cmd**: The corresponding HTML tag (e.g., `h1`, `p`, `div`).  
+- **class**: (optional) A CSS class applied to the block during formatting.  
+- **optionStyle**: (optional) Inline styles used only for rendering the item inside the dropdown menu, allowing a visual preview of the block before selection.
+
 ## Initialization
 ```javascript
 const editor = penman.init({
@@ -16,7 +25,13 @@ const editor = penman.init({
   blockTypes: [
     { name: 'Paragraph', cmd: 'p' },
     { name: 'Subheading', cmd: 'h3' },
-    { name: 'Quote', cmd: 'blockquote' }
+    { name: 'Quote', cmd: 'blockquote' },
+    {
+      name: 'Warning',
+      cmd: 'div',
+      class: 'warning-block',
+      optionStyle: { color: 'red', fontWeight: 'bold' }
+    }
   ]
 });
 ```

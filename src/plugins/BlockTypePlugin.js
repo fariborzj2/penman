@@ -20,13 +20,13 @@ export function setupBlockTypePlugin(editor) {
   const normalizeStyleKey = (key) => {
     // Basic camelCase conversion for kebab-case (if needed)
     const camelKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
-
+    
     // Test if key exists on empty style object
     const el = document.createElement('div');
     if (camelKey in el.style) {
       return camelKey;
     }
-
+    
     // Some common fixes
     if (camelKey.toLowerCase() === 'background') return 'background';
     if (camelKey.toLowerCase() === 'color') return 'color';
@@ -62,12 +62,12 @@ export function setupBlockTypePlugin(editor) {
       // 1. Find all block-level elements currently selected
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
-
+      
       const range = sel.getRangeAt(0);
-
+      
       // Before formatting, let's just use execCommand
       document.execCommand('formatBlock', false, blockDef.cmd);
-
+      
       // Now find all affected blocks in the selection to apply styles/classes
       // To do this reliably, we should use TreeWalker on the selection range.
       const selAfter = window.getSelection();
@@ -83,14 +83,14 @@ export function setupBlockTypePlugin(editor) {
          // Check if child intersects with the range
          const intersects = rangeAfter.compareBoundaryPoints(Range.END_TO_START, nodeRange) === -1 &&
                             rangeAfter.compareBoundaryPoints(Range.START_TO_END, nodeRange) === 1;
-
+                            
         if (intersects || selAfter.containsNode(child, true)) {
            if (child.tagName && child.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
              blocksToStyle.push(child);
            }
         }
       });
-
+      
       // If selection was collapsed, the above might not catch it if containsNode fails.
       if (blocksToStyle.length === 0) {
          let node = selAfter.anchorNode;
@@ -177,7 +177,7 @@ export function setupBlockTypePlugin(editor) {
 
           // Apply optionStyle if available
           if (block.optionStyle) {
-            applyStyles(innerTag, block.optionStyle);
+            applyStyles(item, block.optionStyle);
           }
 
           item.appendChild(innerTag);
@@ -192,7 +192,7 @@ export function setupBlockTypePlugin(editor) {
 
           item.addEventListener('click', (e) => {
             e.preventDefault();
-
+            
             // Execute our new custom command
             editor.execCommand('SET_BLOCK_TYPE', block);
 
@@ -246,21 +246,21 @@ export function setupBlockTypePlugin(editor) {
     // Find the closest block element within the editor
     let activeTag = 'p';
     let activeClass = '';
-
+    
     while (node && node !== editor.editableArea && node.parentNode) {
       const tagName = node.tagName ? node.tagName.toLowerCase() : '';
-
+      
       // Instead of just finding by tag, try finding exact match with class first
       let match = null;
-
+      
       if (node.className) {
          match = blockTypes.find(b => b.cmd === tagName && b.class === node.className);
       }
-
+      
       if (!match) {
          match = blockTypes.find(b => b.cmd === tagName && !b.class);
       }
-
+      
       if (match) {
         activeTag = tagName;
         activeClass = node.className || '';

@@ -45,11 +45,22 @@
     // Initialize the editor
     penman.init({
       selector: '#myTextarea',
-      lang: 'en',
-      direction: 'ltr',
+      lang: 'fa',
+      direction: 'rtl',
       height: 260,
       plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table'],
-      toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink | hr | findreplace | table'
+      toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink | hr | findreplace | table',
+      blockTypes: [
+        { name: 'Paragraph', cmd: 'p' },
+        { name: 'Subheading', cmd: 'h3' },
+        { name: 'Quote', cmd: 'blockquote' },
+        {
+          name: 'Warning',
+          cmd: 'div',
+          class: 'warning-block',
+          optionStyle: { color: '#c73a3a', background: '#fde3e3', fontWeight: 'bold' , borderRight: '2px solid #c73a3a' }
+        }
+      ]
     });
 
     const instance = penman.get('#myTextarea');
