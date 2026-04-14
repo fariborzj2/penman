@@ -8,9 +8,10 @@
 
 export function handleCaptionKeyDown(event, editor) {
   if (event.key === 'Enter') {
-    event.preventDefault();
     const figcaption = event.target;
+    // Strictly check if we are actually inside a caption before preventing default!
     if (figcaption && figcaption.tagName === 'FIGCAPTION') {
+      event.preventDefault();
       figcaption.blur();
 
       const figure = figcaption.closest('figure');
