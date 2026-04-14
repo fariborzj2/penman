@@ -42,12 +42,19 @@ export function setupAlignmentObserver(editorArea) {
 
 function syncAlignmentClass(figure) {
   const alignment = figure.getAttribute('data-alignment') || 'center';
+  const newClass = `penman-align-${alignment}`;
 
-  // Clean existing align classes
-  figure.classList.remove('penman-align-left', 'penman-align-center', 'penman-align-right');
+  // Clean existing align classes only if they shouldn't be there
+  ['penman-align-left', 'penman-align-center', 'penman-align-right'].forEach(cls => {
+    if (cls !== newClass && figure.classList.contains(cls)) {
+      figure.classList.remove(cls);
+    }
+  });
 
-  // Set correct class
-  figure.classList.add(`penman-align-${alignment}`);
+  // Set correct class only if it's missing
+  if (!figure.classList.contains(newClass)) {
+    figure.classList.add(newClass);
+  }
 }
 
 export function setFigureAlignment(figure, alignment, editor) {
