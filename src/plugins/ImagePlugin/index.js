@@ -1,3 +1,4 @@
+import { GallerySystem } from './gallery/index.js';
 import { insertImageFromURL, uploadImageCommand, pasteImageHandler, dropImageHandler } from './commands/index.js';
 import { handleCaptionKeyDown, handleCaptionPaste, handleCaptionBlur, setupAlignmentObserver, setFigureAlignment } from './rendering/index.js';
 import { TrustLevel } from './security/index.js';
@@ -38,7 +39,10 @@ export function setupImagePlugin(editor) {
   }, true); // Use capture phase to catch blur on children
 
   // 3. Expose API to Editor (Registry approach or directly)
+  const gallerySystem = new GallerySystem();
+
   editor.image = {
+    gallery: gallerySystem,
     insertFromURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.TRUSTED }), // From API, it might be trusted? Spec says "trustLevel is explicitly defined at PluginManager registration time". Let's assume UNTRUSTED by default for manual API calls unless specified.
     insertUntrustedURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.UNTRUSTED }),
     upload: (files) => uploadImageCommand(editor, files, editor.options.imageUploadFn),
