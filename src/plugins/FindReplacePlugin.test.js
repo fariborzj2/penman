@@ -103,32 +103,6 @@ describe('FindReplacePlugin', () => {
     expect(btnReplace.disabled).toBe(false);
   });
 
-    // Mock execCommand for JSDOM globally for these tests since replace-all uses it
-    let originalExecCommand = document.execCommand;
-    beforeEach(() => {
-        document.execCommand = function(cmd, showUI, value) {
-            if (cmd === 'insertHTML' || cmd === 'insertText') {
-                const selection = window.getSelection();
-                if (selection.rangeCount > 0) {
-                    const range = selection.getRangeAt(0);
-                    const node = range.startContainer;
-                    if (node.nodeType === 3 && range.startContainer === range.endContainer) {
-                        const text = node.nodeValue;
-                        node.nodeValue = text.substring(0, range.startOffset) + value + text.substring(range.endOffset);
-                        return true;
-                    }
-                    range.deleteContents();
-                    range.insertNode(document.createTextNode(value));
-                }
-                return true;
-            }
-            return originalExecCommand(cmd, showUI, value);
-        };
-    });
-
-    afterEach(() => {
-        document.execCommand = originalExecCommand;
-    });
 
   it('should replace text correctly', () => {
 
