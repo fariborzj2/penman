@@ -154,3 +154,4 @@
 - **توضیحات:** افزونه `image` به صورت کاملا معماری شده و جدا شده بر اساس مستند `docs/19-image-plugin-spec.md` شامل Pipeline آپلود، رویدادها، و Model Selection ایمن (با پشتیبانی از Trust Boundary و Mutation Atomic Law) پیاده سازی شد. این پلاگین در هسته ویرایشگر توسط PluginManager رجیستر شد.
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: پیاده‌سازی کامل ImagePlugin بر پایه Vanilla JS، مدل ثبت Snapshots، ایجاد DOM ایمن (فقط با createElement) و State Machine برای pipeline آپلود. تست‌های JSDOM اجرا و پاس شدند (تست‌های Memory Issue نیز رفع شد).
+  - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: زیرساخت Gallery System مطابق با قراردادهای سختگیرانه (GallerySource) ایجاد شد و اطمینان حاصل شد که trustLevel هنگام خواندن اشیاء JSON از APIهای خارجی به طور غیرقابل‌تغییر باقی می‌ماند. با این پیاده‌سازی، فاز "Gallery System" به طور کامل و ۱۰۰ درصدی در معماری وارد شد.
