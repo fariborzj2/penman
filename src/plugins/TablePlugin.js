@@ -30,42 +30,44 @@ export function setupTablePlugin(editor) {
           editor.ui.createModal({
               title: 'Table Properties',
               body: `
-                  <div class="penman-modal-form-row">
-                      <label>Width:</label>
-                      <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Border:</label>
-                      <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Border Color:</label>
-                      <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="e.g. #000 or red">
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Cell Padding:</label>
-                      <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="e.g. 5">
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Cell Spacing:</label>
-                      <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="e.g. 0">
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Direction:</label>
-                      <select name="dir">
-                          <option value="" ${!currentDir ? 'selected' : ''}>Default</option>
-                          <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>LTR</option>
-                          <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>RTL</option>
-                      </select>
-                  </div>
-                  <div class="penman-modal-form-row">
-                      <label>Alignment:</label>
-                      <select name="textAlign">
-                          <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
-                          <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
-                          <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
-                      </select>
-                  </div>
+                <div style="padding: 15px">
+                    <div class="penman-modal-form-row">
+                        <label>Width:</label>
+                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Border:</label>
+                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Border Color:</label>
+                        <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="e.g. #000 or red">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Cell Padding:</label>
+                        <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="e.g. 5">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Cell Spacing:</label>
+                        <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="e.g. 0">
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Direction:</label>
+                        <select name="dir">
+                            <option value="" ${!currentDir ? 'selected' : ''}>Default</option>
+                            <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>LTR</option>
+                            <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>RTL</option>
+                        </select>
+                    </div>
+                    <div class="penman-modal-form-row">
+                        <label>Alignment:</label>
+                        <select name="textAlign">
+                            <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
+                            <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
+                            <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
+                        </select>
+                    </div>
+                </div>
               `,
               onSubmit: (data) => {
                   const propsToSet = {};

@@ -191,9 +191,6 @@ export class Modal {
         cursor: pointer;
         color: #666;
       }
-      .penman-modal-body {
-        padding: 15px;
-      }
       .penman-modal-body input {
         width: 100%;
         box-sizing: border-box;

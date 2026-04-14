@@ -93,37 +93,44 @@ export function setupImagePlugin(editor) {
             </div>
 
             <div class="penman-image-tab-content active" id="penman-tab-url">
-              <div style="margin-bottom: 10px;">
-                <label style="display:block;margin-bottom:5px;">Image URL</label>
-                <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." style="width: 100%; box-sizing: border-box;" />
+              <div style="padding: 0 15px 15px">
+                <div style="margin-bottom: 10px;">
+                  <label style="display:block;margin-bottom:5px;">Image URL</label>
+                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." style="width: 100%; box-sizing: border-box;" />
+                </div>
+                <div style="margin-bottom: 15px;">
+                  <label style="display:block;margin-bottom:5px;">Alternative Text (Optional)</label>
+                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" style="width: 100%; box-sizing: border-box;" />
+                </div>
               </div>
-              <div style="margin-bottom: 15px;">
-                <label style="display:block;margin-bottom:5px;">Alternative Text (Optional)</label>
-                <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" style="width: 100%; box-sizing: border-box;" />
-              </div>
-              <div style="text-align: right;">
+              <div class="penman-modal-footer">
                 <button type="button" class="penman-btn" id="penman-image-url-cancel">Cancel</button>
                 <button type="button" class="penman-btn penman-btn-primary" id="penman-image-url-submit">Insert</button>
               </div>
             </div>
 
             <div class="penman-image-tab-content" id="penman-tab-upload">
-              <div style="margin-bottom: 15px; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 4px;">
-                <p style="margin: 0 0 10px 0; color: #666;">Drag and drop an image here, or browse.</p>
-                <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" />
-                <button type="button" class="penman-btn" onclick="document.getElementById('penman-image-file-input').click()">Browse Files</button>
+              <div style="padding: 0 15px 15px">
+                <div style="margin-bottom: 15px; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 4px;">
+                  <p style="margin: 0 0 10px 0; color: #666;">Drag and drop an image here, or browse.</p>
+                  <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" />
+                  <button type="button" class="penman-btn" style="margin: 0 auto" onclick="document.getElementById('penman-image-file-input').click()">Browse Files</button>
+                </div>
               </div>
-              <div style="text-align: right;">
+
+              <div class="penman-modal-footer">
                 <button type="button" class="penman-btn" id="penman-image-upload-cancel">Cancel</button>
                 <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit">Upload</button>
               </div>
             </div>
 
             <div class="penman-image-tab-content" id="penman-tab-gallery">
-              <div style="text-align: center; color: #666; padding: 20px;">
-                <p>Gallery is empty or not configured.</p>
+              <div style="padding: 0 15px 15px">
+                <div style="text-align: center; color: #666; padding: 20px;">
+                  <p>Gallery is empty or not configured.</p>
+                </div>
               </div>
-              <div style="text-align: right;">
+              <div class="penman-modal-footer">
                 <button type="button" class="penman-btn" id="penman-image-gallery-cancel">Close</button>
               </div>
             </div>

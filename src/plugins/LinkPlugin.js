@@ -23,28 +23,30 @@ export function setupLinkPlugin(editor) {
       editor.ui.createModal({
         title: 'Insert Link',
         body: `
-          <div>
-            <label for="penman-link-url">URL</label>
-            <input type="url" id="penman-link-url" name="url" placeholder="https://example.com" required>
-          </div>
-          <div style="margin-top: 10px;">
-            <label for="penman-link-text">Text to display</label>
-            <input type="text" id="penman-link-text" name="text" placeholder="Link text" value="${currentText}">
-          </div>
-          <div style="margin-top: 10px; display: flex; gap: 10px;">
-            <div style="flex: 1;">
-              <label for="penman-link-target">Target</label>
-              <select id="penman-link-target" name="target" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px;">
-                <option value="">None</option>
-                <option value="_blank">New Window (_blank)</option>
-                <option value="_self">Same Window (_self)</option>
-                <option value="_parent">Parent Frame (_parent)</option>
-                <option value="_top">Top Frame (_top)</option>
-              </select>
+          <div style="padding: 15px">
+            <div>
+              <label for="penman-link-url">URL</label>
+              <input type="url" id="penman-link-url" name="url" placeholder="https://example.com" required>
             </div>
-            <div style="flex: 1;">
-              <label for="penman-link-rel">Rel</label>
-              <input type="text" id="penman-link-rel" name="rel" placeholder="e.g. nofollow">
+            <div style="margin-top: 10px;">
+              <label for="penman-link-text">Text to display</label>
+              <input type="text" id="penman-link-text" name="text" placeholder="Link text" value="${currentText}">
+            </div>
+            <div style="margin-top: 10px; display: flex; gap: 10px;">
+              <div style="flex: 1;">
+                <label for="penman-link-target">Target</label>
+                <select id="penman-link-target" name="target" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                  <option value="">None</option>
+                  <option value="_blank">New Window (_blank)</option>
+                  <option value="_self">Same Window (_self)</option>
+                  <option value="_parent">Parent Frame (_parent)</option>
+                  <option value="_top">Top Frame (_top)</option>
+                </select>
+              </div>
+              <div style="flex: 1;">
+                <label for="penman-link-rel">Rel</label>
+                <input type="text" id="penman-link-rel" name="rel" placeholder="e.g. nofollow">
+              </div>
             </div>
           </div>
         `,
