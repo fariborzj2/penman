@@ -21,8 +21,7 @@ describe('BlockTypePlugin', () => {
           name: 'Warning',
           cmd: 'div',
           class: 'warning-block',
-          optionStyle: { color: 'red' },
-          editorStyle: { background: '#fde3e3' }
+          optionStyle: { color: 'red' }
         }
       ]
     });

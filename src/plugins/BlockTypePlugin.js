@@ -113,30 +113,9 @@ export function setupBlockTypePlugin(editor) {
           block.classList.remove(c);
         });
 
-        // Remove only known blockType editorStyles to prevent wiping custom user inline styles
-        // However, standard formatBlock usually creates a fresh element without old inline styles anyway.
-        // We will just clear styles defined in any blockType's editorStyle, then apply the new one.
-        const allEditorStyleKeys = new Set();
-        blockTypes.forEach(b => {
-          if (b.editorStyle) {
-            Object.keys(b.editorStyle).forEach(k => allEditorStyleKeys.add(normalizeStyleKey(k)));
-          }
-        });
-
-        allEditorStyleKeys.forEach(k => {
-          if (k && block.style[k] !== undefined) {
-            block.style[k] = '';
-          }
-        });
-
         // Apply new class
         if (blockDef.class) {
           block.classList.add(blockDef.class);
-        }
-
-        // Apply new styles
-        if (blockDef.editorStyle) {
-          applyStyles(block, blockDef.editorStyle);
         }
       });
     }
