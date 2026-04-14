@@ -58,9 +58,7 @@ export function setFigureAlignment(figure, alignment, editor) {
       // Small timeout to allow MutationObserver to fire and class to settle before history snapshot
       // Wait, spec says: "Alignment changes each trigger exactly ONE atomic snapshot."
       // Since it's synchronous DOM update, we can snapshot immediately.
-      setTimeout(() => {
-        editor.history.saveSnapshot();
-      }, 0);
+      editor.history.saveSnapshot();
     }
   }
 }

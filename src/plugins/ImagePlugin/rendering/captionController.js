@@ -46,56 +46,77 @@ export function handleCaptionPaste(event) {
   if (!figcaption) return;
 
   if (html) {
-    // Paste Event: Pasting HTML strips block tags (div, p, img) converting them to whitespace.
-    // Content Model: strictly limited to text and inline tags (b, i, u, a).
-
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-
-    // Convert block elements to text with space
     const blockTags = ['P', 'DIV', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI', 'IMG', 'FIGURE', 'TABLE', 'TR', 'TD'];
 
-    function extractAllowedContent(node) {
-      let content = '';
+    function processAllowedContent(node, fragment) {
       for (const child of node.childNodes) {
         if (child.nodeType === Node.TEXT_NODE) {
-          content += child.textContent;
+          fragment.appendChild(document.createTextNode(child.textContent));
         } else if (child.nodeType === Node.ELEMENT_NODE) {
           const tagName = child.tagName;
           if (blockTags.includes(tagName)) {
-            content += ' ' + extractAllowedContent(child) + ' ';
+            fragment.appendChild(document.createTextNode(' '));
+            processAllowedContent(child, fragment);
+            fragment.appendChild(document.createTextNode(' '));
           } else if (['B', 'I', 'U', 'A'].includes(tagName)) {
-             // Create an allowed tag
              const allowedNode = document.createElement(tagName.toLowerCase());
              if (tagName === 'A') {
-               allowedNode.href = child.href || '#';
+               const href = child.getAttribute('href');
+               if (href && !href.trim().toLowerCase().startsWith('javascript:')) {
+                   allowedNode.setAttribute('href', href);
+               } else {
+                   allowedNode.setAttribute('href', '#');
+               }
              }
-             allowedNode.innerHTML = extractAllowedContent(child);
-             content += allowedNode.outerHTML;
+             processAllowedContent(child, allowedNode);
+             fragment.appendChild(allowedNode);
           } else {
-             content += extractAllowedContent(child);
+             processAllowedContent(child, fragment);
           }
         }
       }
-      return content;
     }
 
-    let cleanHTML = extractAllowedContent(doc.body);
-    // Replace multiple spaces
-    cleanHTML = cleanHTML.replace(/\s+/g, ' ');
+    const fragment = document.createDocumentFragment();
+    processAllowedContent(doc.body, fragment);
 
-    document.execCommand('insertHTML', false, cleanHTML);
+    // Normalize text nodes slightly by inserting it cleanly
+    const tempDiv = document.createElement('div');
+    tempDiv.appendChild(fragment);
+    tempDiv.innerHTML = tempDiv.innerHTML.replace(/\s+/g, ' '); // Clean excessive whitespace safely
+
+    const finalFragment = document.createDocumentFragment();
+    while (tempDiv.firstChild) {
+       finalFragment.appendChild(tempDiv.firstChild);
+    }
+
+    const selection = window.getSelection();
+    if (selection.rangeCount > 0) {
+      const range = selection.getRangeAt(0);
+      if (figcaption.contains(range.commonAncestorContainer)) {
+          range.deleteContents();
+
+          // To put cursor at the end, insert and then collapse
+          const lastNode = finalFragment.lastChild;
+          range.insertNode(finalFragment);
+
+          if (lastNode) {
+              range.setStartAfter(lastNode);
+              range.collapse(true);
+              selection.removeAllRanges();
+              selection.addRange(range);
+          }
+          figcaption.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    }
   } else if (text) {
     document.execCommand('insertText', false, text);
   }
 }
 
 export function handleCaptionBlur(event, editor) {
-  // 6.3 Standard Operations
-  // Caption changes trigger a snapshot only on blur, not per keystroke.
-
-  // We need to compare if content changed, but snapshot on blur is required.
-  // Assuming HistoryManager is attached to editor.
   if (editor && editor.history) {
     editor.history.saveSnapshot();
   }
