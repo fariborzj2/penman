@@ -2,7 +2,7 @@ from playwright.sync_api import Page, expect, sync_playwright
 
 def test_editor_svg_icons(page: Page):
   # 1. Navigate to the local dev server
-  page.goto("http://localhost:3000")
+  page.goto("http://localhost:5173")
 
   # 2. Wait for the toolbar to be ready
   toolbar = page.locator(".penman-toolbar")
