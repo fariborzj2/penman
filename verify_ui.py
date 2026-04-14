@@ -8,7 +8,6 @@ def test_editor_svg_icons(page: Page):
   page.goto(URL)
   toolbar = page.locator(".penman-toolbar")
   expect(toolbar).to_be_visible()
-
   bold_btn = page.locator(".penman-btn-bold svg")
   expect(bold_btn).to_be_visible()
 
@@ -17,22 +16,29 @@ def test_editor_find_replace_e2e(page: Page):
 
   editable = page.locator(".penman-editor-area")
   editable.click()
-  editable.fill("This is a strict test. We need to replace the word strict safely. Very strict!")
+
+  # Advanced test: ZWNJ + Diacritics + Normalization
+  editable.fill("This is test. سَلام دنیا. سلام. س‌لام. Hello world!")
 
   page.keyboard.press("Control+f")
 
   modal = page.locator(".penman-modal")
   expect(modal).to_be_visible()
 
-  page.locator("#fr-find").fill("strict")
-  page.locator("#fr-replace").fill("awesome")
+  # Note: The checkbox for RTL Normalization is checked by default
+  page.locator("#fr-find").fill("سلام")
+  page.locator("#fr-replace").fill("درود")
 
   page.locator("#fr-btn-find").click()
   page.locator("#fr-btn-replace-all").click()
 
   content = editable.inner_text()
-  assert "awesome" in content
-  assert "strict" not in content
+  # 3 replacements should happen because of the default normalization
+  assert "درود دنیا" in content
+  assert "درود" in content
+  assert "س‌لام" not in content # The ZWNJ version was matched and replaced!
+  assert "سَلام" not in content # The Diacritic version was matched and replaced!
+  assert "سلام" not in content
 
 if __name__ == "__main__":
   with sync_playwright() as p:
@@ -41,6 +47,6 @@ if __name__ == "__main__":
     try:
       test_editor_svg_icons(page)
       test_editor_find_replace_e2e(page)
-      print("Playwright E2E tests passed successfully.")
+      print("Playwright E2E tests passed successfully. Full RTL Normalization validated.")
     finally:
       browser.close()

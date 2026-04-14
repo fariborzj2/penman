@@ -228,4 +228,34 @@ describe('FindReplacePlugin', () => {
     // JSDOM is slow, but should comfortably run under 2000ms.
     expect(timeTaken).toBeLessThan(3500);
   });
+
+  it('should strictly handle RTL diacritics, ZWNJ, and normalization', () => {
+    // 1. ZWNJ
+    editor.setContent('<p>سَلا‌م</p>');
+    const action = editor.ui.registry.buttons['findreplace'].onAction;
+    action();
+
+    const overlay = document.querySelector('.penman-modal-overlay');
+    const inputFind = overlay.querySelector('#fr-find');
+    const inputReplace = overlay.querySelector('#fr-replace');
+    const btnFind = overlay.querySelector('#fr-btn-find');
+    const btnReplace = overlay.querySelector('#fr-btn-replace');
+
+    inputFind.value = 'سلام';
+    inputReplace.value = 'درود';
+    btnFind.click();
+    btnReplace.click();
+
+    // Verify visual equality is intact
+    expect(editor.getContent().replace(/<span[^>]*><\/span>/g, '')).toBe('<p>درود</p>');
+
+    // 2. Cross node ZWNJ / complex nesting
+    editor.setContent('<p><b>س</b>‌<i>لا</i><u>م</u></p>'); // Note the ZWNJ between <b> and <i>
+    inputFind.value = 'سلام';
+    inputReplace.value = 'hello';
+    btnFind.click();
+    btnReplace.click();
+
+    expect(editor.getContent().replace(/<[^>]+><\/[^>]+>/g, '').replace(/<[^>]+><\/[^>]+>/g, '')).toBe('<p>hello</p>');
+  });
 });

@@ -2,11 +2,45 @@ export function setupFindReplacePlugin(editor) {
   let activeModal = null;
 
   class TextMapper {
-    constructor(root) {
+    constructor(root, normalizeRTL = false) {
       this.root = root;
+      this.normalizeRTL = normalizeRTL;
       this.text = '';
-      this.mapping = []; // Array of { node, globalOffset, length }
+      this.mapping = []; // Array of length `this.text.length` mapping to { node, offset }
       this.build();
+    }
+
+    normalizeChar(char) {
+      if (!this.normalizeRTL) return char;
+
+      // Remove Arabic Diacritics (Fatha, Kasra, Damma, Tanween, Shadda, Sukun, Superscript Alef)
+      if (/[\u064B-\u065F\u0670]/.test(char)) return '';
+
+      // Remove Kashida / Tatweel
+      if (char === '\u0640') return '';
+
+      // Remove ZWNJ, ZWJ
+      if (char === '\u200C' || char === '\u200D') return '';
+
+      // Normalize Yeh/Kaf to Persian
+      if (char === 'ي') return 'ی';
+      if (char === 'ك') return 'ک';
+
+      // Normalize Alef variants
+      if (char === 'أ' || char === 'إ' || char === 'آ') return 'ا';
+
+      // Normalize Teh Marbuta to Heh
+      if (char === 'ة') return 'ه';
+
+      return char;
+    }
+
+    normalizeString(str) {
+       let res = '';
+       for(let i=0; i<str.length; i++) {
+           res += this.normalizeChar(str[i]);
+       }
+       return res;
     }
 
     build() {
@@ -16,65 +50,50 @@ export function setupFindReplacePlugin(editor) {
       let node;
       while ((node = walker.nextNode())) {
         const nodeText = node.nodeValue;
-        this.mapping.push({
-          node,
-          globalOffset: this.text.length,
-          length: nodeText.length
-        });
-        this.text += nodeText;
-      }
-    }
+        for (let i = 0; i < nodeText.length; i++) {
+            const char = nodeText[i];
+            const normalized = this.normalizeChar(char);
 
-    // Binary search to find the mapping entry that contains the globalOffset in O(log N)
-    // This is strictly required over Array.prototype.find() to prevent O(N*M) bottlenecks during "Replace All"
-    findIndexForOffset(globalOffset) {
-      let low = 0;
-      let high = this.mapping.length - 1;
-
-      while (low <= high) {
-        const mid = Math.floor((low + high) / 2);
-        const map = this.mapping[mid];
-
-        if (globalOffset >= map.globalOffset && globalOffset < map.globalOffset + map.length) {
-          return mid;
-        } else if (globalOffset < map.globalOffset) {
-          high = mid - 1;
-        } else {
-          low = mid + 1;
+            // If the character is removed by normalization (e.g. ZWNJ or diacritic),
+            // it doesn't get added to `this.text`, and therefore doesn't get an index in `this.mapping`.
+            // However, we MUST map the visual string we search against back to the exact DOM offsets.
+            if (normalized.length > 0) {
+               this.text += normalized;
+               this.mapping.push({ node, offset: i });
+            }
         }
       }
-      return -1;
     }
 
     getRangeForMatch(globalStart, matchLength) {
-      const startIndex = this.findIndexForOffset(globalStart);
-      if (startIndex === -1) return null;
+      if (globalStart < 0 || globalStart >= this.mapping.length || matchLength <= 0) return null;
 
-      let startNode = this.mapping[startIndex].node;
-      let startOffset = globalStart - this.mapping[startIndex].globalOffset;
+      const startMap = this.mapping[globalStart];
+      const startNode = startMap.node;
+      const startOffset = startMap.offset;
 
-      let endNode = null;
-      let endOffset = 0;
+      const endGlobalIndex = globalStart + matchLength - 1;
+      if (endGlobalIndex >= this.mapping.length) return null;
 
-      let remaining = matchLength;
-      let currentGlobal = globalStart;
+      const endMap = this.mapping[endGlobalIndex];
+      const endNode = endMap.node;
+      // The end offset for a range should be exclusive (after the character)
+      // We must account for trailing diacritics or ZWNJ in the original text that were stripped!
+      // To find the true end offset, we look at the original node's length.
+      // If this is the last character we mapped in that node, we could just say offset + 1.
+      // But what if there are trailing unmapped characters (diacritics) before the next mapped char or node end?
+      // We include them by looking at the next mapped character's offset.
+      let endOffset = endMap.offset + 1;
 
-      for (let i = startIndex; i < this.mapping.length; i++) {
-         const map = this.mapping[i];
-         const nodeEnd = map.globalOffset + map.length;
-
-         if (currentGlobal < nodeEnd) {
-             const availableInNode = map.length - (currentGlobal - map.globalOffset);
-             const consumed = Math.min(remaining, availableInNode);
-             remaining -= consumed;
-             currentGlobal += consumed;
-
-             if (remaining === 0) {
-                 endNode = map.node;
-                 endOffset = currentGlobal - map.globalOffset;
-                 break;
-             }
-         }
+      if (endGlobalIndex + 1 < this.mapping.length) {
+          const nextMap = this.mapping[endGlobalIndex + 1];
+          if (nextMap.node === endNode) {
+              endOffset = nextMap.offset; // Everything up to the next valid character
+          } else {
+              endOffset = endNode.nodeValue.length; // Consume trailing diacritics to end of node
+          }
+      } else {
+          endOffset = endNode.nodeValue.length;
       }
 
       if (startNode && endNode) {
@@ -88,6 +107,17 @@ export function setupFindReplacePlugin(editor) {
          }
       }
       return null;
+    }
+
+    // Convert a global offset back to a native DOM selection marker
+    resolveGlobalOffsetToNative(globalOffset) {
+        if (this.mapping.length === 0) return null;
+        if (globalOffset >= this.mapping.length) {
+            const last = this.mapping[this.mapping.length - 1];
+            return { node: last.node, offset: last.node.nodeValue.length };
+        }
+        const map = this.mapping[globalOffset];
+        return { node: map.node, offset: map.offset };
     }
   }
 
@@ -108,13 +138,13 @@ export function setupFindReplacePlugin(editor) {
     let results = []; // Array of { globalStart, length }
     let currentIndex = -1;
 
-    const performSearch = (query, matchCase) => {
+    const performSearch = (query, matchCase, normalizeRTL) => {
         results = [];
         if (!query) return results;
 
-        const mapper = new TextMapper(editor.editableArea);
+        const mapper = new TextMapper(editor.editableArea, normalizeRTL);
         let textStr = mapper.text;
-        let searchStr = query;
+        let searchStr = normalizeRTL ? mapper.normalizeString(query) : query;
 
         if (!matchCase) {
              textStr = textStr.toLowerCase();
@@ -124,29 +154,25 @@ export function setupFindReplacePlugin(editor) {
         let startIndex = 0;
         let index;
         while ((index = textStr.indexOf(searchStr, startIndex)) > -1) {
-             results.push({ globalStart: index, length: query.length });
-             startIndex = index + query.length;
+             results.push({ globalStart: index, length: searchStr.length });
+             startIndex = index + searchStr.length;
         }
         return results;
     };
 
-    const highlightResult = (index, selectAll = false) => {
+    const highlightResult = (index, selectAll = false, normalizeRTL = false) => {
          if (results.length === 0) return;
 
          const sel = window.getSelection();
          sel.removeAllRanges();
-         const mapper = new TextMapper(editor.editableArea);
+         const mapper = new TextMapper(editor.editableArea, normalizeRTL);
 
          if (selectAll) {
-             // Browser selection API generally only supports 1 range visually in most modern browsers (except Firefox).
-             // Highlighting 10,000 ranges crashes the browser or freezes JSDOM. Cap it at 100 for safety.
-             const limit = Math.min(results.length, 100);
+             const limit = Math.min(results.length, 100); // Browser safety limit
              for(let i=0; i<limit; i++) {
                  const res = results[i];
                  const range = mapper.getRangeForMatch(res.globalStart, res.length);
-                 if (range) {
-                     sel.addRange(range);
-                 }
+                 if (range) sel.addRange(range);
              }
 
              if (results[0]) {
@@ -169,6 +195,23 @@ export function setupFindReplacePlugin(editor) {
          }
     };
 
+    const doReplaceAt = (index, replacement, normalizeRTL) => {
+         if (index >= 0 && index < results.length) {
+            const result = results[index];
+            const mapper = new TextMapper(editor.editableArea, normalizeRTL);
+            const range = mapper.getRangeForMatch(result.globalStart, result.length);
+
+            if (range) {
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                document.execCommand('insertText', false, replacement);
+                return true;
+            }
+         }
+         return false;
+    };
+
     const modalHtml = `
         <div class="penman-modal-form-row">
           <label for="fr-find">Find</label>
@@ -180,6 +223,7 @@ export function setupFindReplacePlugin(editor) {
         </div>
         <div class="penman-modal-checkbox-group">
           <label><input type="checkbox" id="fr-match-case"> Match case</label>
+          <label><input type="checkbox" id="fr-normalize-rtl" checked> Ignore Diacritics (RTL)</label>
           <label><input type="checkbox" id="fr-all-words"> All words</label>
         </div>
     `;
@@ -195,13 +239,13 @@ export function setupFindReplacePlugin(editor) {
              if (results.length === 0) return;
              currentIndex = (currentIndex + 1) % results.length;
              const elModal = modal.modalElement;
-             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked);
+             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, elModal.querySelector('#fr-normalize-rtl').checked);
           }},
           { text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true, onClick: () => {
              if (results.length === 0) return;
              currentIndex = (currentIndex - 1 + results.length) % results.length;
              const elModal = modal.modalElement;
-             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked);
+             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, elModal.querySelector('#fr-normalize-rtl').checked);
           }},
           { text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right', onClick: () => {
              editor.selection.restore();
@@ -211,35 +255,40 @@ export function setupFindReplacePlugin(editor) {
              if (results.length === 0 || currentIndex < 0 || currentIndex >= results.length) return;
              const elModal = modal.modalElement;
              const replacement = elModal.querySelector('#fr-replace').value;
+             const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
 
-             const mapper = new TextMapper(editor.editableArea);
-             const result = results[currentIndex];
-             const range = mapper.getRangeForMatch(result.globalStart, result.length);
+             // Save logical cursor position
+             const currentResult = results[currentIndex];
+             const originalStart = currentResult.globalStart;
 
-             if (range) {
-                const sel = window.getSelection();
-                sel.removeAllRanges();
-                sel.addRange(range);
-
-                // Use insertText instead of insertHTML to prevent XSS / format bleed
-                document.execCommand('insertText', false, replacement);
-
+             if (doReplaceAt(currentIndex, replacement, normalizeRTL)) {
                 if (editor.history) {
                     editor.history.pushImmediate();
                 }
                 editor._syncToTextarea();
                 editor.emit('change', editor.getContent());
 
-                // Preserve sequential index UX rather than jumping to 0
-                performSearch(elModal.querySelector('#fr-find').value, elModal.querySelector('#fr-match-case').checked);
+                performSearch(elModal.querySelector('#fr-find').value, elModal.querySelector('#fr-match-case').checked, normalizeRTL);
                 if (results.length > 0) {
-                    // Match index logic: if we replaced the 2nd item, there's a new item at index 2 (formerly 3)
-                    // Just bound it gracefully to array length.
-                    currentIndex = Math.min(currentIndex, results.length - 1);
-                    highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked);
+                    // Find the next logical match after our replacement
+                    // The replacement changed string lengths, so we just pick the first result whose globalStart >= our original cursor
+                    let nextIdx = results.findIndex(r => r.globalStart >= originalStart);
+                    if (nextIdx === -1) nextIdx = 0; // Wrap around
+                    currentIndex = nextIdx;
+                    highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, normalizeRTL);
                 } else {
                     currentIndex = -1;
-                    editor.selection.restore();
+                    // Restore cursor to right after the replacement safely
+                    const finalMapper = new TextMapper(editor.editableArea, normalizeRTL);
+                    const sel = window.getSelection();
+                    sel.removeAllRanges();
+                    const marker = finalMapper.resolveGlobalOffsetToNative(originalStart + replacement.length);
+                    if (marker) {
+                        const range = document.createRange();
+                        range.setStart(marker.node, marker.offset);
+                        range.collapse(true);
+                        sel.addRange(range);
+                    }
                     editor.selection.save();
                 }
                 updateButtonsState();
@@ -249,40 +298,36 @@ export function setupFindReplacePlugin(editor) {
               if (results.length === 0) return;
               const elModal = modal.modalElement;
               const replacement = elModal.querySelector('#fr-replace').value;
+              const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
 
               if (editor.history && typeof editor.history.takeSnapshot === 'function') {
                   editor.history.takeSnapshot();
               }
 
-              // We instantiate the TextMapper ONCE to achieve O(M + N log M)
-              let mapper = new TextMapper(editor.editableArea);
+              // We instantiate the TextMapper ONCE
+              let mapper = new TextMapper(editor.editableArea, normalizeRTL);
               const sel = window.getSelection();
 
-              // Iterate strictly backwards.
-              // By mutating the DOM exclusively at indices greater than the remaining queue,
-              // the structure and relative TextNode boundaries *before* the mutation point remain pristine.
+              // Iterate strictly backwards to prevent invalidating upstream DOM nodes
               for (let i = results.length - 1; i >= 0; i--) {
                   const result = results[i];
                   const range = mapper.getRangeForMatch(result.globalStart, result.length);
 
                   if (range) {
                       if (range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE) {
-                          // Fast path: single text node string manipulation without triggering browser layout reflows/normalizations
+                          // Fast path
                           const node = range.startContainer;
                           const text = node.nodeValue;
                           node.nodeValue = text.substring(0, range.startOffset) + replacement + text.substring(range.endOffset);
                       } else {
-                          // Fallback path: multi-node boundaries. This uses execCommand which modifies multiple DOM nodes.
-                          // It can cause previous text nodes (earlier in the array) to become detached if the browser normalizes.
-                          // Since we iterate backwards, this is generally safe. However, to be absolutely bulletproof against
-                          // unpredictable browser normalization of upstream siblings, we rebuild the mapper if we hit a complex boundary.
-                          sel.removeAllRanges();
-                          sel.addRange(range);
-                          document.execCommand('insertText', false, replacement); // MUST be insertText to prevent XSS/HTML Injection
-
-                          // Re-sync mapper to guarantee absolute safety for upstream nodes after heavy DOM mutation
-                          if (i > 0) {
-                              mapper = new TextMapper(editor.editableArea);
+                          // Fallback path
+                          try {
+                             // Use native DOM mutation for complex replacements.
+                             // Backward iteration guarantees previous nodes in the array are unaffected by these structural changes
+                             range.deleteContents();
+                             range.insertNode(document.createTextNode(replacement));
+                          } catch(e) {
+                             console.warn('Find and Replace native DOM split failed', e);
                           }
                       }
                   }
@@ -294,8 +339,6 @@ export function setupFindReplacePlugin(editor) {
               editor._syncToTextarea();
               editor.emit('change', editor.getContent());
 
-              // After massive replace, don't execute search immediately if we replaced thousands,
-              // or just clear results to avoid massive freeze on highlighting.
               results = [];
               currentIndex = -1;
               updateButtonsState();
@@ -314,6 +357,7 @@ export function setupFindReplacePlugin(editor) {
     const inputFind = elModal.querySelector('#fr-find');
     const cbMatchCase = elModal.querySelector('#fr-match-case');
     const cbAllWords = elModal.querySelector('#fr-all-words');
+    const cbNormalizeRTL = elModal.querySelector('#fr-normalize-rtl');
 
     const btnReplace = elModal.querySelector('#fr-btn-replace');
     const btnReplaceAll = elModal.querySelector('#fr-btn-replace-all');
@@ -329,10 +373,10 @@ export function setupFindReplacePlugin(editor) {
     };
 
     executeSearch = () => {
-         performSearch(inputFind.value, cbMatchCase.checked);
+         performSearch(inputFind.value, cbMatchCase.checked, cbNormalizeRTL.checked);
          if (results.length > 0) {
             currentIndex = 0;
-            highlightResult(currentIndex, cbAllWords.checked);
+            highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
          } else {
             currentIndex = -1;
             editor.selection.restore();
@@ -343,8 +387,12 @@ export function setupFindReplacePlugin(editor) {
 
     cbAllWords.addEventListener('change', () => {
          if (results.length > 0) {
-            highlightResult(currentIndex, cbAllWords.checked);
+            highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
          }
+    });
+
+    cbNormalizeRTL.addEventListener('change', () => {
+        executeSearch();
     });
 
     if (inputFind.value) {
