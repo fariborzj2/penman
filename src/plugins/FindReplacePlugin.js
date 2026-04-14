@@ -116,13 +116,21 @@ export function setupFindReplacePlugin(editor) {
          if (index >= 0 && index < results.length) {
             const result = results[index];
 
-            // Check if node is still valid and has enough length
-            if (!result.node.parentNode || result.node.nodeValue.length < result.index + result.length) {
-                return false; // Skip if node is invalid or mutated outside
+            // In JSDOM and some browsers, text node length checks might be tricky if the node was mutated.
+            // Also, we need to handle potential detached nodes.
+            if (!result.node || !result.node.parentNode) {
+                return false;
+            }
+
+            // Re-verify the text node still contains what we expect
+            const textValue = result.node.nodeValue;
+            if (!textValue || textValue.length < result.index + result.length) {
+                return false;
             }
 
             const range = document.createRange();
             try {
+                // JSDOM has an issue where nodes can be temporarily invalid or bounds are strict.
                 range.setStart(result.node, result.index);
                 range.setEnd(result.node, result.index + result.length);
 
@@ -133,6 +141,8 @@ export function setupFindReplacePlugin(editor) {
                 editor.insertContent(replacement);
                 return true;
             } catch (e) {
+                // Ignore the JSDOM specific error if it happens but still attempt to execute
+                // This shouldn't normally happen in a real browser if our bounds checks passed above.
                 console.warn('Find and Replace: Range error', e);
                 return false;
             }

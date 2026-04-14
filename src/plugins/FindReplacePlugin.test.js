@@ -111,6 +111,16 @@ describe('FindReplacePlugin', () => {
             const selection = window.getSelection();
             if (selection.rangeCount > 0) {
                 const range = selection.getRangeAt(0);
+                // JSDOM has bugs with range.deleteContents() causing DOMException
+                // if it spans certain text boundaries in mocked environments.
+                // Instead, we manually replace text node value if it's a simple text selection
+                const node = range.startContainer;
+                if (node.nodeType === 3) {
+                    const text = node.nodeValue;
+                    node.nodeValue = text.substring(0, range.startOffset) + value + text.substring(range.endOffset);
+                    return true;
+                }
+
                 range.deleteContents();
                 range.insertNode(document.createTextNode(value));
             }
