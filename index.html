@@ -44,12 +44,21 @@
 
     // Initialize the editor
     penman.init({
+      imageUploadFn: async (file) => {
+        // Mock upload function for testing
+        return new Promise((resolve) => {
+           setTimeout(() => {
+              const objectUrl = URL.createObjectURL(file);
+              resolve({ url: objectUrl, alt: file.name });
+           }, 1500);
+        });
+      },
       selector: '#myTextarea',
       lang: 'en',
       direction: 'ltr',
       height: 260,
-      plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table'],
-      toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink | hr | findreplace | table'
+      plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image'],
+      toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr | findreplace | table'
     });
 
     const instance = penman.get('#myTextarea');
