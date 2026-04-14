@@ -141,3 +141,9 @@
 - **[$(date +'%Y-%m-%d %H:%M')]** Added missing `setTableProperty` to `TableTransaction` solving the submit error on Table Properties. Enhanced `ColorPicker` with a `transparent` option including visual styling and input validation. Tested via Playwright E2E.
 - **[$(date +'%Y-%m-%d %H:%M')]** Fixed Table padding and border applications to recursively style native <td> elements. Documented new ColorPicker spec. Resolved Hex input auto-close typing issues.
 - **[2026-04-13T20:50:00Z]**: Resolved strict End-to-End gap for Phase 4 (FindReplace DOMException Range bug during `replace` operations) and Phase 5 (missing `test-e2e.mjs` orchestrator and wrong port in Playwright script `verify_ui.py`). Validated fixes via comprehensive integration and unit tests, reverting Phase 4 and 5 back to "Completed" officially.
+### فاز 1 و 2 افزونه تصویر
+- **وضعیت:** کامل (Completed)
+- **درصد پیشرفت:** 100%
+- **توضیحات:** مستند مشخصات معماری افزونه تصویر و گالری در `docs/19-image-plugin-spec.md` اضافه شد.
+- **بخش ثبت تغییرات (Change Log):**
+  - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: مستندات و مشخصات مربوط به پلاگین جدید Image Plugin شامل یکپارچه‌سازی با سیستم‌های آپلود، مدیریت گالری، رندرینگ، تست و UI اضافه شدند.
