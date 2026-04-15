@@ -33,6 +33,81 @@ const editor = penman.init({
 - `editor.image.upload(files: FileList | File[]): void`
 - `editor.image.setAlignment(figure: HTMLElement, alignment: string): void`
 
+## Gallery Mode Registration
+
+The Gallery System allows users to search and select images from external or internal libraries directly from the "Gallery" tab in the Image modal. A gallery source must follow a strict contract.
+
+### The Source Contract
+
+A Gallery source requires an `id`, a `name`, and two core methods: `list()` and `get()`. It can optionally include an `auth()` method that resolves before loading images.
+
+Each source explicitly declares its `trustLevel` (`TRUSTED` or `UNTRUSTED`). An `ImageItem` inherits its source's trust level immutably.
+
+### Expected `ImageItem` JSON Schema
+
+When `list` or `get` resolves, the returned items must adhere to the following `ImageItem` schema:
+
+```json
+{
+  "id": "string",
+  "url": "string (full image url)",
+  "thumbnailUrl": "string (optional, defaults to url)",
+  "title": "string (optional, alt text)",
+  "width": "number (optional)",
+  "height": "number (optional)"
+}
+```
+
+### Registration Example
+
+You can register gallery sources against the `editor.image.gallery` API instance:
+
+```javascript
+// Register an external source (e.g., Unsplash mock)
+editor.image.gallery.registerSource({
+  id: 'unsplash',
+  name: 'Unsplash Images',
+  trustLevel: 'UNTRUSTED', // Enforce strict validation
+
+  // Optional auth method executed once upon initial load
+  auth: async () => {
+    const token = await fetchMyUnsplashToken();
+    return token !== null; // Returns boolean
+  },
+
+  // Required list method returning a GalleryListResponse
+  list: async (cursor = null, limit = 20) => {
+    const res = await fetch(`https://api.unsplash.com/photos?page=${cursor || 1}&per_page=${limit}`);
+    const data = await res.json();
+
+    // Map external API response to the required ImageItem schema
+    const items = data.map(photo => ({
+      id: photo.id,
+      url: photo.urls.regular,
+      thumbnailUrl: photo.urls.thumb,
+      title: photo.alt_description || photo.description
+    }));
+
+    return {
+      items: items,
+      nextCursor: cursor ? cursor + 1 : 2 // Used for pagination
+    };
+  },
+
+  // Required get method for fetching a single item by ID
+  get: async (id) => {
+    const res = await fetch(`https://api.unsplash.com/photos/${id}`);
+    const photo = await res.json();
+    return {
+      id: photo.id,
+      url: photo.urls.regular,
+      thumbnailUrl: photo.urls.thumb,
+      title: photo.alt_description || photo.description
+    };
+  }
+});
+```
+
 ## Configuration examples
 ```javascript
 // Disabling uploads natively by omitting imageUploadFn
