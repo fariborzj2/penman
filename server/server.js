@@ -49,7 +49,10 @@ app.get('/gallery', (req, res) => {
     const images = files.filter(file => {
       const ext = path.extname(file).toLowerCase();
       return ['.png', '.jpg', '.jpeg', '.webp', '.gif'].includes(ext);
-    });
+    }).map(file => {
+        const stats = fs.statSync(path.join(uploadDir, file));
+        return { file, mtime: stats.mtime.getTime() };
+    }).sort((a, b) => b.mtime - a.mtime).map(f => f.file);
 
     const items = images.map((file, index) => ({
       id: file,

@@ -72,7 +72,7 @@ export function setupImagePlugin(editor) {
           floatingUI.hide();
        }
     });
-
+    
     // Override hide to clear outline
     const originalHide = floatingUI.hide.bind(floatingUI);
     floatingUI.hide = () => {
@@ -87,7 +87,7 @@ export function setupImagePlugin(editor) {
 
   root.addEventListener('click', (e) => {
       const figure = e.target.closest('figure.penman-image');
-
+      
       // Clear previous outline if any
       const previousFigures = root.querySelectorAll('figure.penman-image.penman-selected-image');
       previousFigures.forEach(fig => {
@@ -100,7 +100,7 @@ export function setupImagePlugin(editor) {
           if (!floatingUI) createFloatingUI();
           floatingUI.setAnchor(figure);
           floatingUI.show();
-
+          
           figure.classList.add('penman-selected-image');
           const img = figure.querySelector('img');
           if (img) img.style.outline = '3px solid #007bff';
@@ -116,13 +116,45 @@ export function setupImagePlugin(editor) {
   root.addEventListener('keydown', (e) => {
     handleCaptionKeyDown(e, editor);
 
+    // Backspace to select image handler
+    if (e.key === 'Backspace') {
+        const sel = window.getSelection();
+        if (sel && sel.rangeCount > 0) {
+            const range = sel.getRangeAt(0);
+            if (range.collapsed && range.startOffset === 0) {
+                // Check if we are at the beginning of a paragraph that immediately follows a figure
+                let currentBlock = range.startContainer;
+                if (currentBlock.nodeType === Node.TEXT_NODE) {
+                    currentBlock = currentBlock.parentNode;
+                }
+                
+                // Get block level parent
+                while (currentBlock && currentBlock !== root && currentBlock.tagName !== 'P' && currentBlock.tagName !== 'DIV') {
+                    currentBlock = currentBlock.parentNode;
+                }
+                
+                if (currentBlock && currentBlock.previousElementSibling && currentBlock.previousElementSibling.tagName === 'FIGURE' && currentBlock.previousElementSibling.classList.contains('penman-image')) {
+                    e.preventDefault();
+                    
+                    // Simulate selecting the figure
+                    const figure = currentBlock.previousElementSibling;
+                    const img = figure.querySelector('img');
+                    if (img) {
+                        img.click();
+                        return; // Stop further execution
+                    }
+                }
+            }
+        }
+    }
+
     // Image Deletion Handler
     if ((e.key === 'Delete' || e.key === 'Backspace') && floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
         // Double check we are not typing inside the caption
         if (!e.target.closest('figcaption')) {
             e.preventDefault();
             const figure = floatingUI.anchorNode;
-
+            
             // Move cursor out of figure before deleting
             const nextNode = figure.nextElementSibling;
             let targetNode = nextNode;
@@ -131,7 +163,7 @@ export function setupImagePlugin(editor) {
                 targetNode.innerHTML = '<br>';
                 figure.parentNode.insertBefore(targetNode, figure.nextSibling);
             }
-
+            
             // Fix setRange TypeError
             const sel = window.getSelection();
             if (sel) {
@@ -141,7 +173,7 @@ export function setupImagePlugin(editor) {
                 sel.removeAllRanges();
                 sel.addRange(range);
             }
-
+            
             figure.remove();
             floatingUI.hide();
             editor.history.pushImmediate();
@@ -292,11 +324,11 @@ export function setupImagePlugin(editor) {
         const tabs = elModal.querySelectorAll('.penman-image-tab');
         const contents = elModal.querySelectorAll('.penman-image-tab-content');
 
-
+        
         function renderGalleryItems(items, galleryContainer, modal, editor) {
             galleryContainer.innerHTML = ''; // clear loading
             galleryContainer.dataset.loaded = 'true';
-
+            
             items.forEach(item => {
                 const imgDiv = document.createElement('div');
                 imgDiv.style.cursor = 'pointer';
@@ -306,22 +338,22 @@ export function setupImagePlugin(editor) {
                 imgDiv.style.height = '100px';
                 imgDiv.style.position = 'relative';
                 imgDiv.style.backgroundColor = '#f0f0f0';
-
+                
                 // Fix: Implement Native Lazy Loading to improve delay and performance
                 imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;" title="${item.title || ''}" onload="this.style.opacity=1" onerror="this.style.opacity=0">`;
                 // Set initial opacity to 0 in HTML string, actually it's easier to just use standard loading="lazy"
                 const img = imgDiv.querySelector('img');
                 img.style.opacity = '0';
                 img.onload = () => img.style.opacity = '1';
-
+                
                 imgDiv.addEventListener('mouseover', () => imgDiv.style.borderColor = '#007bff');
                 imgDiv.addEventListener('mouseout', () => imgDiv.style.borderColor = 'transparent');
-
+                
                 imgDiv.addEventListener('click', () => {
                     editor.image.insertFromURL(item.url, item.title || '');
                     modal.close();
                 });
-
+                
                 galleryContainer.appendChild(imgDiv);
             });
         }
@@ -332,11 +364,11 @@ export function setupImagePlugin(editor) {
             contents.forEach(c => c.classList.remove('active'));
             tab.classList.add('active');
             elModal.querySelector('#penman-tab-' + tab.dataset.tab).classList.add('active');
-
+            
             // Gallery Loading Logic
             if (tab.dataset.tab === 'gallery') {
             const galleryContainer = elModal.querySelector('.penman-gallery-container');
-
+            
             // Fix: Prevent re-fetching and re-rendering if already loaded
             if (galleryContainer.dataset.loaded === 'true') {
                 // If it's loaded, we still want to re-render from cache in case a new upload was injected
@@ -405,14 +437,14 @@ export function setupImagePlugin(editor) {
                         img.src = url;
                         if (alt) img.alt = alt;
                         else img.removeAttribute('alt');
-
+                        
                         editor.history.pushImmediate();
                         editor.emit('change');
                         modal.close();
                         return;
                     }
                 }
-
+                
                 // Otherwise, insert new
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
@@ -429,9 +461,16 @@ export function setupImagePlugin(editor) {
         const dropzone = elModal.querySelector('#penman-image-dropzone');
         const queueContainer = elModal.querySelector('#penman-image-upload-queue');
         const uploadFn = editor.options.imageUploadFn;
-
+        
         let uploadQueue = globalUploadQueue;
-
+        
+        // Immediately render queue to restore state visually upon reopen
+        setTimeout(() => {
+            if (uploadQueue && uploadQueue.length > 0) {
+                 renderQueue();
+            }
+        }, 0);
+        
         function formatSize(bytes) {
             if (bytes === 0) return '0B';
             const k = 1024;
@@ -453,7 +492,7 @@ export function setupImagePlugin(editor) {
                 el.style.alignItems = 'center';
                 el.style.padding = '12px 0';
                 el.style.borderBottom = '1px solid #f0f0f0';
-
+                
                 // Thumbnail
                 const thumbDiv = document.createElement('div');
                 thumbDiv.style.width = '64px';
@@ -463,7 +502,7 @@ export function setupImagePlugin(editor) {
                 thumbDiv.style.marginRight = '16px';
                 thumbDiv.style.flexShrink = '0';
                 thumbDiv.style.backgroundColor = '#f5f5f5';
-
+                
                 if (item.thumbnailUrl) {
                     const img = document.createElement('img');
                     img.src = item.thumbnailUrl;
@@ -473,7 +512,7 @@ export function setupImagePlugin(editor) {
                     thumbDiv.appendChild(img);
                 }
                 el.appendChild(thumbDiv);
-
+                
                 // Content
                 const contentDiv = document.createElement('div');
                 contentDiv.style.flex = '1';
@@ -481,7 +520,7 @@ export function setupImagePlugin(editor) {
                 contentDiv.style.display = 'flex';
                 contentDiv.style.flexDirection = 'column';
                 contentDiv.style.justifyContent = 'center';
-
+                
                 const nameDiv = document.createElement('div');
                 nameDiv.textContent = item.file.name.length > 25 ? item.file.name.substring(0, 22) + '...' : item.file.name;
                 nameDiv.style.fontSize = '15px';
@@ -492,13 +531,13 @@ export function setupImagePlugin(editor) {
                 nameDiv.style.overflow = 'hidden';
                 nameDiv.style.textOverflow = 'ellipsis';
                 contentDiv.appendChild(nameDiv);
-
+                
                 // Status / Progress bar
                 const statusDiv = document.createElement('div');
                 statusDiv.style.display = 'flex';
                 statusDiv.style.alignItems = 'center';
                 statusDiv.style.marginBottom = '6px';
-
+                
                 if (item.status === 'SUCCESS') {
                     const successText = document.createElement('span');
                     successText.textContent = 'SUCCESS';
@@ -513,7 +552,7 @@ export function setupImagePlugin(editor) {
                     errText.style.fontSize = '12px';
                     errText.style.fontWeight = 'bold';
                     statusDiv.appendChild(errText);
-
+                    
                     const retryBtn = document.createElement('span');
                     retryBtn.textContent = 'Retry';
                     retryBtn.style.color = '#007bff';
@@ -536,41 +575,41 @@ export function setupImagePlugin(editor) {
                     barContainer.style.borderRadius = '3px';
                     barContainer.style.overflow = 'hidden';
                     barContainer.style.marginRight = '12px';
-
+                    
                     const bar = document.createElement('div');
                     bar.style.width = Math.min(item.progress, 100) + '%';
                     bar.style.height = '100%';
                     bar.style.backgroundColor = '#28a745';
                     bar.style.transition = 'width 0.2s linear';
                     barContainer.appendChild(bar);
-
+                    
                     const pctText = document.createElement('span');
                     pctText.textContent = Math.floor(item.progress) + '%';
                     pctText.style.fontSize = '12px';
                     pctText.style.color = '#333';
                     pctText.style.fontWeight = '500';
-
+                    
                     statusDiv.appendChild(barContainer);
                     statusDiv.appendChild(pctText);
                 }
-
+                
                 contentDiv.appendChild(statusDiv);
-
+                
                 // Meta
                 const metaDiv = document.createElement('div');
                 metaDiv.style.fontSize = '12px';
                 metaDiv.style.color = '#888';
                 metaDiv.innerHTML = `Format: <span style="color:#333;font-weight:500;margin-right:8px;">${item.format}</span> Size: <span style="color:#333;font-weight:500;">${item.size}</span>`;
                 contentDiv.appendChild(metaDiv);
-
+                
                 el.appendChild(contentDiv);
-
+                
                 // Checkbox
                 const checkContainer = document.createElement('div');
                 checkContainer.style.marginLeft = '16px';
                 checkContainer.style.display = 'flex';
                 checkContainer.style.alignItems = 'center';
-
+                
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = item.selected;
@@ -580,24 +619,24 @@ export function setupImagePlugin(editor) {
                 checkbox.onchange = (e) => {
                     item.selected = e.target.checked;
                 };
-
+                
                 checkContainer.appendChild(checkbox);
                 el.appendChild(checkContainer);
-
+                
                 queueContainer.appendChild(el);
             });
         }
-
+        
         async function processQueue() {
             for (let i = 0; i < uploadQueue.length; i++) {
                 const item = uploadQueue[i];
                 if (item.status === 'PENDING') {
                     item.status = 'UPLOADING';
                     renderQueue();
-
+                    
                     try {
                         if (!uploadFn) throw new Error('Upload function not configured');
-
+                        
                         // Simulate progress since standard uploadFn doesn't support progress callbacks
                         item.progressInterval = setInterval(() => {
                             if (item.progress < 90) {
@@ -607,13 +646,13 @@ export function setupImagePlugin(editor) {
                         }, 200);
 
                         const result = await uploadFn(item.file);
-
+                        
                         clearInterval(item.progressInterval);
                         item.progress = 100;
                         item.status = 'SUCCESS';
                         item.url = result.url || result;
                         item.alt = result.alt || '';
-
+                        
                         // Push into gallery cache immediately
                         const sources = editor.image.gallery.getRegisteredSources();
                         if (sources && sources.length > 0) {
@@ -632,7 +671,7 @@ export function setupImagePlugin(editor) {
                                  }
                              }).catch(() => {});
                         }
-
+                        
                     } catch (err) {
                         if (item.progressInterval) clearInterval(item.progressInterval);
                         item.status = 'ERROR';
@@ -642,7 +681,7 @@ export function setupImagePlugin(editor) {
                 }
             }
         }
-
+        
         function handleFiles(files) {
             if (!files || files.length === 0) return;
             const newItems = Array.from(files).map(file => {
@@ -674,7 +713,7 @@ export function setupImagePlugin(editor) {
                 fileInput.value = ''; // Reset
             });
         }
-
+        
         if (dropzone) {
             dropzone.addEventListener('dragover', (e) => {
                 e.preventDefault();
