@@ -3,12 +3,15 @@ import multer from 'multer';
 import cors from 'cors';
 import fs from 'fs';
 import path from 'path';
+import { fileURLToPath } from 'url';
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(cors());
 
 // 👇 مسیر درست و ثابت
-const uploadDir = path.resolve('uploads');
+const uploadDir = path.join(__dirname, 'uploads');
 
 // 👇 اطمینان از وجود پوشه
 if (!fs.existsSync(uploadDir)) {
