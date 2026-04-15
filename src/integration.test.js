@@ -204,8 +204,37 @@ describe('End-to-End Integration Flow', () => {
     editor.editableArea.dispatchEvent(pasteEvent);
 
     expect(isPrevented).toBe(true);
-    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<p>Safe alert("xss")<span>Text</span></p>');
-    expect(editor.getContent()).toContain('<p>Safe alert("xss")<span>Text</span></p>');
+    expect(document.execCommand).toHaveBeenCalledWith('insertHTML', false, '<div><p>Safe alert("xss")<span>Text</span></p></div>');
+    expect(editor.getContent()).toContain('<div><p>Safe alert("xss")<span>Text</span></p></div>');
+
+    editor.destroy();
+  });
+
+  it('should normalize copy payload for same-editor paste', () => {
+    const editor = penman.init({ selector: '#e2e-editor' });
+    editor.editableArea.innerHTML = '<p>One <strong>two</strong></p><p>Three</p>';
+
+    const range = document.createRange();
+    const firstParagraph = editor.editableArea.querySelector('p');
+    range.selectNode(firstParagraph);
+
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    const copyEvent = new window.Event('copy', { bubbles: true, cancelable: true });
+    copyEvent.clipboardData = {
+      setData: vi.fn()
+    };
+
+    let isPrevented = false;
+    copyEvent.preventDefault = () => { isPrevented = true; };
+
+    editor.editableArea.dispatchEvent(copyEvent);
+
+    expect(isPrevented).toBe(true);
+    expect(copyEvent.clipboardData.setData).toHaveBeenCalledWith('text/html', '<p>One <strong>two</strong></p>');
+    expect(copyEvent.clipboardData.setData).toHaveBeenCalledWith('text/plain', 'One two');
 
     editor.destroy();
   });

@@ -327,7 +327,11 @@ export function setupImagePlugin(editor) {
 
     // Normal image paste handler
     const uploadFn = editor.options.imageUploadFn;
-    pasteImageHandler(editor, e, uploadFn);
+    const handled = pasteImageHandler(editor, e, uploadFn);
+    if (handled) {
+      e.stopImmediatePropagation();
+      return;
+    }
   });
 
   root.addEventListener('drop', (e) => {

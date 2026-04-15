@@ -43,6 +43,7 @@ export function pasteImageHandler(editor, event, uploadFn) {
       // We must prevent default to stop the native paste from double-inserting or causing race conditions
       // with our manual DOM modification logic.
       event.preventDefault();
+      event.stopImmediatePropagation();
 
       // For a perfectly safe fallback: Extract images, insert them sequentially, and also
       // paste the rest of the valid HTML using standard execCommand if needed.

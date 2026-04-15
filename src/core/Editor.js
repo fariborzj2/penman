@@ -334,8 +334,12 @@ export class Editor extends EventEmitter {
       }
     });
 
-    // 3. Intercept paste to prevent un-sanitized and history-polluting native pastes
+    // 3. Intercept copy to normalize HTML/plain text payloads for same-editor copy/paste
+    this.editableArea.addEventListener('copy', (e) => this._handleCopy(e));
+
+    // 4. Intercept paste to prevent un-sanitized and history-polluting native pastes
     this.editableArea.addEventListener('paste', (e) => {
+      if (e.defaultPrevented) return;
       e.preventDefault();
 
       const clipboardData = (e.originalEvent || e).clipboardData;
@@ -345,11 +349,11 @@ export class Editor extends EventEmitter {
       let contentToInsert = '';
 
       if (html) {
-        // Sanitize rich text
+        // Sanitize rich text and preserve valid structural markup
         contentToInsert = this.sanitizer.sanitize(html);
       } else if (text) {
-        // Escape plain text
-        contentToInsert = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/\n/g, '<br>');
+        // Escape plain text and preserve line breaks
+        contentToInsert = this._escapeText(text).replace(/\n/g, '<br>');
       }
 
       if (contentToInsert) {
@@ -398,6 +402,29 @@ export class Editor extends EventEmitter {
     this._syncToTextarea();
     this.emit('change', this.getContent());
     this.emit('selectionChange');
+  }
+
+  _handleCopy(event) {
+    const clipboardData = (event.clipboardData || window.clipboardData);
+    if (!clipboardData) return;
+
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return;
+
+    const range = selection.getRangeAt(0).cloneRange();
+    const container = document.createElement('div');
+    container.appendChild(range.cloneContents());
+
+    const html = container.innerHTML;
+    const text = container.textContent || '';
+
+    event.preventDefault();
+    clipboardData.setData('text/html', this.sanitizer.sanitize(html));
+    clipboardData.setData('text/plain', text);
+  }
+
+  _escapeText(text) {
+    return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   /**
