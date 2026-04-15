@@ -104,3 +104,20 @@
 .penman-cell-handle-tr { top: -3px; right: -3px; }
 .penman-cell-handle-bl { bottom: -3px; left: -3px; }
 .penman-cell-handle-br { bottom: -3px; right: -3px; }
+
+/* Image Caption */
+figcaption.penman-image-caption {
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 8px;
+  outline: none;
+  min-height: 1.5em; /* Ensure it has height even when empty */
+}
+
+figcaption.penman-image-caption:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  cursor: text;
+  pointer-events: none;
+}
