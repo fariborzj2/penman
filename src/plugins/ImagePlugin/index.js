@@ -66,7 +66,7 @@ export function setupImagePlugin(editor) {
        e.preventDefault();
        if (floatingUI.anchorNode) {
           // Trigger a history snapshot before removal as per standard operations
-          editor.history.takeSnapshot();
+          editor.history.pushImmediate();
           floatingUI.anchorNode.remove();
           editor.emit('change');
           floatingUI.hide();
@@ -190,16 +190,18 @@ export function setupImagePlugin(editor) {
 
             <div class="penman-image-tab-content" id="penman-tab-upload">
               <div style="padding: 0 15px 15px">
-                <div style="margin-bottom: 15px; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 4px;">
+                <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 4px;">
                   <p style="margin: 0 0 10px 0; color: #666;">Drag and drop an image here, or browse.</p>
-                  <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" />
+                  <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple />
                   <button type="button" class="penman-btn" style="margin: 0 auto" onclick="document.getElementById('penman-image-file-input').click()">Browse Files</button>
+                </div>
+                <div id="penman-image-upload-queue" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
                 </div>
               </div>
 
               <div class="penman-modal-footer">
                 <button type="button" class="penman-btn" id="penman-image-upload-cancel">Cancel</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit">Upload</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit">Insert</button>
               </div>
             </div>
 
@@ -305,25 +307,145 @@ export function setupImagePlugin(editor) {
           });
         }
 
-        // Upload Submit Logic
+        // Upload Queue State Phase
         const uploadSubmit = elModal.querySelector('#penman-image-upload-submit');
         const fileInput = elModal.querySelector('#penman-image-file-input');
+        const dropzone = elModal.querySelector('#penman-image-dropzone');
+        const queueContainer = elModal.querySelector('#penman-image-upload-queue');
+        const uploadFn = editor.options.imageUploadFn;
 
-        if (uploadSubmit && fileInput) {
+        let uploadQueue = [];
+
+        function renderQueue() {
+            queueContainer.innerHTML = '';
+            uploadQueue.forEach(item => {
+                const el = document.createElement('div');
+                el.style.display = 'flex';
+                el.style.alignItems = 'center';
+                el.style.justifyContent = 'space-between';
+                el.style.padding = '8px';
+                el.style.border = '1px solid #eee';
+                el.style.borderRadius = '4px';
+                el.style.background = item.status === 'ERROR' ? '#ffeeee' : '#fff';
+
+                const name = document.createElement('span');
+                name.textContent = item.file.name;
+                name.style.flex = '1';
+                name.style.overflow = 'hidden';
+                name.style.textOverflow = 'ellipsis';
+                name.style.whiteSpace = 'nowrap';
+
+                const status = document.createElement('span');
+                status.textContent = item.status;
+                status.style.fontSize = '0.85em';
+                status.style.fontWeight = 'bold';
+                status.style.color = item.status === 'SUCCESS' ? 'green' : (item.status === 'ERROR' ? 'red' : 'orange');
+                status.style.marginLeft = '10px';
+
+                el.appendChild(name);
+                el.appendChild(status);
+
+                if (item.status === 'ERROR') {
+                    const retryBtn = document.createElement('button');
+                    retryBtn.textContent = 'Retry';
+                    retryBtn.className = 'penman-btn';
+                    retryBtn.style.padding = '2px 6px';
+                    retryBtn.style.fontSize = '0.8em';
+                    retryBtn.style.marginLeft = '10px';
+                    retryBtn.onclick = () => {
+                        item.status = 'PENDING';
+                        renderQueue();
+                        processQueue();
+                    };
+                    el.appendChild(retryBtn);
+                }
+
+                queueContainer.appendChild(el);
+            });
+        }
+
+        async function processQueue() {
+            for (let i = 0; i < uploadQueue.length; i++) {
+                const item = uploadQueue[i];
+                if (item.status === 'PENDING') {
+                    item.status = 'UPLOADING';
+                    renderQueue();
+                    try {
+                        if (!uploadFn) throw new Error('Upload function not configured');
+                        const result = await uploadFn(item.file);
+                        item.status = 'SUCCESS';
+                        item.url = result.url || result;
+                        item.alt = result.alt || '';
+                    } catch (err) {
+                        item.status = 'ERROR';
+                        item.error = err.message;
+                    }
+                    renderQueue();
+                }
+            }
+        }
+
+        function handleFiles(files) {
+            if (!files || files.length === 0) return;
+            const newItems = Array.from(files).map(file => ({
+                file,
+                status: 'PENDING',
+                url: null,
+                alt: null
+            }));
+            uploadQueue.push(...newItems);
+            renderQueue();
+            processQueue();
+        }
+
+        if (fileInput) {
+            fileInput.addEventListener('change', () => {
+                handleFiles(fileInput.files);
+                fileInput.value = ''; // Reset
+            });
+        }
+
+        if (dropzone) {
+            dropzone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = '#007bff';
+            });
+            dropzone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = '#ccc';
+            });
+            dropzone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropzone.style.borderColor = '#ccc';
+                if (e.dataTransfer && e.dataTransfer.files) {
+                    handleFiles(e.dataTransfer.files);
+                }
+            });
+        }
+
+        if (uploadSubmit) {
           uploadSubmit.addEventListener('click', () => {
-             const files = fileInput.files;
-             if (files && files.length > 0) {
-                 try {
-                     editor.image.upload(Array.from(files));
-                     modal.close();
-                 } catch (err) {
-                     alert('Upload error: ' + err.message);
-                 }
+             const successfulItems = uploadQueue.filter(item => item.status === 'SUCCESS');
+             if (successfulItems.length > 0) {
+                 successfulItems.forEach(item => {
+                     // Insert Phase
+                     editor.image.insertUntrustedURL(item.url, item.alt || '');
+                 });
+                 // Clear the queue to avoid duplicates on next open
+                 uploadQueue = [];
+                 renderQueue();
+                 modal.close();
              } else {
-                 alert('Please select a file first.');
+                 alert('No successful uploads to insert.');
              }
           });
         }
+
+        // Clear queue on modal close so old state isn't preserved incorrectly
+        modal.onClose = () => {
+             uploadQueue = [];
+             renderQueue();
+        };
 
         // Cancel Buttons Logic
         const cancelIds = ['#penman-image-url-cancel', '#penman-image-upload-cancel', '#penman-image-gallery-cancel'];
