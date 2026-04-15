@@ -125,13 +125,21 @@ export function setupImagePlugin(editor) {
 
             // Move cursor out of figure before deleting
             const nextNode = figure.nextElementSibling;
-            if (nextNode) {
-                editor.selection.setRange(nextNode, 0);
-            } else {
-                const p = document.createElement('p');
-                p.innerHTML = '<br>';
-                figure.parentNode.insertBefore(p, figure.nextSibling);
-                editor.selection.setRange(p, 0);
+            let targetNode = nextNode;
+            if (!targetNode) {
+                targetNode = document.createElement('p');
+                targetNode.innerHTML = '<br>';
+                figure.parentNode.insertBefore(targetNode, figure.nextSibling);
+            }
+
+            // Fix setRange TypeError
+            const sel = window.getSelection();
+            if (sel) {
+                const range = document.createRange();
+                range.setStart(targetNode, 0);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
             }
 
             figure.remove();
@@ -605,6 +613,25 @@ export function setupImagePlugin(editor) {
                         item.status = 'SUCCESS';
                         item.url = result.url || result;
                         item.alt = result.alt || '';
+
+                        // Push into gallery cache immediately
+                        const sources = editor.image.gallery.getRegisteredSources();
+                        if (sources && sources.length > 0) {
+                             editor.image.gallery.getSource(sources[0].id).then(source => {
+                                 if (source._cachedItems) {
+                                     source._cachedItems.unshift({
+                                         id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                                         url: item.url,
+                                         thumbnailUrl: item.url,
+                                         filename: item.file.name,
+                                         sourceId: sources[0].id
+                                     });
+                                     // Invalidate the 'loaded' dataset flag so the gallery forces a re-render from the updated cache
+                                     const galleryContainer = elModal.querySelector('.penman-gallery-container');
+                                     if (galleryContainer) galleryContainer.dataset.loaded = 'false';
+                                 }
+                             }).catch(() => {});
+                        }
 
                     } catch (err) {
                         if (item.progressInterval) clearInterval(item.progressInterval);
