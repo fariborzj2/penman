@@ -6,6 +6,7 @@ import { setupImagePlugin } from './src/plugins/ImagePlugin/index.js';
 import { insertImageFromURL } from './src/plugins/ImagePlugin/commands/insertImageFromURL.js';
 import { executeUploadPipeline } from './src/plugins/ImagePlugin/core/uploadPipeline.js';
 import { resolveInsertionPoint } from './src/plugins/ImagePlugin/core/selectionModel.js';
+import { SelectionManager } from './src/selection/SelectionManager.js';
 
 describe('ImagePlugin Stress Test', () => {
     let editor;
@@ -164,21 +165,48 @@ describe('ImagePlugin Extra Stress Tests', () => {
         vi.clearAllMocks();
     });
 
-    it('5. SECURITY BREAK TESTS: Prevent malformed data: URL', () => {
+    it('5. INSERTION MODEL TESTS: Insert image at cursor and split paragraph', () => {
+        editor.selection = new SelectionManager(editor);
+        editor.focus = () => editorArea.focus();
+
+        const paragraph = document.createElement('p');
+        paragraph.textContent = 'Hello world';
+        editorArea.appendChild(paragraph);
+
+        const range = document.createRange();
+        range.setStart(paragraph.firstChild, 6);
+        range.collapse(true);
+
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        editor.selection.save();
+
+        insertImageFromURL(editor, { url: 'http://example.com/insert.png', trustLevel: 'TRUSTED' });
+
+        expect(editorArea.querySelectorAll('figure.penman-image').length).toBe(1);
+        const paragraphs = editorArea.querySelectorAll('p');
+        expect(paragraphs.length).toBe(2);
+        expect(paragraphs[0].textContent).toBe('Hello ');
+        expect(paragraphs[1].textContent).toBe('world');
+    });
+
+    it('6. SECURITY BREAK TESTS: Prevent malformed data: URL', () => {
         const url = 'data:text/html;base64,PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==';
         expect(() => {
             insertImageFromURL(editor, { url, trustLevel: 'UNTRUSTED' });
         }).toThrow('INVALID_URL');
     });
 
-    it('6. SECURITY BREAK TESTS: Prevent javascript: URLs', () => {
+    it('7. SECURITY BREAK TESTS: Prevent javascript: URLs', () => {
         const url = 'javascript:alert(1)';
         expect(() => {
             insertImageFromURL(editor, { url, trustLevel: 'UNTRUSTED' });
         }).toThrow('INVALID_URL');
     });
 
-    it('7. SECURITY BREAK TESTS: HTML injection via alt/caption is safe', () => {
+    it('8. SECURITY BREAK TESTS: HTML injection via alt/caption is safe', () => {
         const url = 'http://example.com/a.png';
         const alt = '"><script>alert(1)</script><img alt="';
 

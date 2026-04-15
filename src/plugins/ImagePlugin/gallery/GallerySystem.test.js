@@ -28,4 +28,26 @@ describe('GallerySystem Core Laws', () => {
     const item = await source.get('1');
     expect(item.trustLevel).toBe(TrustLevel.TRUSTED); // Enforced from registry
   });
+
+  it('sorts gallery items by newest-first when timestamps are provided', async () => {
+    const system = new GallerySystem();
+
+    const source = system.registerSource({
+      id: 'timestamped-source',
+      trustLevel: TrustLevel.TRUSTED,
+      list: async () => ({
+        items: [
+          { id: 'old', url: 'https://example.com/old.png', createdAt: '2024-01-01T00:00:00Z' },
+          { id: 'new', url: 'https://example.com/new.png', createdAt: '2024-05-01T00:00:00Z' }
+        ]
+      }),
+      get: async () => ({ url: 'https://example.com/new.png' })
+    });
+
+    await source.init();
+    const response = await source.list();
+
+    expect(response.items[0].id).toBe('new');
+    expect(response.items[1].id).toBe('old');
+  });
 });

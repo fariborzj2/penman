@@ -86,9 +86,49 @@ export class GallerySource {
 
     // Ensure all returned items inherit the strict trust level of this source
     if (response && Array.isArray(response.items)) {
-      response.items = response.items.map(item => this._enforceSchema(item));
+      const normalizedItems = response.items.map(item => this._enforceSchema(item));
+      response.items = this._sortItemsDescending(normalizedItems);
     }
     return response;
+  }
+
+  _sortItemsDescending(items) {
+    const getSortKey = (item) => {
+      const timestampFields = ['mtime', 'timestamp', 'uploadedAt', 'createdAt', 'updatedAt', 'date'];
+      for (const field of timestampFields) {
+        if (item[field] != null) {
+          const value = item[field];
+          if (typeof value === 'number' && Number.isFinite(value)) {
+            return value;
+          }
+          const parsed = Date.parse(value);
+          if (!Number.isNaN(parsed)) {
+            return parsed;
+          }
+        }
+      }
+
+      if (item.id != null && !Number.isNaN(Number(item.id))) {
+        return Number(item.id);
+      }
+
+      return null;
+    };
+
+    const keyed = items.map(item => ({ item, key: getSortKey(item) }));
+    const hasSortKey = keyed.some(({ key }) => key !== null);
+    if (!hasSortKey) {
+      return items;
+    }
+
+    return keyed
+      .sort((a, b) => {
+        if (a.key === null && b.key === null) return 0;
+        if (a.key === null) return 1;
+        if (b.key === null) return -1;
+        return b.key - a.key;
+      })
+      .map(({ item }) => item);
   }
 
   /**
@@ -121,7 +161,13 @@ export class GallerySource {
       width: Number(item.width) || 0,
       height: Number(item.height) || 0,
       sourceId: this.id,
-      trustLevel: this._trustLevel // STRICT: Enforced from source definition, ignoring API payload
+      trustLevel: this._trustLevel, // STRICT: Enforced from source definition, ignoring API payload
+      mtime: item.mtime != null ? Number(item.mtime) : null,
+      timestamp: item.timestamp != null ? item.timestamp : null,
+      createdAt: item.createdAt != null ? item.createdAt : null,
+      updatedAt: item.updatedAt != null ? item.updatedAt : null,
+      uploadedAt: item.uploadedAt != null ? item.uploadedAt : null,
+      date: item.date != null ? item.date : null
     };
   }
 }

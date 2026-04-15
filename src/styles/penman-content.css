@@ -121,3 +121,23 @@ figcaption.penman-image-caption:empty::before {
   cursor: text;
   pointer-events: none;
 }
+
+.penman-image {
+  display: flex;
+  direction: auto;
+  flex-direction: column;
+  margin: 16px 0;
+}
+.penman-image.penman-align-center {
+  align-items: center
+}
+.penman-image.penman-align-left {
+  align-items: flex-end
+}
+.penman-image.penman-align-right {
+  align-items: flex-start
+}
+figure.penman-selected-image {
+  outline: 3px solid #007bff;
+  outline-offset: 5px;
+}

@@ -39,7 +39,7 @@ function validateFile(file) {
  * @param {File[]} files - Array of files to upload
  * @param {Function} uploadFn - Async function(file) that returns { url: string, alt?: string }
  */
-export async function executeUploadPipeline(editor, files, uploadFn) {
+export async function executeUploadPipeline(editor, files, uploadFn, options = {}) {
   // 1. Snapshot Locked: Capture editor.selection.save() instantly.
   if (editor.selection && typeof editor.selection.save === 'function') {
     editor.selection.save();
@@ -65,7 +65,7 @@ export async function executeUploadPipeline(editor, files, uploadFn) {
       figureNode.classList.add('penman-image-uploading');
 
       // Synchronous insertion
-      insertFigureAtResolvedPoint(editor, figureNode);
+      insertFigureAtResolvedPoint(editor, figureNode, options);
 
       // 6.1 Uploading Snapshot Exemption: NO history snapshot here.
 

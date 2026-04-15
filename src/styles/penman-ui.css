@@ -201,9 +201,3 @@
 .penman-grid-cell {
   aspect-ratio: 1/1;
 }
-
-/* Active Image Selection Highlight */
-figure.penman-selected-image {
-  outline: 3px solid #007bff;
-  outline-offset: 2px;
-}
