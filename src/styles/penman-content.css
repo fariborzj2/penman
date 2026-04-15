@@ -104,3 +104,18 @@
 .penman-cell-handle-tr { top: -3px; right: -3px; }
 .penman-cell-handle-bl { bottom: -3px; left: -3px; }
 .penman-cell-handle-br { bottom: -3px; right: -3px; }
+
+.penman-image {
+  margin: 0;
+  padding: 0;
+  border: 1px solid #ddd;
+  width: fit-content;
+  margin: 0 auto
+}
+.penman-image-caption {
+  padding: 5px 0 10px
+}
+.penman-editor-area img {
+  max-width: 100%;
+  margin: 0 auto;
+}
