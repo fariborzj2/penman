@@ -190,18 +190,18 @@ export function setupImagePlugin(editor) {
 
             <div class="penman-image-tab-content" id="penman-tab-upload">
               <div style="padding: 0 15px 15px">
-                <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 2px dashed #ccc; padding: 20px; text-align: center; border-radius: 4px;">
-                  <p style="margin: 0 0 10px 0; color: #666;">Drag and drop an image here, or browse.</p>
+                <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 1.5px dashed #b0b0b0; padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer;" onclick="document.getElementById('penman-image-file-input').click()">
+                  <p style="margin: 0 0 8px 0; color: #555; font-size: 16px;">Drag and drop an image here, or browse.</p>
                   <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple />
-                  <button type="button" class="penman-btn" style="margin: 0 auto" onclick="document.getElementById('penman-image-file-input').click()">Browse Files</button>
+                  <p style="margin: 0; color: #001529; font-weight: 600; font-size: 14px;">Browser Files</p>
                 </div>
                 <div id="penman-image-upload-queue" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
                 </div>
               </div>
 
-              <div class="penman-modal-footer">
-                <button type="button" class="penman-btn" id="penman-image-upload-cancel">Cancel</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit">Insert</button>
+              <div class="penman-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="penman-btn" id="penman-image-upload-remove" style="background-color: #fff0f0; color: #ff4d4f; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">Remove</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit" style="background-color: #4285f4; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">Insert</button>
               </div>
             </div>
 
@@ -316,49 +316,157 @@ export function setupImagePlugin(editor) {
 
         let uploadQueue = [];
 
+        function formatSize(bytes) {
+            if (bytes === 0) return '0B';
+            const k = 1024;
+            const sizes = ['B', 'K', 'M', 'G'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + sizes[i];
+        }
+
+        function formatType(type) {
+            const ext = type.split('/')[1] || '';
+            return ext.toUpperCase() || 'UNKNOWN';
+        }
+
         function renderQueue() {
             queueContainer.innerHTML = '';
             uploadQueue.forEach(item => {
                 const el = document.createElement('div');
                 el.style.display = 'flex';
                 el.style.alignItems = 'center';
-                el.style.justifyContent = 'space-between';
-                el.style.padding = '8px';
-                el.style.border = '1px solid #eee';
-                el.style.borderRadius = '4px';
-                el.style.background = item.status === 'ERROR' ? '#ffeeee' : '#fff';
+                el.style.padding = '12px 0';
+                el.style.borderBottom = '1px solid #f0f0f0';
 
-                const name = document.createElement('span');
-                name.textContent = item.file.name;
-                name.style.flex = '1';
-                name.style.overflow = 'hidden';
-                name.style.textOverflow = 'ellipsis';
-                name.style.whiteSpace = 'nowrap';
+                // Thumbnail
+                const thumbDiv = document.createElement('div');
+                thumbDiv.style.width = '64px';
+                thumbDiv.style.height = '64px';
+                thumbDiv.style.borderRadius = '8px';
+                thumbDiv.style.overflow = 'hidden';
+                thumbDiv.style.marginRight = '16px';
+                thumbDiv.style.flexShrink = '0';
+                thumbDiv.style.backgroundColor = '#f5f5f5';
 
-                const status = document.createElement('span');
-                status.textContent = item.status;
-                status.style.fontSize = '0.85em';
-                status.style.fontWeight = 'bold';
-                status.style.color = item.status === 'SUCCESS' ? 'green' : (item.status === 'ERROR' ? 'red' : 'orange');
-                status.style.marginLeft = '10px';
+                if (item.thumbnailUrl) {
+                    const img = document.createElement('img');
+                    img.src = item.thumbnailUrl;
+                    img.style.width = '100%';
+                    img.style.height = '100%';
+                    img.style.objectFit = 'cover';
+                    thumbDiv.appendChild(img);
+                }
+                el.appendChild(thumbDiv);
 
-                el.appendChild(name);
-                el.appendChild(status);
+                // Content
+                const contentDiv = document.createElement('div');
+                contentDiv.style.flex = '1';
+                contentDiv.style.minWidth = '0';
+                contentDiv.style.display = 'flex';
+                contentDiv.style.flexDirection = 'column';
+                contentDiv.style.justifyContent = 'center';
 
-                if (item.status === 'ERROR') {
-                    const retryBtn = document.createElement('button');
+                const nameDiv = document.createElement('div');
+                nameDiv.textContent = item.file.name.length > 25 ? item.file.name.substring(0, 22) + '...' : item.file.name;
+                nameDiv.style.fontSize = '15px';
+                nameDiv.style.fontWeight = '500';
+                nameDiv.style.color = '#333';
+                nameDiv.style.marginBottom = '6px';
+                nameDiv.style.whiteSpace = 'nowrap';
+                nameDiv.style.overflow = 'hidden';
+                nameDiv.style.textOverflow = 'ellipsis';
+                contentDiv.appendChild(nameDiv);
+
+                // Status / Progress bar
+                const statusDiv = document.createElement('div');
+                statusDiv.style.display = 'flex';
+                statusDiv.style.alignItems = 'center';
+                statusDiv.style.marginBottom = '6px';
+
+                if (item.status === 'SUCCESS') {
+                    const successText = document.createElement('span');
+                    successText.textContent = 'SUCCESS';
+                    successText.style.color = '#28a745';
+                    successText.style.fontSize = '12px';
+                    successText.style.fontWeight = 'bold';
+                    statusDiv.appendChild(successText);
+                } else if (item.status === 'ERROR') {
+                    const errText = document.createElement('span');
+                    errText.textContent = 'ERROR: ' + (item.error || 'Failed');
+                    errText.style.color = '#dc3545';
+                    errText.style.fontSize = '12px';
+                    errText.style.fontWeight = 'bold';
+                    statusDiv.appendChild(errText);
+
+                    const retryBtn = document.createElement('span');
                     retryBtn.textContent = 'Retry';
-                    retryBtn.className = 'penman-btn';
-                    retryBtn.style.padding = '2px 6px';
-                    retryBtn.style.fontSize = '0.8em';
+                    retryBtn.style.color = '#007bff';
+                    retryBtn.style.fontSize = '12px';
+                    retryBtn.style.cursor = 'pointer';
                     retryBtn.style.marginLeft = '10px';
                     retryBtn.onclick = () => {
                         item.status = 'PENDING';
+                        item.progress = 0;
                         renderQueue();
                         processQueue();
                     };
-                    el.appendChild(retryBtn);
+                    statusDiv.appendChild(retryBtn);
+                } else {
+                    // Progress bar
+                    const barContainer = document.createElement('div');
+                    barContainer.style.flex = '1';
+                    barContainer.style.height = '6px';
+                    barContainer.style.backgroundColor = '#f0f0f0';
+                    barContainer.style.borderRadius = '3px';
+                    barContainer.style.overflow = 'hidden';
+                    barContainer.style.marginRight = '12px';
+
+                    const bar = document.createElement('div');
+                    bar.style.width = Math.min(item.progress, 100) + '%';
+                    bar.style.height = '100%';
+                    bar.style.backgroundColor = '#28a745';
+                    bar.style.transition = 'width 0.2s linear';
+                    barContainer.appendChild(bar);
+
+                    const pctText = document.createElement('span');
+                    pctText.textContent = Math.floor(item.progress) + '%';
+                    pctText.style.fontSize = '12px';
+                    pctText.style.color = '#333';
+                    pctText.style.fontWeight = '500';
+
+                    statusDiv.appendChild(barContainer);
+                    statusDiv.appendChild(pctText);
                 }
+
+                contentDiv.appendChild(statusDiv);
+
+                // Meta
+                const metaDiv = document.createElement('div');
+                metaDiv.style.fontSize = '12px';
+                metaDiv.style.color = '#888';
+                metaDiv.innerHTML = `Format: <span style="color:#333;font-weight:500;margin-right:8px;">${item.format}</span> Size: <span style="color:#333;font-weight:500;">${item.size}</span>`;
+                contentDiv.appendChild(metaDiv);
+
+                el.appendChild(contentDiv);
+
+                // Checkbox
+                const checkContainer = document.createElement('div');
+                checkContainer.style.marginLeft = '16px';
+                checkContainer.style.display = 'flex';
+                checkContainer.style.alignItems = 'center';
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.checked = item.selected;
+                checkbox.style.width = '20px';
+                checkbox.style.height = '20px';
+                checkbox.style.cursor = 'pointer';
+                checkbox.onchange = (e) => {
+                    item.selected = e.target.checked;
+                };
+
+                checkContainer.appendChild(checkbox);
+                el.appendChild(checkContainer);
 
                 queueContainer.appendChild(el);
             });
@@ -370,13 +478,28 @@ export function setupImagePlugin(editor) {
                 if (item.status === 'PENDING') {
                     item.status = 'UPLOADING';
                     renderQueue();
+
                     try {
                         if (!uploadFn) throw new Error('Upload function not configured');
+
+                        // Simulate progress since standard uploadFn doesn't support progress callbacks
+                        item.progressInterval = setInterval(() => {
+                            if (item.progress < 90) {
+                                item.progress += Math.random() * 15;
+                                renderQueue();
+                            }
+                        }, 200);
+
                         const result = await uploadFn(item.file);
+
+                        clearInterval(item.progressInterval);
+                        item.progress = 100;
                         item.status = 'SUCCESS';
                         item.url = result.url || result;
                         item.alt = result.alt || '';
+
                     } catch (err) {
+                        if (item.progressInterval) clearInterval(item.progressInterval);
                         item.status = 'ERROR';
                         item.error = err.message;
                     }
@@ -387,12 +510,24 @@ export function setupImagePlugin(editor) {
 
         function handleFiles(files) {
             if (!files || files.length === 0) return;
-            const newItems = Array.from(files).map(file => ({
-                file,
-                status: 'PENDING',
-                url: null,
-                alt: null
-            }));
+            const newItems = Array.from(files).map(file => {
+                let thumbnailUrl = null;
+                if (file.type.startsWith('image/')) {
+                    thumbnailUrl = URL.createObjectURL(file);
+                }
+                return {
+                    id: Math.random().toString(36).substr(2, 9),
+                    file,
+                    thumbnailUrl,
+                    status: 'PENDING', // PENDING, UPLOADING, SUCCESS, ERROR
+                    progress: 0,
+                    url: null,
+                    alt: null,
+                    selected: true, // Selected by default
+                    format: formatType(file.type),
+                    size: formatSize(file.size)
+                };
+            });
             uploadQueue.push(...newItems);
             renderQueue();
             processQueue();
@@ -423,32 +558,55 @@ export function setupImagePlugin(editor) {
             });
         }
 
+        const uploadRemoveBtn = elModal.querySelector('#penman-image-upload-remove');
+        if (uploadRemoveBtn) {
+            uploadRemoveBtn.addEventListener('click', () => {
+                const remainingItems = uploadQueue.filter(item => !item.selected);
+                uploadQueue.forEach(item => {
+                    if (item.selected && item.thumbnailUrl) {
+                        URL.revokeObjectURL(item.thumbnailUrl);
+                    }
+                });
+                uploadQueue = remainingItems;
+                renderQueue();
+            });
+        }
+
         if (uploadSubmit) {
           uploadSubmit.addEventListener('click', () => {
-             const successfulItems = uploadQueue.filter(item => item.status === 'SUCCESS');
-             if (successfulItems.length > 0) {
-                 successfulItems.forEach(item => {
+             const itemsToInsert = uploadQueue.filter(item => item.selected && item.status === 'SUCCESS');
+             if (itemsToInsert.length > 0) {
+                 itemsToInsert.forEach(item => {
                      // Insert Phase
                      editor.image.insertUntrustedURL(item.url, item.alt || '');
                  });
-                 // Clear the queue to avoid duplicates on next open
-                 uploadQueue = [];
+                 // Remove inserted items from the queue
+                 const remainingItems = uploadQueue.filter(item => !(item.selected && item.status === 'SUCCESS'));
+                 uploadQueue.forEach(item => {
+                     if (item.selected && item.status === 'SUCCESS' && item.thumbnailUrl) {
+                         URL.revokeObjectURL(item.thumbnailUrl);
+                     }
+                 });
+                 uploadQueue = remainingItems;
                  renderQueue();
                  modal.close();
              } else {
-                 alert('No successful uploads to insert.');
+                 alert('No selected successful uploads to insert.');
              }
           });
         }
 
         // Clear queue on modal close so old state isn't preserved incorrectly
         modal.onClose = () => {
+             uploadQueue.forEach(item => {
+                 if (item.thumbnailUrl) URL.revokeObjectURL(item.thumbnailUrl);
+             });
              uploadQueue = [];
              renderQueue();
         };
 
         // Cancel Buttons Logic
-        const cancelIds = ['#penman-image-url-cancel', '#penman-image-upload-cancel', '#penman-image-gallery-cancel'];
+        const cancelIds = ['#penman-image-url-cancel', '#penman-image-gallery-cancel'];
         cancelIds.forEach(id => {
             const btn = elModal.querySelector(id);
             if (btn) {
