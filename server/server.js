@@ -50,8 +50,8 @@ app.get('/gallery', (req, res) => {
 
     const items = images.map((file, index) => ({
       id: file,
-      url: \`http://localhost:3000/uploads/\${file}\`,
-      thumbnailUrl: \`http://localhost:3000/uploads/\${file}\`,
+      url: `http://localhost:3000/uploads/${file}`,
+      thumbnailUrl: `http://localhost:3000/uploads/${file}`,
       title: file,
       width: 0,
       height: 0
