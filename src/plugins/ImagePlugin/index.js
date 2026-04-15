@@ -72,14 +72,38 @@ export function setupImagePlugin(editor) {
           floatingUI.hide();
        }
     });
+
+    // Override hide to clear outline
+    const originalHide = floatingUI.hide.bind(floatingUI);
+    floatingUI.hide = () => {
+        if (floatingUI.anchorNode) {
+            floatingUI.anchorNode.classList.remove('penman-selected-image');
+            const img = floatingUI.anchorNode.querySelector('img');
+            if (img) img.style.outline = 'none';
+        }
+        originalHide();
+    };
   }
 
   root.addEventListener('click', (e) => {
       const figure = e.target.closest('figure.penman-image');
+
+      // Clear previous outline if any
+      const previousFigures = root.querySelectorAll('figure.penman-image.penman-selected-image');
+      previousFigures.forEach(fig => {
+          fig.classList.remove('penman-selected-image');
+          const img = fig.querySelector('img');
+          if (img) img.style.outline = 'none';
+      });
+
       if (figure) {
           if (!floatingUI) createFloatingUI();
           floatingUI.setAnchor(figure);
           floatingUI.show();
+
+          figure.classList.add('penman-selected-image');
+          const img = figure.querySelector('img');
+          if (img) img.style.outline = '3px solid #007bff';
       } else {
           if (floatingUI) floatingUI.hide();
       }
@@ -134,8 +158,16 @@ export function setupImagePlugin(editor) {
     editor.ui.registry.addButton('image', {
       text: 'Image',
       onAction: () => {
-        // Open a modal to insert image from URL
-        // A complete file upload UI would be more complex, but let's provide URL insertion as a baseline per the UI Specification
+        // Find selected image if floatingUI is active to pre-fill URL tab
+        let defaultUrl = '';
+        let defaultAlt = '';
+        if (floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
+            const img = floatingUI.anchorNode.querySelector('img');
+            if (img) {
+                defaultUrl = img.getAttribute('src') || '';
+                defaultAlt = img.getAttribute('alt') || '';
+            }
+        }
 
         const modal = editor.ui.createModal({
           title: 'Insert Image',
@@ -175,16 +207,16 @@ export function setupImagePlugin(editor) {
               <div style="padding: 0 15px 15px">
                 <div style="margin-bottom: 10px;">
                   <label style="display:block;margin-bottom:5px;">Image URL</label>
-                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." style="width: 100%; box-sizing: border-box;" />
+                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." value="${defaultUrl}" style="width: 100%; box-sizing: border-box;" />
                 </div>
                 <div style="margin-bottom: 15px;">
                   <label style="display:block;margin-bottom:5px;">Alternative Text (Optional)</label>
-                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" style="width: 100%; box-sizing: border-box;" />
+                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
                 </div>
               </div>
               <div class="penman-modal-footer">
                 <button type="button" class="penman-btn" id="penman-image-url-cancel">Cancel</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-url-submit">Insert</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-url-submit">${defaultUrl ? 'Update' : 'Insert'}</button>
               </div>
             </div>
 
@@ -226,20 +258,61 @@ export function setupImagePlugin(editor) {
         const tabs = elModal.querySelectorAll('.penman-image-tab');
         const contents = elModal.querySelectorAll('.penman-image-tab-content');
 
+
+        function renderGalleryItems(items, galleryContainer, modal, editor) {
+            galleryContainer.innerHTML = ''; // clear loading
+            galleryContainer.dataset.loaded = 'true';
+
+            items.forEach(item => {
+                const imgDiv = document.createElement('div');
+                imgDiv.style.cursor = 'pointer';
+                imgDiv.style.border = '2px solid transparent';
+                imgDiv.style.borderRadius = '4px';
+                imgDiv.style.overflow = 'hidden';
+                imgDiv.style.height = '100px';
+                imgDiv.style.position = 'relative';
+                imgDiv.style.backgroundColor = '#f0f0f0';
+
+                // Fix: Implement Native Lazy Loading to improve delay and performance
+                imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;" title="${item.title || ''}" onload="this.style.opacity=1" onerror="this.style.opacity=0">`;
+                // Set initial opacity to 0 in HTML string, actually it's easier to just use standard loading="lazy"
+                const img = imgDiv.querySelector('img');
+                img.style.opacity = '0';
+                img.onload = () => img.style.opacity = '1';
+
+                imgDiv.addEventListener('mouseover', () => imgDiv.style.borderColor = '#007bff');
+                imgDiv.addEventListener('mouseout', () => imgDiv.style.borderColor = 'transparent');
+
+                imgDiv.addEventListener('click', () => {
+                    editor.image.insertFromURL(item.url, item.title || '');
+                    modal.close();
+                });
+
+                galleryContainer.appendChild(imgDiv);
+            });
+        }
+
         tabs.forEach(tab => {
           tab.addEventListener('click', () => {
             tabs.forEach(t => t.classList.remove('active'));
             contents.forEach(c => c.classList.remove('active'));
             tab.classList.add('active');
             elModal.querySelector('#penman-tab-' + tab.dataset.tab).classList.add('active');
-        // Gallery Loading Logic
-        tab.addEventListener('click', () => {
-          if (tab.dataset.tab === 'gallery') {
+
+            // Gallery Loading Logic
+            if (tab.dataset.tab === 'gallery') {
             const galleryContainer = elModal.querySelector('.penman-gallery-container');
+
+            // Fix: Prevent re-fetching and re-rendering if already loaded
+            if (galleryContainer.dataset.loaded === 'true') {
+                return;
+            }
+
             const sources = editor.image.gallery.getRegisteredSources();
             
             if (sources.length === 0) {
               galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>No gallery sources registered.</p></div>';
+              galleryContainer.dataset.loaded = 'true';
               return;
             }
 
@@ -247,33 +320,19 @@ export function setupImagePlugin(editor) {
             const sourceInfo = sources[0];
             
             editor.image.gallery.getSource(sourceInfo.id).then(source => {
+                // Fix: Check cache on the source object itself to persist across modal reopens
+                if (source._cachedItems) {
+                    renderGalleryItems(source._cachedItems, galleryContainer, modal, editor);
+                    return;
+                }
+
                 source.list().then(res => {
                     if (res && res.items && res.items.length > 0) {
-                        galleryContainer.innerHTML = ''; // clear loading
-                        res.items.forEach(item => {
-                            const imgDiv = document.createElement('div');
-                            imgDiv.style.cursor = 'pointer';
-                            imgDiv.style.border = '2px solid transparent';
-                            imgDiv.style.borderRadius = '4px';
-                            imgDiv.style.overflow = 'hidden';
-                            imgDiv.style.height = '100px';
-                            imgDiv.style.position = 'relative';
-                            
-                            imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" style="width:100%; height:100%; object-fit:cover;" title="${item.title || ''}">`;
-                            
-                            imgDiv.addEventListener('mouseover', () => imgDiv.style.borderColor = '#007bff');
-                            imgDiv.addEventListener('mouseout', () => imgDiv.style.borderColor = 'transparent');
-                            
-                            imgDiv.addEventListener('click', () => {
-                                // Trust level is inherited from the source definition (Trust Immutability Rule)
-                                editor.image.insertFromURL(item.url, item.title || '');
-                                modal.close();
-                            });
-                            
-                            galleryContainer.appendChild(imgDiv);
-                        });
+                        source._cachedItems = res.items; // Cache in memory
+                        renderGalleryItems(res.items, galleryContainer, modal, editor);
                     } else {
                          galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>Gallery is empty.</p></div>';
+                         galleryContainer.dataset.loaded = 'true';
                     }
                 }).catch(err => {
                     galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error loading gallery: ${err.message}</p></div>`;
@@ -282,8 +341,6 @@ export function setupImagePlugin(editor) {
                 galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error initializing gallery source: ${err.message}</p></div>`;
             });
           }
-        });
-
           });
         });
 
@@ -298,6 +355,22 @@ export function setupImagePlugin(editor) {
 
             if (url) {
               try {
+                // If we have an active selected image, update it instead of inserting a new one
+                if (defaultUrl && floatingUI && floatingUI.anchorNode) {
+                    const img = floatingUI.anchorNode.querySelector('img');
+                    if (img) {
+                        img.src = url;
+                        if (alt) img.alt = alt;
+                        else img.removeAttribute('alt');
+
+                        editor.history.pushImmediate();
+                        editor.emit('change');
+                        modal.close();
+                        return;
+                    }
+                }
+
+                // Otherwise, insert new
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
               } catch (err) {
