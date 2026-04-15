@@ -112,10 +112,24 @@
   width: fit-content;
   margin: 0 auto
 }
-.penman-image-caption {
-  padding: 5px 0 10px
-}
 .penman-editor-area img {
   max-width: 100%;
   margin: 0 auto;
+}
+/* Image Caption */
+figcaption.penman-image-caption {
+  text-align: center;
+  color: #666;
+  font-size: 0.9em;
+  margin-top: 8px;
+  padding: 5px 0 10px
+  outline: none;
+  min-height: 1.5em; /* Ensure it has height even when empty */
+}
+
+figcaption.penman-image-caption:empty::before {
+  content: attr(data-placeholder);
+  color: #aaa;
+  cursor: text;
+  pointer-events: none;
 }

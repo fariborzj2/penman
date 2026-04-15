@@ -115,6 +115,31 @@ export function setupImagePlugin(editor) {
   // 2. Setup Event Listeners
   root.addEventListener('keydown', (e) => {
     handleCaptionKeyDown(e, editor);
+
+    // Image Deletion Handler
+    if ((e.key === 'Delete' || e.key === 'Backspace') && floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
+        // Double check we are not typing inside the caption
+        if (!e.target.closest('figcaption')) {
+            e.preventDefault();
+            const figure = floatingUI.anchorNode;
+
+            // Move cursor out of figure before deleting
+            const nextNode = figure.nextElementSibling;
+            if (nextNode) {
+                editor.selection.setRange(nextNode, 0);
+            } else {
+                const p = document.createElement('p');
+                p.innerHTML = '<br>';
+                figure.parentNode.insertBefore(p, figure.nextSibling);
+                editor.selection.setRange(p, 0);
+            }
+
+            figure.remove();
+            floatingUI.hide();
+            editor.history.pushImmediate();
+            editor.emit('change');
+        }
+    }
   });
 
   root.addEventListener('paste', (e) => {
@@ -143,6 +168,7 @@ export function setupImagePlugin(editor) {
 
   // 3. Expose API to Editor (Registry approach or directly)
   const gallerySystem = new GallerySystem();
+  let globalUploadQueue = [];
 
   editor.image = {
     gallery: gallerySystem,
@@ -305,6 +331,15 @@ export function setupImagePlugin(editor) {
 
             // Fix: Prevent re-fetching and re-rendering if already loaded
             if (galleryContainer.dataset.loaded === 'true') {
+                // If it's loaded, we still want to re-render from cache in case a new upload was injected
+                const sources = editor.image.gallery.getRegisteredSources();
+                if (sources.length > 0) {
+                   editor.image.gallery.getSource(sources[0].id).then(source => {
+                       if (source._cachedItems) {
+                           renderGalleryItems(source._cachedItems, galleryContainer, modal, editor);
+                       }
+                   }).catch(() => {});
+                }
                 return;
             }
 
@@ -387,7 +422,7 @@ export function setupImagePlugin(editor) {
         const queueContainer = elModal.querySelector('#penman-image-upload-queue');
         const uploadFn = editor.options.imageUploadFn;
 
-        let uploadQueue = [];
+        let uploadQueue = globalUploadQueue;
 
         function formatSize(bytes) {
             if (bytes === 0) return '0B';
@@ -671,11 +706,8 @@ export function setupImagePlugin(editor) {
 
         // Clear queue on modal close so old state isn't preserved incorrectly
         modal.onClose = () => {
-             uploadQueue.forEach(item => {
-                 if (item.thumbnailUrl) URL.revokeObjectURL(item.thumbnailUrl);
-             });
-             uploadQueue = [];
-             renderQueue();
+             // We no longer clear the queue on close, preserving state.
+             globalUploadQueue = uploadQueue;
         };
 
         // Cancel Buttons Logic
