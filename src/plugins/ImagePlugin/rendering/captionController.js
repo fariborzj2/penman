@@ -119,6 +119,6 @@ export function handleCaptionPaste(event) {
 
 export function handleCaptionBlur(event, editor) {
   if (editor && editor.history) {
-    editor.history.saveSnapshot();
+    editor.history.pushImmediate();
   }
 }

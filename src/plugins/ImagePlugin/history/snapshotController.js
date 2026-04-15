@@ -16,12 +16,12 @@ export function captureCompletionSnapshot(editor, dataId) {
   // Edge Case Lock is enforced at the caller level via Atomic Mutation Block.
   // When this is called, the DOM mutation is already SUCCESS and done.
   if (editor && editor.history) {
-    editor.history.saveSnapshot();
+    editor.history.pushImmediate();
   }
 }
 
 export function captureAtomicSnapshot(editor) {
   if (editor && editor.history) {
-    editor.history.saveSnapshot();
+    editor.history.pushImmediate();
   }
 }

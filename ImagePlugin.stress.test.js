@@ -26,7 +26,7 @@ describe('ImagePlugin Stress Test', () => {
                 restore: vi.fn()
             },
             history: {
-                saveSnapshot: vi.fn()
+                pushImmediate: vi.fn()
             },
             emit: vi.fn()
         };
@@ -82,7 +82,7 @@ describe('ImagePlugin Stress Test', () => {
         // Verify node wasn't recreated and no events were emitted
         expect(editorArea.innerHTML).toBe('');
         // No snapshot on FAILED/deleted
-        expect(editor.history.saveSnapshot).not.toHaveBeenCalled();
+        expect(editor.history.pushImmediate).not.toHaveBeenCalled();
     });
 
     it('3. HISTORY CORRUPTION TESTS: History order MUST follow completion order', async () => {
@@ -102,18 +102,18 @@ describe('ImagePlugin Stress Test', () => {
         await Promise.resolve();
 
         // No snapshots on pending
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(0);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(0);
 
         // Resolve 2 out of order
         resolveUpload2({ url: 'url2' });
         await new Promise(r => setTimeout(r, 0));
 
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(1);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(1);
 
         resolveUpload1({ url: 'url1' });
         await new Promise(r => setTimeout(r, 0));
 
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(2);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(2);
     });
 
     it('4. ATOMIC EVENT TESTS: Emit SUCCESS/FAILED after node deletion', async () => {
@@ -153,7 +153,7 @@ describe('ImagePlugin Extra Stress Tests', () => {
                 restore: vi.fn()
             },
             history: {
-                saveSnapshot: vi.fn()
+                pushImmediate: vi.fn()
             },
             emit: vi.fn()
         };
@@ -210,12 +210,12 @@ describe('ImagePlugin Extra Stress Tests', () => {
         resolveUpload2({ url: 'url2' });
         await new Promise(r => setTimeout(r, 0));
 
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(1);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(1);
 
         resolveUpload1({ url: 'url1' });
         await new Promise(r => setTimeout(r, 0));
 
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(2);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(2);
 
         // Check order of images in DOM
         const images = editorArea.querySelectorAll('img');
@@ -244,7 +244,7 @@ describe('ImagePlugin DOM Integrity and Capability Tests', () => {
                 restore: vi.fn()
             },
             history: {
-                saveSnapshot: vi.fn()
+                pushImmediate: vi.fn()
             },
             emit: vi.fn()
         };
@@ -283,7 +283,7 @@ describe('ImagePlugin DOM Integrity and Capability Tests', () => {
 
         // The event should drop entirely because querySelector('[data-id="..."]') will return null
         expect(editor.emit).toHaveBeenCalledTimes(0);
-        expect(editor.history.saveSnapshot).toHaveBeenCalledTimes(0);
+        expect(editor.history.pushImmediate).toHaveBeenCalledTimes(0);
         expect(figure.classList.contains('penman-image-uploading')).toBe(true); // Should be untouched
     });
 });

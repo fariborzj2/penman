@@ -4,7 +4,12 @@
 1. Ensure the backend implements an upload endpoint if drag/drop is required.
 2. Initialize the editor with `image` in `plugins` and provide `imageUploadFn`.
 3. Users can drag and drop image files directly onto the editor surface, or paste them from the clipboard.
-4. Developers can programmatically insert URLs via `editor.image.insertUntrustedURL(url)`.
+4. Users can open the Image modal which features multi-select upload workflows.
+   - Selected images enter an automated queue with independent states (`PENDING`, `UPLOADING`, `SUCCESS`, `ERROR`).
+   - The queue automatically triggers the `imageUploadFn` for each item.
+   - Users manually click "Insert" to embed the successful (`SUCCESS`) images into the editor.
+5. Users can also select images from registered gallery sources using the Gallery mode.
+6. Developers can programmatically insert URLs via `editor.image.insertUntrustedURL(url)`.
 
 ## Initialization
 ```javascript
@@ -40,6 +45,7 @@ const editor = penman.init({
 
 ## Integration points with other plugins
 - Native integration with `HistoryManager` snapshot controller.
+  - *Dependency requirement:* The plugin requires the history manager to expose the `pushImmediate` method for atomic action tracking (used during alignment and insertions).
 - Alignment utilizes the core DOM rendering pipeline intercepting CSS.
 
 ## Common misuse cases
