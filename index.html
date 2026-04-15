@@ -81,6 +81,25 @@
 
     const instance = penman.get('#myTextarea');
 
+    // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
+    if (instance.image && instance.image.gallery) {
+      instance.image.gallery.registerSource({
+        id: 'local-uploads',
+        name: 'Local Uploads',
+        trustLevel: 'TRUSTED', // Since it comes from our own server
+        list: async (cursor = null, limit = 20) => {
+          // در سرور local که راه‌اندازی کردیم، endpoint به نام /gallery ایجاد کردیم
+          const response = await fetch('http://localhost:3000/gallery');
+          const data = await response.json();
+          return data; // { items: [...], nextCursor: null }
+        },
+        get: async (id) => {
+          // در این مثال ساده get به صورت dummy کار می‌کند چون لیست همه فیلدها را دارد
+          return { id, url: `http://localhost:3000/uploads/${id}` };
+        }
+      });
+    }
+
     document.getElementById('btnSetContent').addEventListener('click', () => {
       const ed = penman.get('#myTextarea');
       if(ed) ed.setContent('<p><b>This is dynamically set content!</b></p>');

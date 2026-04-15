@@ -40,6 +40,32 @@ app.post('/upload', upload.single('file'), (req, res) => {
 // 👇 سرو کردن فایل‌ها از همان پوشه واقعی
 app.use('/uploads', express.static(uploadDir));
 
+app.get('/gallery', (req, res) => {
+  try {
+    const files = fs.readdirSync(uploadDir);
+    const images = files.filter(file => {
+      const ext = path.extname(file).toLowerCase();
+      return ['.png', '.jpg', '.jpeg', '.webp', '.gif'].includes(ext);
+    });
+
+    const items = images.map((file, index) => ({
+      id: file,
+      url: \`http://localhost:3000/uploads/\${file}\`,
+      thumbnailUrl: \`http://localhost:3000/uploads/\${file}\`,
+      title: file,
+      width: 0,
+      height: 0
+    }));
+
+    res.json({
+      items: items,
+      nextCursor: null
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to read gallery' });
+  }
+});
+
 app.listen(3000, () => {
   console.log('Server running on http://localhost:3000');
 });
