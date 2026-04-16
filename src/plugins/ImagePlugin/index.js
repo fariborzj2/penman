@@ -295,7 +295,6 @@ export function setupImagePlugin(editor) {
             let targetNode = nextNode;
             if (!targetNode) {
                 targetNode = document.createElement('p');
-                targetNode.innerHTML = '<br>';
                 figure.parentNode.insertBefore(targetNode, figure.nextSibling);
             }
             

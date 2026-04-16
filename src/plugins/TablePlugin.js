@@ -98,11 +98,11 @@ export function setupTablePlugin(editor) {
       for(let r=0; r<rows; r++) {
          html += `<tr>`;
          for(let c=0; c<cols; c++) {
-             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><br></td>`;
+             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"></td>`;
          }
          html += `</tr>`;
       }
-      html += `</tbody></table><p><br></p>`;
+      html += `</tbody></table>`;
 
       editor.insertContent(html);
     }

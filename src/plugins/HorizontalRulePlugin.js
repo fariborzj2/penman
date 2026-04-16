@@ -44,7 +44,6 @@ export function setupHorizontalRulePlugin(editor) {
       const lastChild = editor.editableArea.lastChild;
       if (lastChild && lastChild.tagName && lastChild.tagName.toLowerCase() === 'hr') {
           const p = document.createElement('p');
-          p.innerHTML = '<br>';
           editor.editableArea.appendChild(p);
 
           // move selection to new p

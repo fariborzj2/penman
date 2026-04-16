@@ -136,9 +136,7 @@ export class TableTransaction {
            const gridCell = this.grid.getCellById(id);
            if (gridCell && gridCell.isReal) {
                const content = gridCell.domNode.innerHTML.trim();
-               if (content && content !== '<br>') {
-                   const br = document.createElement('br');
-                   newContentFragment.appendChild(br);
+               if (content) {
                    while(gridCell.domNode.firstChild) {
                        newContentFragment.appendChild(gridCell.domNode.firstChild);
                    }
@@ -219,7 +217,6 @@ export class TableTransaction {
             if (data.cs > 1) td.setAttribute('colspan', data.cs);
             td.style.border = anchorNode.style.border || '1px solid #ccc';
             td.style.padding = anchorNode.style.padding || '5px';
-            td.innerHTML = '<br>';
 
             // Re-insert logic based on the original grid colIndex relative to existing cells in that row
             let inserted = false;
@@ -322,7 +319,6 @@ export class TableTransaction {
   deleteTable() {
      if (this.table && this.table.parentNode) {
          const p = document.createElement('p');
-         p.innerHTML = '<br>';
          this.table.parentNode.replaceChild(p, this.table);
          // Mark as completely deleted so commit doesn't fail Grid checks
          this.table = p;
@@ -366,7 +362,6 @@ export class TableTransaction {
         if (needsNewCell) {
             const td = document.createElement('td');
             td.setAttribute('data-cell-id', TableGrid.generateCellId());
-            td.innerHTML = '<br>';
 
             // inherit properties
             const tableBorder = this.table.getAttribute('border') || '1';
@@ -482,7 +477,6 @@ export class TableTransaction {
          if (needsNewCell) {
              const td = document.createElement('td');
              td.setAttribute('data-cell-id', TableGrid.generateCellId());
-             td.innerHTML = '<br>';
 
              const tableBorder = this.table.getAttribute('border') || '1';
              const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
@@ -625,7 +619,6 @@ export class TableTransaction {
   deleteTable() {
      if (this.table && this.table.parentNode) {
          const p = document.createElement('p');
-         p.innerHTML = '<br>';
          this.table.parentNode.replaceChild(p, this.table);
          // Mark as completely deleted so commit doesn't fail Grid checks
          this.table = p;
@@ -669,7 +662,6 @@ export class TableTransaction {
         if (needsNewCell) {
             const td = document.createElement('td');
             td.setAttribute('data-cell-id', TableGrid.generateCellId());
-            td.innerHTML = '<br>';
 
             // inherit properties
             const tableBorder = this.table.getAttribute('border') || '1';

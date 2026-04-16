@@ -89,7 +89,7 @@ describe('TableTransaction', () => {
       const newRowCells = table.querySelectorAll('tr')[1].querySelectorAll('td');
       expect(newRowCells.length).toBe(2);
       expect(newRowCells[0].getAttribute('data-cell-id')).toBeDefined();
-      expect(newRowCells[0].innerHTML).toBe('<br>');
+      expect(newRowCells[0].innerHTML).toBe('');
   });
 
   it('should remove row correctly', () => {

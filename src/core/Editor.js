@@ -86,9 +86,9 @@ export class Editor extends EventEmitter {
     this.editableArea.className = 'penman-editor-area';
     this.editableArea.contentEditable = true;
 
-    // Defaulting to empty <p><br></p> if empty, ensures typing creates P instead of DIV
+    // Defaulting to empty <p></p> if empty, ensures typing creates P instead of DIV
     const initialVal = this.textarea.value.trim();
-    this.editableArea.innerHTML = initialVal ? initialVal : '<p><br></p>';
+    this.editableArea.innerHTML = initialVal ? initialVal : '<p></p>';
 
     // Create footer (status bar)
     this.footer = document.createElement('div');
@@ -233,7 +233,6 @@ export class Editor extends EventEmitter {
 
                             // Create a new paragraph and insert it BEFORE the table
                             const p = document.createElement('p');
-                            p.innerHTML = '<br>';
                             this.editableArea.insertBefore(p, table);
 
                             // Move cursor to the new paragraph
@@ -299,7 +298,6 @@ export class Editor extends EventEmitter {
           if (remainingText.length === 0) {
             e.preventDefault();
             const p = document.createElement('p');
-            p.innerHTML = '<br>';
             if (blockNode.nextSibling) {
               blockNode.parentNode.insertBefore(p, blockNode.nextSibling);
             } else {
@@ -352,8 +350,16 @@ export class Editor extends EventEmitter {
         // Sanitize rich text and preserve valid structural markup
         contentToInsert = this.sanitizer.sanitize(html);
       } else if (text) {
-        // Escape plain text and preserve line breaks
-        contentToInsert = this._escapeText(text).replace(/\n/g, '<br>');
+        // Escape plain text and preserve line breaks without wrapping everything in P
+        // Since we are moving to a strict block-based structure,
+        // inline pasting (no newlines) shouldn't be wrapped in <p>,
+        // but multi-line pastes should create distinct paragraphs instead of <br>.
+        const escaped = this._escapeText(text);
+        if (escaped.includes('\n')) {
+          contentToInsert = escaped.split('\n').map(line => `<p>${line}</p>`).join('');
+        } else {
+          contentToInsert = escaped;
+        }
       }
 
       if (contentToInsert) {
