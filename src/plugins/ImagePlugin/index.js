@@ -286,7 +286,19 @@ export function setupImagePlugin(editor) {
     // Image Deletion Handler
     if ((e.key === 'Delete' || e.key === 'Backspace') && floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
         // Double check we are not typing inside the caption
-        if (!e.target.closest('figcaption')) {
+        let isInsideCaption = !!e.target.closest('figcaption');
+        if (!isInsideCaption) {
+            const sel = window.getSelection();
+            if (sel && sel.rangeCount > 0) {
+                let node = sel.getRangeAt(0).startContainer;
+                if (node.nodeType === 3) node = node.parentNode;
+                if (node && node.closest) {
+                    isInsideCaption = !!node.closest('figcaption');
+                }
+            }
+        }
+
+        if (!isInsideCaption) {
             e.preventDefault();
             const figure = floatingUI.anchorNode;
             
