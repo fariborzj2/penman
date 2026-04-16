@@ -188,6 +188,7 @@ export function setupImagePlugin(editor) {
   }
 
   root.addEventListener('click', (e) => {
+      const isCaption = e.target.closest('figcaption');
       const figure = e.target.closest('figure.penman-image');
       
       // Clear previous outline if any
@@ -198,7 +199,7 @@ export function setupImagePlugin(editor) {
           if (img) img.style.outline = 'none';
       });
 
-      if (figure) {
+      if (figure && !isCaption) {
           if (!floatingUI) createFloatingUI();
           floatingUI.setAnchor(figure);
           floatingUI.show();
