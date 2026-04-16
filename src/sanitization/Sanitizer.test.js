@@ -32,12 +32,12 @@ describe('Sanitizer', () => {
   it('should neutralize javascript: hrefs', () => {
     const html = '<a href="javascript:alert(1)">Click</a>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<a>Click</a>');
+    expect(clean).toBe('<p><a>Click</a></p>');
 
     // Also test with obfuscated invisible characters
     const obfuscatedHtml = '<a href="jav&#x09;ascript:alert(1)">Click</a>';
     const cleanObfuscated = sanitizer.sanitize(obfuscatedHtml);
-    expect(cleanObfuscated).toBe('<a>Click</a>');
+    expect(cleanObfuscated).toBe('<p><a>Click</a></p>');
   });
 
   it('should preserve table and heading structure when rendering sanitized HTML', () => {
@@ -50,5 +50,31 @@ describe('Sanitizer', () => {
     const html = '<div onmouseover="xss"><p>Safe <img src="x" onerror="xss"> <span>Text</span></p></div>';
     const clean = sanitizer.sanitize(html);
     expect(clean).toBe('<div><p>Safe <img src="x"> <span>Text</span></p></div>');
+  });
+});
+
+describe('Sanitizer normalizes orphaned text', () => {
+  it('wraps raw text in p', () => {
+    const sanitizer = new Sanitizer();
+    const html = sanitizer.sanitize("سلام این یک متن تستی است");
+    expect(html).toBe("<p>سلام این یک متن تستی است</p>");
+  });
+
+  it('wraps raw text when next to div', () => {
+    const sanitizer = new Sanitizer();
+    const html = sanitizer.sanitize("<div>متن داخل div</div>\nمتن بیرون از تگ");
+    expect(html).toBe('<div>متن داخل div</div><p>\nمتن بیرون از تگ</p>');
+  });
+
+  it('does not double wrap paragraphs', () => {
+    const sanitizer = new Sanitizer();
+    const html = sanitizer.sanitize("<p>متن از قبل داخل پاراگراف</p>");
+    expect(html).toBe("<p>متن از قبل داخل پاراگراف</p>");
+  });
+
+  it('wraps inline elements alongside text', () => {
+    const sanitizer = new Sanitizer();
+    const html = sanitizer.sanitize("<b>متن بولد</b> متن ساده");
+    expect(html).toBe("<p><b>متن بولد</b> متن ساده</p>");
   });
 });

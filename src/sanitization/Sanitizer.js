@@ -102,12 +102,55 @@ export class Sanitizer {
   /* ================= NORMALIZATION ENGINE ================= */
 
   _normalize(root) {
+    this._wrapOrphanText(root);
     this._removeEmptyInline(root);
     this._normalizeParagraphs(root);
     this._normalizeListItems(root);
     this._fixBreaks(root);
     this._deduplicateFigures(root);
     this._normalizeText(root);
+  }
+
+  /* Wrap raw/orphaned text and inline elements in paragraph */
+  _wrapOrphanText(root) {
+    const blockTags = new Set([
+      "p", "div", "ul", "ol", "li", "blockquote",
+      "h1", "h2", "h3", "h4", "h5", "h6",
+      "figure", "table", "thead", "tbody", "tfoot", "tr", "th", "td",
+      "caption", "figcaption"
+    ]);
+
+    let currentP = null;
+    const children = Array.from(root.childNodes);
+
+    for (const child of children) {
+      const isElement = child.nodeType === Node.ELEMENT_NODE;
+      const isText = child.nodeType === Node.TEXT_NODE;
+
+      let isInline = false;
+      if (isText) {
+        isInline = true;
+      } else if (isElement) {
+        const tag = child.tagName.toLowerCase();
+        if (!blockTags.has(tag)) {
+          isInline = true;
+        }
+      }
+
+      if (isInline) {
+        const isPureWhitespace = isText && child.nodeValue.trim() === '';
+        if (!currentP) {
+          if (isPureWhitespace) {
+            continue;
+          }
+          currentP = document.createElement("p");
+          root.insertBefore(currentP, child);
+        }
+        currentP.appendChild(child);
+      } else {
+        currentP = null;
+      }
+    }
   }
 
   /* حذف inline خالی */
