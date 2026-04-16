@@ -123,21 +123,23 @@ figcaption.penman-image-caption:empty::before {
 }
 
 .penman-image {
-  display: flex;
-  direction: auto;
-  flex-direction: column;
-  margin: 16px 0;
+  margin: 15px auto;
 }
 .penman-image.penman-align-center {
-  align-items: center
+  text-align: center;
 }
 .penman-image.penman-align-left {
-  align-items: flex-end
+  text-align: left;
 }
 .penman-image.penman-align-right {
-  align-items: flex-start
+  text-align: right;
 }
 figure.penman-selected-image {
   outline: 3px solid #007bff;
   outline-offset: 5px;
+}
+.penman-image-wrapper img {
+  max-width: 100%;
+  height: auto;
+  display: block;
 }

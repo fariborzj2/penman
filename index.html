@@ -6,22 +6,25 @@
   <title>Penman Editor Example</title>
   <style>
     body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f5f5f5;}
+    .main { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     /* All internal styles are now bundled in src/styles via index.js */
   </style>
 </head>
 <body>
-  <h1>Penman Editor Example</h1>
+  <div class="main">
+    <h1>Penman Editor Example</h1>
+    <form id="myForm">
+      <textarea name="fullstory" id="myTextarea">Initial content in textarea.</textarea>
+    </form>
 
-  <form id="myForm">
-    <textarea name="fullstory" id="myTextarea">Initial content in textarea.</textarea>
-  </form>
-
-  <div style="margin-top: 20px;">
-    <button id="btnSetContent">Set Content</button>
-    <button id="btnGetContent">Get Content (Alert)</button>
-    <button id="btnFocus">Focus Editor</button>
-    <button id="btnDestroy">Destroy Editor</button>
+    <div style="margin-top: 20px;">
+      <button id="btnSetContent">Set Content</button>
+      <button id="btnGetContent">Get Content (Alert)</button>
+      <button id="btnFocus">Focus Editor</button>
+      <button id="btnDestroy">Destroy Editor</button>
+    </div>
   </div>
+  
 
   <!-- Load the built script -->
   <script type="module">
@@ -47,7 +50,7 @@
       selector: '#myTextarea',
       lang: 'fa',
       direction: 'rtl',
-      height: 260,
+      height: 700,
       plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image'],
       toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr | findreplace | table',
       blockTypes: [
