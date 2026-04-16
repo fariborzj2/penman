@@ -17,6 +17,7 @@
 /* Base Typography Resets */
 .penman-editor-area p {
   margin: 0 0 1em 0;
+  padding: 1em 0;
 }
 
 .penman-editor-area p:last-child {
@@ -113,6 +114,7 @@ figcaption.penman-image-caption {
   margin-top: 8px;
   outline: none;
   min-height: 1.5em; /* Ensure it has height even when empty */
+  padding-bottom: 5px
 }
 
 figcaption.penman-image-caption:empty::before {
@@ -125,6 +127,7 @@ figcaption.penman-image-caption:empty::before {
 .penman-image {
   margin: 15px auto;
   width: fit-content;
+  border: 1px solid #eee
 }
 .penman-image.penman-align-center {
   text-align: center;
