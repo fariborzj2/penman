@@ -214,7 +214,7 @@ export function setupImagePlugin(editor) {
 
   root.addEventListener('dragstart', (e) => {
     const figure = e.target.closest('figure.penman-image');
-    if (!figure || figure.closest('figcaption')) return;
+    if (!figure || e.target.closest('figcaption')) return;
 
     dragState.figure = figure;
     e.dataTransfer.effectAllowed = 'move';
