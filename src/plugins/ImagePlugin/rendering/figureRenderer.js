@@ -15,7 +15,6 @@ export function createFigureNode(src, alt = '', dataId = null, alignment = 'cent
   figure.className = 'penman-image';
   figure.setAttribute('data-alignment', alignment);
   figure.setAttribute('contenteditable', 'false');
-  figure.setAttribute('draggable', 'true');
 
   const wrapper = document.createElement('div');
   wrapper.className = 'penman-image-wrapper';

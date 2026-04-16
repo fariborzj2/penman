@@ -14,107 +14,6 @@ export function setupImagePlugin(editor) {
   // Floating UI for Images
   let floatingUI = null;
 
-  // Drag/Reorder State
-  let dragState = {
-    figure: null,
-    placeholder: null
-  };
-
-  function createDropIndicator() {
-    const indicator = document.createElement('div');
-    indicator.className = 'penman-image-drop-indicator';
-    indicator.style.height = '4px';
-    indicator.style.backgroundColor = '#007bff';
-    indicator.style.borderRadius = '2px';
-    indicator.style.margin = '2px 0';
-    indicator.style.transition = 'opacity 0.15s ease';
-    indicator.style.opacity = '0.85';
-    return indicator;
-  }
-
-  function clearDropIndicator() {
-    if (dragState.placeholder && dragState.placeholder.parentNode) {
-      dragState.placeholder.parentNode.removeChild(dragState.placeholder);
-    }
-    dragState.placeholder = null;
-  }
-
-  function getCaretRangeFromPoint(x, y) {
-    if (typeof document.caretRangeFromPoint === 'function') {
-      return document.caretRangeFromPoint(x, y);
-    }
-
-    if (typeof document.caretPositionFromPoint === 'function') {
-      const position = document.caretPositionFromPoint(x, y);
-      if (position) {
-        const range = document.createRange();
-        range.setStart(position.offsetNode, position.offset);
-        range.collapse(true);
-        return range;
-      }
-    }
-
-    return null;
-  }
-
-  function getDropPosition(event) {
-    const range = getCaretRangeFromPoint(event.clientX, event.clientY);
-    if (!range || !root.contains(range.startContainer)) {
-      return null;
-    }
-    return range;
-  }
-
-  function showDropPlaceholder(event) {
-    clearDropIndicator();
-
-    let targetBlock = event.target.closest('figure.penman-image');
-    if (!targetBlock) {
-      targetBlock = event.target.closest('p, div, h1, h2, h3, h4, h5, h6, blockquote, li');
-    }
-    let insertBefore = null;
-
-    if (targetBlock && targetBlock !== root) {
-      const rect = targetBlock.getBoundingClientRect();
-      const insertAfter = event.clientY > rect.top + rect.height / 2;
-      insertBefore = insertAfter ? targetBlock.nextSibling : targetBlock;
-    }
-
-    const indicator = createDropIndicator();
-    dragState.placeholder = indicator;
-
-    if (insertBefore && insertBefore.parentNode) {
-      insertBefore.parentNode.insertBefore(indicator, insertBefore);
-    } else {
-      root.appendChild(indicator);
-    }
-  }
-
-  function finishDragMove(event) {
-    if (!dragState.figure) return;
-
-    const range = getDropPosition(event);
-    if (!range) {
-      clearDropIndicator();
-      dragState.figure = null;
-      return;
-    }
-
-    const figure = dragState.figure;
-    if (figure.contains(range.startContainer) || range.startContainer === figure) {
-      clearDropIndicator();
-      dragState.figure = null;
-      return;
-    }
-
-    dragState.figure = null;
-    clearDropIndicator();
-    figure.remove();
-    insertFigureAtResolvedPoint(editor, figure, { range });
-    editor.history.pushImmediate();
-    editor.emit('change');
-  }
-
   function createFloatingUI() {
     floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
     const html = `
@@ -210,39 +109,6 @@ export function setupImagePlugin(editor) {
       } else {
           if (floatingUI) floatingUI.hide();
       }
-  });
-
-  root.addEventListener('dragstart', (e) => {
-    const figure = e.target.closest('figure.penman-image');
-    if (!figure || e.target.closest('figcaption')) return;
-
-    dragState.figure = figure;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('application/x-penman-image', 'true');
-
-    figure.classList.add('penman-image-dragging');
-  });
-
-  root.addEventListener('dragover', (e) => {
-    if (!dragState.figure) return;
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-    showDropPlaceholder(e);
-  });
-
-  root.addEventListener('dragleave', (e) => {
-    if (!dragState.figure) return;
-    if (e.target === root || !root.contains(e.relatedTarget)) {
-      clearDropIndicator();
-    }
-  });
-
-  root.addEventListener('dragend', () => {
-    if (dragState.figure) {
-      dragState.figure.classList.remove('penman-image-dragging');
-    }
-    dragState.figure = null;
-    clearDropIndicator();
   });
 
   // End of Floating UI logic
@@ -348,14 +214,6 @@ export function setupImagePlugin(editor) {
 
   root.addEventListener('drop', (e) => {
     const uploadFn = editor.options.imageUploadFn;
-    if (dragState.figure && e.dataTransfer && e.dataTransfer.types.includes('application/x-penman-image')) {
-      e.preventDefault();
-      e.stopPropagation();
-      dragState.figure.classList.remove('penman-image-dragging');
-      finishDragMove(e);
-      return;
-    }
-
     dropImageHandler(editor, e, uploadFn);
   });
 
