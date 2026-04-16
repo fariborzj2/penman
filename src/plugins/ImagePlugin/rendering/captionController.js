@@ -19,7 +19,6 @@ export function handleCaptionKeyDown(event, editor) {
         let nextSibling = figure.nextSibling;
         if (!nextSibling || nextSibling.tagName !== 'P') {
           const p = document.createElement('p');
-          p.appendChild(document.createElement('br'));
           figure.parentNode.insertBefore(p, nextSibling);
           nextSibling = p;
         }

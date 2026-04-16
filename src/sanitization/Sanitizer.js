@@ -33,8 +33,8 @@ export class Sanitizer {
       tbody: [],
       tfoot: [],
       tr: ["style"],
-      th: ["rowspan", "colspan", "style"],
-      td: ["rowspan", "colspan", "style"],
+      th: ["rowspan", "colspan", "style", "data-cell-id"],
+      td: ["rowspan", "colspan", "style", "data-cell-id"],
       caption: []
     };
   }
@@ -90,6 +90,11 @@ export class Sanitizer {
     for (const attr of Array.from(el.attributes)) {
       if (!allowed.includes(attr.name.toLowerCase())) {
         el.removeAttribute(attr.name);
+      } else if (attr.name.toLowerCase() === 'href') {
+        const val = attr.value.replace(/\s/g, '').toLowerCase();
+        if (val.startsWith('javascript:')) {
+          el.removeAttribute(attr.name);
+        }
       }
     }
   }
@@ -223,7 +228,8 @@ export class Sanitizer {
 
     let node;
     while ((node = walker.nextNode())) {
-      node.nodeValue = node.nodeValue.replace(/\s+/g, " ");
+      // Allow whitespace
+      node.nodeValue = node.nodeValue.replace(/\s{2,}/g, " ");
     }
   }
 
@@ -236,7 +242,7 @@ export class Sanitizer {
   _removeEmptyTextNodes(node) {
     for (const child of Array.from(node.childNodes)) {
       if (child.nodeType === Node.TEXT_NODE) {
-        if (!child.nodeValue.trim()) child.remove();
+        if (!child.nodeValue.trim() && child.nodeValue !== " ") child.remove();
       } else if (child.nodeType === Node.ELEMENT_NODE) {
         this._removeEmptyTextNodes(child);
       }

@@ -168,7 +168,6 @@ function normalizeAfterInsert(figureNode) {
     }
   } else {
     const p = document.createElement('p');
-    p.appendChild(document.createElement('br'));
     figureNode.parentNode.appendChild(p);
     newRange.setStart(p, 0);
   }
