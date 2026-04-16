@@ -1,114 +1,244 @@
 export class Sanitizer {
   constructor() {
-    // Whitelist approach: only allow specific tags and attributes
     this.allowedTags = {
-      'p': [],
-      'div': ['class'],
-      'b': [],
-      'i': [],
-      'u': [],
-      'strong': [],
-      'em': [],
-      'a': ['href', 'target', 'rel'],
-      'ul': [],
-      'ol': [],
-      'li': [],
-      'br': [],
-      'span': ['style', 'id'], // Added id and style for marker retention and font-size
-      'hr': [],
-      'mark': [],
-      's': [],
-      'strike': [],
-      'blockquote': [],
-      'h1': [],
-      'h2': [],
-      'h3': [],
-      'h4': [],
-      'h5': [],
-      'h6': [],
-      'figure': ['class', 'data-alignment', 'contenteditable', 'draggable'],
-      'figcaption': ['class', 'contenteditable', 'data-placeholder'],
-      'img': ['src', 'alt', 'width', 'height', 'data-id', 'style', 'draggable'],
-      'table': ['border', 'bordercolor', 'style', 'data-table-id'],
-      'thead': [],
-      'tbody': [],
-      'tfoot': [],
-      'tr': ['style'],
-      'th': ['data-cell-id', 'rowspan', 'colspan', 'style'],
-      'td': ['data-cell-id', 'rowspan', 'colspan', 'style'],
-      'caption': []
+      p: [],
+      div: ["class"],
+      b: [],
+      i: [],
+      u: [],
+      strong: [],
+      em: [],
+      a: ["href", "target", "rel"],
+      ul: [],
+      ol: [],
+      li: [],
+      br: [],
+      span: ["style", "id"],
+      hr: [],
+      mark: [],
+      s: [],
+      strike: [],
+      blockquote: [],
+      h1: [],
+      h2: [],
+      h3: [],
+      h4: [],
+      h5: [],
+      h6: [],
+      figure: ["class", "data-alignment"],
+      figcaption: ["class", "data-placeholder"],
+      img: ["src", "alt", "width", "height", "data-id", "style"],
+      table: ["border", "bordercolor", "style", "data-table-id"],
+      thead: [],
+      tbody: [],
+      tfoot: [],
+      tr: ["style"],
+      th: ["rowspan", "colspan", "style"],
+      td: ["rowspan", "colspan", "style"],
+      caption: []
     };
   }
 
-  /**
-   * Sanitizes the given HTML string
-   * @param {string} dirtyHtml
-   * @returns {string} Cleaned HTML string
-   */
-  sanitize(dirtyHtml) {
-    if (!dirtyHtml) return '';
+  sanitize(html) {
+    if (!html) return "";
 
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(dirtyHtml, 'text/html');
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const root = doc.body;
 
-    this._sanitizeNode(doc.body);
+    this._sanitize(root);
+    this._normalize(root);
+    this._cleanup(root);
 
-    return doc.body.innerHTML;
+    return root.innerHTML;
   }
 
-  _sanitizeNode(node) {
-    // Convert children to array so we can safely remove or modify nodes while iterating
+  /* ================= SANITIZE ================= */
+
+  _sanitize(node) {
     const children = Array.from(node.childNodes);
 
     for (const child of children) {
-      if (child.nodeType === Node.TEXT_NODE) {
+      if (child.nodeType === Node.TEXT_NODE) continue;
+
+      if (child.nodeType !== Node.ELEMENT_NODE) {
+        child.remove();
         continue;
       }
 
-      if (child.nodeType === Node.ELEMENT_NODE) {
-        const tagName = child.tagName.toLowerCase();
+      const tag = child.tagName.toLowerCase();
 
-        if (!this.allowedTags[tagName]) {
-          // Tag is not allowed. Unwrapping.
-          // Before unwrapping, we should sanitize its children recursively.
-          this._sanitizeNode(child);
+      if (!this.allowedTags[tag]) {
+        this._sanitize(child);
 
-          // Now unwrap. We must insert children before the child, then remove the child.
-          const parent = child.parentNode;
-          while (child.firstChild) {
-            parent.insertBefore(child.firstChild, child);
-          }
-          parent.removeChild(child);
-        } else {
-          // Tag is allowed. Clean attributes.
-          this._cleanAttributes(child, tagName);
-          // Recursively clean children
-          this._sanitizeNode(child);
+        const parent = child.parentNode;
+        while (child.firstChild) {
+          parent.insertBefore(child.firstChild, child);
         }
-      } else {
-        // Remove comments and other node types
-        child.parentNode.removeChild(child);
+
+        child.remove();
+        continue;
+      }
+
+      this._cleanAttributes(child, tag);
+      this._sanitize(child);
+    }
+  }
+
+  _cleanAttributes(el, tag) {
+    const allowed = this.allowedTags[tag] || [];
+
+    for (const attr of Array.from(el.attributes)) {
+      if (!allowed.includes(attr.name.toLowerCase())) {
+        el.removeAttribute(attr.name);
       }
     }
   }
 
-  _cleanAttributes(element, tagName) {
-    const allowedAttrs = this.allowedTags[tagName];
-    const attrs = Array.from(element.attributes);
+  /* ================= NORMALIZATION ENGINE ================= */
 
-    for (const attr of attrs) {
-      const attrName = attr.name.toLowerCase();
-      if (!allowedAttrs.includes(attrName)) {
-        element.removeAttribute(attrName);
-      } else {
-        // Additional security: block `javascript:` URIs in href
-        if (attrName === 'href') {
-          // Remove invisible/control characters that could bypass the check
-          const value = attr.value.replace(/[\x00-\x20\x7F]/g, '').toLowerCase();
-          if (value.startsWith('javascript:')) {
-            element.removeAttribute('href');
-          }
+  _normalize(root) {
+    this._removeEmptyInline(root);
+    this._normalizeParagraphs(root);
+    this._normalizeListItems(root);
+    this._fixBreaks(root);
+    this._deduplicateFigures(root);
+    this._normalizeText(root);
+  }
+
+  /* حذف inline خالی */
+  _removeEmptyInline(root) {
+    const inlineTags = ["span", "b", "i", "u", "strong", "em"];
+
+    for (const tag of inlineTags) {
+      const nodes = Array.from(root.querySelectorAll(tag));
+
+      for (const el of nodes) {
+        const hasContent =
+          el.textContent.trim().length > 0 ||
+          el.querySelector("img, br, hr");
+
+        if (!hasContent) el.remove();
+      }
+    }
+  }
+
+  /* paragraph cleanup */
+  _normalizeParagraphs(root) {
+    const ps = Array.from(root.querySelectorAll("p"));
+
+    for (const p of ps) {
+      // remove empty <p>
+      if (!p.textContent.trim() && !p.querySelector("img,br,hr")) {
+        p.remove();
+        continue;
+      }
+
+      // remove trailing br
+      while (p.lastChild && p.lastChild.nodeName === "BR") {
+        p.lastChild.remove();
+      }
+    }
+
+    // merge consecutive empty p
+    for (let i = 0; i < ps.length - 1; i++) {
+      const a = ps[i];
+      const b = ps[i + 1];
+
+      if (a && b && !a.textContent.trim() && !b.textContent.trim()) {
+        b.remove();
+      }
+    }
+  }
+
+  /* ================= IMPORTANT FIX ================= */
+
+  /* لیست‌ها: رفتار br در li */
+  _normalizeListItems(root) {
+    const lis = Array.from(root.querySelectorAll("li"));
+
+    for (const li of lis) {
+      const brs = Array.from(li.querySelectorAll("br"));
+
+      for (const br of brs) {
+        const prev = br.previousSibling;
+        const next = br.nextSibling;
+
+        const hasTextBefore =
+          prev &&
+          prev.nodeType === Node.TEXT_NODE &&
+          prev.textContent.trim().length > 0;
+
+        const hasTextAfter =
+          next &&
+          next.nodeType === Node.TEXT_NODE &&
+          next.textContent.trim().length > 0;
+
+        // فقط br بین دو متن واقعی نگه داشته می‌شود
+        if (!(hasTextBefore && hasTextAfter)) {
+          br.remove();
         }
+      }
+    }
+  }
+
+  /* fix break structure */
+  _fixBreaks(root) {
+    const brs = Array.from(root.querySelectorAll("br"));
+
+    for (const br of brs) {
+      const parent = br.parentElement;
+
+      if (parent?.tagName === "P" && parent.childNodes.length === 1) {
+        br.remove();
+      }
+
+      if (br.nextSibling && br.nextSibling.nodeName === "BR") {
+        br.remove();
+      }
+    }
+  }
+
+  /* duplicate figures/images */
+  _deduplicateFigures(root) {
+    const seen = new Set();
+    const figures = Array.from(root.querySelectorAll("figure"));
+
+    for (const fig of figures) {
+      const img = fig.querySelector("img");
+      const key = img?.src;
+
+      if (key) {
+        if (seen.has(key)) {
+          fig.remove();
+        } else {
+          seen.add(key);
+        }
+      }
+    }
+  }
+
+  /* normalize whitespace */
+  _normalizeText(root) {
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+
+    let node;
+    while ((node = walker.nextNode())) {
+      node.nodeValue = node.nodeValue.replace(/\s+/g, " ");
+    }
+  }
+
+  /* ================= CLEANUP ================= */
+
+  _cleanup(root) {
+    this._removeEmptyTextNodes(root);
+  }
+
+  _removeEmptyTextNodes(node) {
+    for (const child of Array.from(node.childNodes)) {
+      if (child.nodeType === Node.TEXT_NODE) {
+        if (!child.nodeValue.trim()) child.remove();
+      } else if (child.nodeType === Node.ELEMENT_NODE) {
+        this._removeEmptyTextNodes(child);
       }
     }
   }
