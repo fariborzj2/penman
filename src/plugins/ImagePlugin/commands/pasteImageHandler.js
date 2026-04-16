@@ -1,5 +1,7 @@
 import { executeUploadPipeline } from '../core/uploadPipeline.js';
-import { insertImageFromURL } from './insertImageFromURL.js';
+import { validateURL, TrustLevel } from '../security/urlValidator.js';
+import { createFigureNode } from '../rendering/figureRenderer.js';
+
 
 /**
  * PASTE IMAGE
@@ -45,34 +47,50 @@ export function pasteImageHandler(editor, event, uploadFn) {
       event.preventDefault();
       event.stopImmediatePropagation();
 
-      // For a perfectly safe fallback: Extract images, insert them sequentially, and also
-      // paste the rest of the valid HTML using standard execCommand if needed.
-      // But spec just says: "Extract src, validate, insert as URL. Drop invalid tags."
-      // Let's insert the text and the images manually to preserve structure without racing.
-
-      // A more robust way to keep the text is to allow the editor's Sanitizer to run,
-      // but since we prevented default, we can just insert the clean text first, then images.
-
-      const cleanText = doc.body.textContent || clipboardData.getData('text/plain') || '';
-
-      // 1. Insert text (if any)
-      if (cleanText.trim().length > 0) {
-          document.execCommand('insertText', false, cleanText);
-      }
-
-      // 2. Insert extracted images synchronously
+      // Preserve the entire HTML structure (Block nodes + Images).
       images.forEach(img => {
         const src = img.getAttribute('src');
-        if (src) {
-          try {
-            // Validate and insert
-            // Using UNTRUSTED by default since it's pasted from arbitrary source
-            insertImageFromURL(editor, { url: src, alt: img.getAttribute('alt') || '', trustLevel: 'UNTRUSTED' });
-          } catch (e) {
-            // Drop invalid tags silently
+        if (!src) {
+          // Drop if no src
+          const parentFigure = img.closest('figure');
+          if (parentFigure) {
+            parentFigure.remove();
+          } else {
+            img.remove();
+          }
+          return;
+        }
+
+        try {
+          // Validate using UNTRUSTED by default
+          validateURL(src, TrustLevel.UNTRUSTED);
+
+          // Check if it's already well-formed inside a Penman figure
+          const parentFigure = img.closest('figure.penman-image');
+          if (!parentFigure) {
+            // Wrap in a well-formed figure
+            const figureNode = createFigureNode(src, img.getAttribute('alt') || '');
+            img.parentNode.replaceChild(figureNode, img);
+          }
+        } catch (e) {
+          // Drop invalid images silently
+          const parentFigure = img.closest('figure');
+          if (parentFigure) {
+            parentFigure.remove();
+          } else {
+            img.remove();
           }
         }
       });
+
+      const processedHtml = doc.body.innerHTML;
+
+      // Let the editor's sanitizer clean the result, preserving the correct structure
+      const safeHtml = editor.sanitizer ? editor.sanitizer.sanitize(processedHtml) : processedHtml;
+
+      if (safeHtml) {
+        editor.insertContent(safeHtml);
+      }
 
       return true;
     }
