@@ -3,7 +3,7 @@ export class Sanitizer {
     // Whitelist approach: only allow specific tags and attributes
     this.allowedTags = {
       'p': [],
-      'div': [],
+      'div': ['class'],
       'b': [],
       'i': [],
       'u': [],
@@ -26,9 +26,9 @@ export class Sanitizer {
       'h4': [],
       'h5': [],
       'h6': [],
-      'figure': ['class', 'data-alignment', 'contenteditable'],
+      'figure': ['class', 'data-alignment', 'contenteditable', 'draggable'],
       'figcaption': ['class', 'contenteditable', 'data-placeholder'],
-      'img': ['src', 'alt', 'width', 'height', 'data-id', 'style'],
+      'img': ['src', 'alt', 'width', 'height', 'data-id', 'style', 'draggable'],
       'table': ['border', 'bordercolor', 'style', 'data-table-id'],
       'thead': [],
       'tbody': [],
