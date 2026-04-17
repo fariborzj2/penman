@@ -14,15 +14,8 @@
   <div class="main">
     <h1>Penman Editor Example</h1>
     <form id="myForm">
-      <textarea name="fullstory" id="myTextarea">متن مقاله را اینجا وارد کنید</textarea>
+      <textarea name="fullstory" id="myTextarea"><p>متن مقاله را اینجا وارد کنید</p></textarea>
     </form>
-
-    <div style="margin-top: 20px;">
-      <button id="btnSetContent">Set Content</button>
-      <button id="btnGetContent">Get Content (Alert)</button>
-      <button id="btnFocus">Focus Editor</button>
-      <button id="btnDestroy">Destroy Editor</button>
-    </div>
   </div>
   
 
@@ -31,7 +24,7 @@
     import penman from './src/index.js';
 
     // Assign to window for console access if needed, simulating real usage
-    window.penman = penman;
+    // window.penman = penman;
 
     // Initialize the editor
     penman.init({
@@ -90,32 +83,6 @@
         }
       });
     }
-
-    document.getElementById('btnSetContent').addEventListener('click', () => {
-      const ed = penman.get('#myTextarea');
-      if(ed) ed.setContent('<p><b>This is dynamically set content!</b></p>');
-    });
-
-    document.getElementById('btnGetContent').addEventListener('click', () => {
-      const ed = penman.get('#myTextarea');
-      if(ed) alert("Editor Content: " + ed.getContent());
-    });
-
-    document.getElementById('btnFocus').addEventListener('click', () => {
-      const ed = penman.get('#myTextarea');
-      if(ed) ed.focus();
-    });
-
-    document.getElementById('btnDestroy').addEventListener('click', () => {
-      const ed = penman.get('#myTextarea');
-      if(ed) ed.destroy();
-    });
-
-    // Listen to changes to verify sync
-    const textarea = document.getElementById('myTextarea');
-    setInterval(() => {
-        console.log("Textarea value:", textarea.value);
-    }, 5000);
   </script>
 </body>
 </html>
