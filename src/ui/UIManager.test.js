@@ -73,7 +73,7 @@ describe('UIManager', () => {
     expect(boldButton.className).not.toContain('penman-btn-active');
     expect(italicButton.className).not.toContain('penman-btn-active');
 
-    // Mock queryState to return true for 'bold'
+    // Spy queryState to return true for 'bold'
     editor.commands.queryState = vi.fn().mockImplementation(cmd => cmd === 'bold');
 
     // Simulate selection change
@@ -85,7 +85,7 @@ describe('UIManager', () => {
   });
 
   it('should call editor.execCommand when a button is clicked', () => {
-    // Mock execCommand to avoid Uncaught Exception when JSDOM evaluates the fallback
+    // Spy execCommand to avoid Uncaught Exception when JSDOM evaluates the fallback
     document.execCommand = vi.fn();
 
     editor = new Editor({

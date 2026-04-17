@@ -7,14 +7,14 @@ import { FloatingUI } from './FloatingUI.js';
 
 describe('FloatingUI', () => {
   let floatingUI;
-  let mockEditor;
+  let fakeEditor;
   let container;
 
   beforeEach(() => {
-    mockEditor = {};
+    fakeEditor = {};
     container = document.createElement('div');
     document.body.appendChild(container);
-    floatingUI = new FloatingUI(mockEditor);
+    floatingUI = new FloatingUI(fakeEditor);
   });
 
   afterEach(() => {

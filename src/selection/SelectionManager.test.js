@@ -18,7 +18,7 @@ describe('SelectionManager', () => {
   });
 
   it('should save markers and restore them', () => {
-    // Setup a mock selection
+    // Setup a fake selection
     editor.editableArea.innerHTML = 'Hello <span id="target">World</span>';
     const target = editor.editableArea.querySelector('#target');
 

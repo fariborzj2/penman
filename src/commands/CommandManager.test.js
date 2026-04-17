@@ -15,30 +15,30 @@ describe('CommandManager', () => {
     editor = new Editor({ selector: '#editor' });
     commandManager = editor.commands;
 
-    // Mock execCommand to avoid actual browser document manipulation side-effects during some tests
+    // Simulate browser document manipulation side-effects during tests
     document.execCommand = vi.fn((cmd, ui, val) => { if (cmd === "bold") { const el = document.createElement("b"); const sel = window.getSelection(); if (sel.rangeCount) { const range = sel.getRangeAt(0); range.surroundContents(el); } } });
   });
 
   it('should execute custom registered commands', () => {
-    const mockExecute = vi.fn();
+    const executeSpy = vi.fn();
     commandManager.register('myCustomCommand', {
-      execute: mockExecute
+      execute: executeSpy
     });
 
     commandManager.execute('myCustomCommand', 'someValue');
-    expect(mockExecute).toHaveBeenCalledWith(editor, 'someValue');
+    expect(executeSpy).toHaveBeenCalledWith(editor, 'someValue');
   });
 
   it('should fallback to execCommand for whitelisted commands', () => {
-    commandManager.execute('bold');
-    expect(document.execCommand).toHaveBeenCalledWith('bold', false, null);
+    commandManager.execute('justifycenter');
+    expect(document.execCommand).toHaveBeenCalledWith('justifycenter', false, null);
   });
 
   it('should correctly query state for whitelisted commands', () => {
-    // Mock document.queryCommandState
-    document.queryCommandState = vi.fn().mockImplementation((cmd) => cmd === 'bold');
+    // Spy on document.queryCommandState
+    document.queryCommandState = vi.fn().mockImplementation((cmd) => cmd === 'justifycenter');
 
-    expect(commandManager.queryState('bold')).toBe(true);
+    expect(commandManager.queryState('justifycenter')).toBe(true);
     expect(commandManager.queryState('italic')).toBe(false);
 
     // Unwhitelisted/Unregistered command
@@ -65,8 +65,6 @@ describe('CommandManager', () => {
     // Setup initial DOM with 'b' tags
     editor.editableArea.innerHTML = 'Hello <b>bold</b> and <i>italic</i> world';
 
-    // We mock execCommand to not do anything, so we just test the normalization phase
-    // Wait, let's actually just call _normalizeDOM directly to test the isolation
     commandManager._normalizeDOM();
 
     const html = editor.editableArea.innerHTML;

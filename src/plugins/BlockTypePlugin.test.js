@@ -26,7 +26,7 @@ describe('BlockTypePlugin', () => {
       ]
     });
 
-    // Mock execCommand to avoid actual browser document manipulation side-effects during some tests
+    // Replace execCommand to avoid actual browser document manipulation side-effects during some tests
     document.execCommand = vi.fn();
   });
 

@@ -1,22 +1,12 @@
 # FormatPlugin Specification
 
 ## Options
-UNKNOWN
+None
 
 ## Internal Execution Rules
-1. Loops through `['bold', 'italic', 'underline']` formats.
-2. Registers a button via `editor.ui.registry.addButton` for each.
-3. Executes formats using `document.execCommand(format)`.
-
-## State Changes
-- Toggles standard formatting tags (`<b>`/`<strong>`, `<i>`/`<em>`, `<u>`) in the DOM based on browser interpretation.
+1. Iterates over the array `['bold', 'italic', 'underline']`.
+2. Uses `editor.ui.registry.addButton` to register UI buttons for each format.
+3. Delegates action handling to `editor.execCommand(format)`.
 
 ## Side Effects
-- Relies completely on native browser engine side effects for splitting, merging, and wrapping text nodes.
-
-## Edge Cases
-- **No text selected**: Browser behavior toggles the formatting state for the next typed characters.
-- **Overlapping formats**: Handled automatically by the browser's native API.
-
-## Error Conditions
-- Fails implicitly if browser lacks `execCommand` support (though universally supported for these 3).
+- Binds 3 standard inline formatting buttons to the toolbar registry.

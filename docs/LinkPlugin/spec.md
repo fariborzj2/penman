@@ -1,7 +1,7 @@
 # LinkPlugin Specification
 
 ## Options
-UNKNOWN
+None currently exposed as options at initialization.
 
 ## Internal Execution Rules
 1. Retrieves native selection text before UI modal interaction.

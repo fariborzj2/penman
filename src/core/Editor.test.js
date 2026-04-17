@@ -81,11 +81,12 @@ describe('Editor Core', () => {
       toolbar: 'bold'
     });
 
-    // Mock document.execCommand to intercept it
+    // Replace document.execCommand to intercept it
     let executedCmd = null;
-    document.execCommand = (cmd, showUI, value) => {
-      executedCmd = cmd;
-    };
+    // Since we removed bold from fallbackWhitelist, we need to register it in the test
+    editor.commands.register('bold', {
+      execute: (ed, val) => { executedCmd = 'bold'; }
+    });
 
     const boldBtn = editor.container.querySelector('button[title="bold"]');
     expect(boldBtn).not.toBeNull();
@@ -98,6 +99,7 @@ describe('Editor Core', () => {
 
   it('should push a snapshot to HistoryManager and trigger undo on Ctrl+Z', () => {
     const editor = new Editor({ selector: '#test-textarea' });
+    editor.commands.register('bold', { execute: () => { editor.editableArea.innerHTML = 'bold'; } });
 
     // Check initial state
     expect(editor.history.undoStack.length).toBe(1);
@@ -107,7 +109,8 @@ describe('Editor Core', () => {
     editor.setContent('Some different text for history test');
 
     // Make a change using a command
-    editor.execCommand('bold');
+    editor.commands.register('justifycenter', { execute: () => { editor.editableArea.innerHTML = 'justifycenter'; } });
+    editor.execCommand('justifycenter');
 
     // Should have 2 states now (initial + bold)
     expect(editor.history.undoStack.length).toBe(2);
