@@ -1,5 +1,6 @@
 import { Editor } from './core/Editor.js';
 import { PluginManager } from './plugins/PluginManager.js';
+import './styles/fonts/vazirmatn/Vazirmatn-font-face.css';
 import './styles/penman-ui.css';
 import './styles/penman-content.css';
 
