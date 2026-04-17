@@ -33,18 +33,6 @@
     // Assign to window for console access if needed, simulating real usage
     window.penman = penman;
 
-    // Register a simple custom plugin to test the Dropdown UI visually
-    penman.PluginManager.add('testDropdown', function(editor) {
-      editor.ui.registry.addDropdown('testdrop', {
-        text: 'Dropdown',
-        icon: '<svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 9l6 6 6-6"></path></svg>',
-        content: `
-          <div style="padding: 5px; cursor: pointer;" onclick="alert('Option 1 clicked!')">Option 1</div>
-          <div style="padding: 5px; cursor: pointer;" onclick="alert('Option 2 clicked!')">Option 2</div>
-        `
-      });
-    });
-
     // Initialize the editor
     penman.init({
       selector: '#myTextarea',
