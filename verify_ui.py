@@ -104,6 +104,15 @@ def test_editor_list_plugin_e2e(page: Page):
   editable.click()
   editable.evaluate("node => node.innerHTML = '<p>List item 1</p>'")
 
+  # Select the text explicitly to ensure the range is correctly set
+  editable.evaluate("""node => {
+    const range = document.createRange();
+    range.selectNodeContents(node.querySelector('p'));
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }""")
+
   # Apply bullet list
   page.locator(".penman-btn-bullist").click()
 

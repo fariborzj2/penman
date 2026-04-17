@@ -69,7 +69,7 @@ export function setupFormatPlugin(editor) {
     editor.ui.registry.addButton(format, {
       text: format.charAt(0).toUpperCase() + format.slice(1),
       onAction: function() {
-        editor.execCommand(format);
+        editor.commands.execute(format);
       }
     });
   });

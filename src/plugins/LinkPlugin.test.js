@@ -29,38 +29,57 @@ describe('LinkPlugin', () => {
     sel.removeAllRanges();
     sel.addRange(range);
 
-    const createModalSpy = vi.spyOn(editor.ui, 'createModal').mockImplementation(() => {});
-
     editor.ui.registry.buttons['link'].onAction();
 
-    expect(createModalSpy).toHaveBeenCalled();
-    const modalArgs = createModalSpy.mock.calls[0][0];
-    expect(modalArgs.title).toBe('Insert Link');
-    expect(modalArgs.body).toContain('Hello World');
+    const modal = document.querySelector('.penman-modal');
+    expect(modal).not.toBeNull();
+    const modalTitle = modal.querySelector('h3').textContent;
+    expect(modalTitle).toBe('Insert Link');
 
-    createModalSpy.mockRestore();
+    const textInput = modal.querySelector('#penman-link-text');
+    expect(textInput.value).toBe('Hello World');
+
+    // Close modal to clean up DOM
+    const closeBtn = modal.querySelector('.penman-modal-close');
+    closeBtn.click();
   });
 
-  it('should insert correct HTML when submitted', () => {
-    let submitCallback;
-    const createModalSpy = vi.spyOn(editor.ui, 'createModal').mockImplementation((options) => {
-      submitCallback = options.onSubmit;
-    });
-    const insertContentSpy = vi.spyOn(editor, 'insertContent').mockImplementation(() => {});
+  it('should insert correct HTML into the editor when submitted', () => {
+    editor.editableArea.innerHTML = '<p id="target">Link this text</p>';
+    const target = editor.editableArea.querySelector('#target');
+
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    // Using execCommand 'insertHTML' is standard for inserting links in this editor setup for content insertion
+    let insertedHTML = '';
+    document.execCommand = (cmd, showUI, value) => {
+      if (cmd === 'insertHTML') {
+        insertedHTML = value;
+      }
+    };
 
     editor.ui.registry.buttons['link'].onAction();
+    const modal = document.querySelector('.penman-modal');
 
-    // Simulate submission
-    submitCallback({
-      url: 'https://example.com',
-      text: 'My Link',
-      target: '_blank',
-      rel: 'noopener'
-    });
+    const urlInput = modal.querySelector('#penman-link-url');
+    urlInput.value = 'https://example.com';
 
-    expect(insertContentSpy).toHaveBeenCalledWith('<a href="https://example.com" target="_blank" rel="noopener">My Link</a>');
+    const textInput = modal.querySelector('#penman-link-text');
+    textInput.value = 'My Link';
 
-    createModalSpy.mockRestore();
-    insertContentSpy.mockRestore();
+    const targetInput = modal.querySelector('#penman-link-target');
+    targetInput.value = '_blank';
+
+    const relInput = modal.querySelector('#penman-link-rel');
+    relInput.value = 'noopener';
+
+    const submitBtn = modal.querySelector('.penman-modal-btn-submit');
+    submitBtn.click();
+
+    expect(insertedHTML).toBe('<a href="https://example.com" target="_blank" rel="noopener">My Link</a>');
   });
 });

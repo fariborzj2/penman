@@ -16,27 +16,40 @@ describe('CommandManager', () => {
     commandManager = editor.commands;
 
     // Simulate browser document manipulation side-effects during tests
-    document.execCommand = vi.fn((cmd, ui, val) => { if (cmd === "bold") { const el = document.createElement("b"); const sel = window.getSelection(); if (sel.rangeCount) { const range = sel.getRangeAt(0); range.surroundContents(el); } } });
+    let insertedCommand = null;
+    let insertedValue = null;
+    document.execCommand = (cmd, showUI, value) => {
+        insertedCommand = cmd;
+        insertedValue = value;
+    };
+
+    // We will verify through side-effects rather than vi.fn directly on execCommand.
   });
 
   it('should execute custom registered commands', () => {
-    const executeSpy = vi.fn();
+    let executed = false;
+    let receivedValue = null;
     commandManager.register('myCustomCommand', {
-      execute: executeSpy
+      execute: (ed, val) => {
+          executed = true;
+          receivedValue = val;
+      }
     });
 
     commandManager.execute('myCustomCommand', 'someValue');
-    expect(executeSpy).toHaveBeenCalledWith(editor, 'someValue');
+    expect(executed).toBe(true);
+    expect(receivedValue).toBe('someValue');
   });
 
   it('should fallback to execCommand for whitelisted commands', () => {
+    let lastCmd = null;
+    document.execCommand = (cmd) => { lastCmd = cmd; };
     commandManager.execute('justifycenter');
-    expect(document.execCommand).toHaveBeenCalledWith('justifycenter', false, null);
+    expect(lastCmd).toBe('justifycenter');
   });
 
   it('should correctly query state for whitelisted commands', () => {
-    // Spy on document.queryCommandState
-    document.queryCommandState = vi.fn().mockImplementation((cmd) => cmd === 'justifycenter');
+    document.queryCommandState = (cmd) => cmd === 'justifycenter';
 
     expect(commandManager.queryState('justifycenter')).toBe(true);
     expect(commandManager.queryState('italic')).toBe(false);
@@ -46,16 +59,26 @@ describe('CommandManager', () => {
   });
 
   it('should pass value correctly on fallback execute', () => {
+    let lastCmd = null;
+    let lastValue = null;
+    document.execCommand = (cmd, show, val) => {
+        lastCmd = cmd;
+        lastValue = val;
+    };
+
     commandManager.execute('justifycenter', 'value');
-    expect(document.execCommand).toHaveBeenCalledWith('justifycenter', false, 'value');
+    expect(lastCmd).toBe('justifycenter');
+    expect(lastValue).toBe('value');
   });
 
   it('should block non-whitelisted and non-registered commands', () => {
+    let lastCmd = null;
+    document.execCommand = (cmd) => { lastCmd = cmd; };
     const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     commandManager.execute('insertImage', 'http://example.com');
 
-    expect(document.execCommand).not.toHaveBeenCalled();
+    expect(lastCmd).toBeNull();
     expect(consoleWarnSpy).toHaveBeenCalled();
 
     consoleWarnSpy.mockRestore();

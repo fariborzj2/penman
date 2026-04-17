@@ -23,11 +23,17 @@ describe('FormatPlugin', () => {
   });
 
   it('should execute command when format button is clicked', () => {
-    const executeSpy = vi.spyOn(editor, 'execCommand').mockImplementation(() => {});
+    editor.editableArea.innerHTML = '<p id="target">Test</p>';
+    const target = editor.editableArea.querySelector('#target');
+
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
     editor.ui.registry.buttons['bold'].onAction();
-    expect(executeSpy).toHaveBeenCalledWith('bold');
 
-    executeSpy.mockRestore();
+    expect(editor.editableArea.innerHTML).toContain('<strong>Test</strong>');
   });
 });
