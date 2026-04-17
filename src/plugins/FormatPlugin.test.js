@@ -15,10 +15,11 @@ describe('FormatPlugin', () => {
     setupFormatPlugin(editor);
   });
 
-  it('should register bold, italic, and underline buttons', () => {
+  it('should register bold, italic, underline, and strikethrough buttons', () => {
     expect(editor.ui.registry.buttons['bold']).toBeDefined();
     expect(editor.ui.registry.buttons['italic']).toBeDefined();
     expect(editor.ui.registry.buttons['underline']).toBeDefined();
+    expect(editor.ui.registry.buttons['strikethrough']).toBeDefined();
   });
 
   it('should execute command when format button is clicked', () => {

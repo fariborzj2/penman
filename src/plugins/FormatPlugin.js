@@ -1,10 +1,11 @@
 export function setupFormatPlugin(editor) {
-  const formats = ['bold', 'italic', 'underline'];
+  const formats = ['bold', 'italic', 'underline', 'strikethrough'];
 
   const tags = {
     bold: 'strong',
     italic: 'em',
-    underline: 'u'
+    underline: 'u',
+    strikethrough: 's'
   };
 
   formats.forEach(format => {
