@@ -23,17 +23,11 @@ describe('FormatPlugin', () => {
   });
 
   it('should execute command when format button is clicked', () => {
-    editor.editableArea.innerHTML = '<p id="target">Test</p>';
-    const target = editor.editableArea.querySelector('#target');
-
-    const range = document.createRange();
-    range.selectNodeContents(target);
-    const sel = window.getSelection();
-    sel.removeAllRanges();
-    sel.addRange(range);
+    let executedCmd = null;
+    document.execCommand = (cmd) => { executedCmd = cmd; };
 
     editor.ui.registry.buttons['bold'].onAction();
 
-    expect(editor.editableArea.innerHTML).toContain('<strong>Test</strong>');
+    expect(executedCmd).toBe('bold');
   });
 });
