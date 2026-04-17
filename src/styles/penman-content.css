@@ -146,11 +146,11 @@ figure.penman-selected-image {
   height: auto;
   display: block;
 }
-.penman-fontsize-list {
+.penman-fontsize-list, .penman-editor-area {
   scrollbar-width: thin;
   scrollbar-color: #e3effd transparent;
 }
-.penman-fontsize-list::-webkit-scrollbar { width: 6px; height: 6px; }
-.penman-fontsize-list::-webkit-scrollbar-track { background: transparent; }
-.penman-fontsize-list::-webkit-scrollbar-thumb { background: #e3effd; border-radius: 4px; }
-.penman-fontsize-list::-webkit-scrollbar-thumb:hover { background: #e3effd; }
+.penman-fontsize-list::-webkit-scrollbar , .penman-editor-area::-webkit-scrollbar { width: 6px; height: 6px; }
+.penman-fontsize-list::-webkit-scrollbar-track , .penman-editor-area::-webkit-scrollbar-track { background: transparent; }
+.penman-fontsize-list::-webkit-scrollbar-thumb , .penman-editor-area::-webkit-scrollbar-thumb { background: #e3effd; border-radius: 4px; }
+.penman-fontsize-list::-webkit-scrollbar-thumb:hover , .penman-editor-area::-webkit-scrollbar-thumb:hover { background: #e3effd; }
