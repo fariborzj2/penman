@@ -9,66 +9,20 @@ export function setupFormatPlugin(editor) {
   };
 
   formats.forEach(format => {
+    // Only register queryState to handle state reflection in the UI,
+    // execution will fallback to native document.execCommand in CommandManager
+    // since it natively handles complex overlapping ranges perfectly.
     editor.commands.register(format, {
-      execute: (ed) => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount) return;
-        const range = sel.getRangeAt(0);
-
-        const tagName = tags[format];
-        const tagUpper = tagName.toUpperCase();
-
-        let node = range.startContainer;
-        let isWrapped = false;
-        let wrapperNode = null;
-
-        while (node && node !== ed.editableArea) {
-            if (node.nodeType === 1 && node.tagName === tagUpper) {
-                isWrapped = true;
-                wrapperNode = node;
-                break;
-            }
-            node = node.parentNode;
-        }
-
-        if (isWrapped) {
-            // Unwrap
-            const docFrag = document.createDocumentFragment();
-            while (wrapperNode.firstChild) {
-                docFrag.appendChild(wrapperNode.firstChild);
-            }
-            wrapperNode.parentNode.replaceChild(docFrag, wrapperNode);
-        } else {
-            // Wrap
-            try {
-              const el = document.createElement(tagName);
-              range.surroundContents(el);
-            } catch (e) {
-              // Fallback for overlapping selections
-              const el = document.createElement(tagName);
-              el.appendChild(range.extractContents());
-              range.insertNode(el);
-            }
-        }
-      },
       queryState: (ed) => {
-        const sel = window.getSelection();
-        if (!sel.rangeCount) return false;
-        let node = sel.getRangeAt(0).startContainer;
-        const tagName = tags[format].toUpperCase();
-        while (node && node !== ed.editableArea) {
-            if (node.nodeType === 1 && node.tagName === tagName) {
-                return true;
-            }
-            node = node.parentNode;
-        }
-        return false;
+        return document.queryCommandState(format);
       }
     });
 
     editor.ui.registry.addButton(format, {
       text: format.charAt(0).toUpperCase() + format.slice(1),
       onAction: function() {
+        // This will fall back to document.execCommand because the command lacks an 'execute' method,
+        // and is listed in the CommandManager's fallbackWhitelist.
         editor.commands.execute(format);
       }
     });
