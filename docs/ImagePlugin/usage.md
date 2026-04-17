@@ -63,7 +63,7 @@ When `list` or `get` resolves, the returned items must adhere to the following `
 You can register gallery sources against the `editor.image.gallery` API instance:
 
 ```javascript
-// Register an external source (e.g., Unsplash api)
+// Register an external source (e.g., Unsplash mock)
 editor.image.gallery.registerSource({
   id: 'unsplash',
   name: 'Unsplash Images',
