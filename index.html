@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html >
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,7 +14,7 @@
   <div class="main">
     <h1>Penman Editor Example</h1>
     <form id="myForm">
-      <textarea name="fullstory" id="myTextarea">Initial content in textarea.</textarea>
+      <textarea name="fullstory" id="myTextarea">متن مقاله را اینجا وارد کنید</textarea>
     </form>
 
     <div style="margin-top: 20px;">
@@ -40,7 +40,7 @@
       direction: 'rtl',
       height: 700,
       plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image'],
-      toolbar: 'undo redo | blocktype fontsize | bold italic underline removeformat | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr | findreplace | table',
+      toolbar: 'undo redo | blocktype fontsize | bold italic underline strikethrough | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table',
       blockTypes: [
         { name: 'Paragraph', cmd: 'p' },
         { name: 'Subheading', cmd: 'h3' },

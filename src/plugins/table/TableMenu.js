@@ -59,8 +59,8 @@ export class TableMenu {
             Table properties
           </div>
           <div class="penman-menu-item penman-cmd-trigger" data-cmd="table_delete" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
-            <div style="border: 1px solid #777; border-radius: 2px; width: 14px; height: 14px; display:flex; align-items:center; justify-content:center;">
-               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            <div >
+               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-square-x-icon lucide-square-x"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
             </div>
             <span style="color: #777;">Delete table</span>
           </div>

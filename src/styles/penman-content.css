@@ -17,7 +17,6 @@
 /* Base Typography Resets */
 .penman-editor-area p {
   margin: 0 0 1em 0;
-  padding: 1em 0;
 }
 
 .penman-editor-area p:last-child {

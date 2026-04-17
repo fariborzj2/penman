@@ -156,7 +156,6 @@ export function setupTablePlugin(editor) {
 
   editor.ui.registry.addDropdown('table', {
       text: '', // No text, just icon as per standard toolbars
-      icon: '<svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm0 2v3h6V6H5zm8 0v3h6V6h-6zm-8 5v3h6v-3H5zm8 0v3h6v-3h-6zm-8 5v3h6v-3H5zm8 0v3h6v-3h-6z"/></svg>',
       content: tableMenu.getHTML(),
       onOpen: (dropdown) => {
           // Save selection so it isn't lost when interacting with the dropdown
