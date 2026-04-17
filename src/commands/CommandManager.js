@@ -28,6 +28,31 @@ export class CommandManager {
       return this.commands[cmd].queryState(this.editor);
     } else if (this.fallbackWhitelist.includes(cmd)) {
       try {
+        // Special handling for text alignment in RTL context
+        // Some browsers might report justifyleft incorrectly depending on the direction
+        if (cmd.startsWith('justify')) {
+          const sel = window.getSelection();
+          if (!sel || sel.rangeCount === 0) return document.queryCommandState(cmd);
+          let node = sel.anchorNode;
+          if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+          if (node && node.nodeType === Node.ELEMENT_NODE) {
+            const computedStyle = window.getComputedStyle(node);
+            const textAlign = computedStyle.textAlign;
+            const direction = computedStyle.direction;
+
+            if (cmd === 'justifyleft') {
+              return textAlign === 'left' || (textAlign === 'start' && direction === 'ltr');
+            } else if (cmd === 'justifyright') {
+              return textAlign === 'right' || (textAlign === 'start' && direction === 'rtl');
+            } else if (cmd === 'justifycenter') {
+              return textAlign === 'center';
+            } else if (cmd === 'justifyfull') {
+              return textAlign === 'justify';
+            }
+          }
+        }
+
         return document.queryCommandState(cmd);
       } catch (e) {
         return false;

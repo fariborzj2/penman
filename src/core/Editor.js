@@ -192,64 +192,159 @@ export class Editor extends EventEmitter {
         this.history.redo();
       }
 
-      // 1.a Table Breakout Logic
-      if ((e.key === 'Enter' || e.key === 'ArrowUp') && !e.shiftKey) {
+      // 1.a Block Breakout Logic (Tables, Figures)
+      if ((e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.shiftKey) {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
 
         const range = sel.getRangeAt(0);
         let node = sel.anchorNode;
 
-        // Find if we are inside a table cell
-        let td = null;
-        let curr = node;
-        while (curr && curr !== this.editableArea) {
-            if (curr.tagName && (curr.tagName.toLowerCase() === 'td' || curr.tagName.toLowerCase() === 'th')) {
-                td = curr;
+        // Helper to check if cursor is at the very beginning of an element
+        const isAtStart = (el, r) => {
+            const preRange = document.createRange();
+            preRange.selectNodeContents(el);
+            preRange.setEnd(r.startContainer, r.startOffset);
+
+            // To properly check if there is actual content before the cursor,
+            // we look at the original DOM (not clones which lose object equality).
+            // Walk from the start of the element up to the cursor.
+            let hasContent = false;
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_ALL, null, false);
+            let n = walker.nextNode();
+            while (n) {
+                // If we reached the start container, we are done checking nodes before it
+                if (n === r.startContainer) {
+                    // Check if there is text before the cursor offset
+                    if (n.nodeType === Node.TEXT_NODE && r.startOffset > 0 && n.textContent.substring(0, r.startOffset).trim().length > 0) {
+                        hasContent = true;
+                    }
+                    break;
+                }
+
+                // If it's a text node before the start container with text
+                if (n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0) {
+                    hasContent = true;
+                    break;
+                }
+
+                // If it's an image or other meaningful block element
+                if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'img' || n.tagName.toLowerCase() === 'table' || n.tagName.toLowerCase() === 'br')) {
+                    // If we are about to enter a table/img but our startContainer is inside it, it's fine, we will hit it.
+                    // But if it's purely before us:
+                    if (!n.contains(r.startContainer)) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+
+                // If it's a table cell that is before our cell
+                if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'td' || n.tagName.toLowerCase() === 'th')) {
+                    if (!n.contains(r.startContainer)) {
+                        hasContent = true;
+                        break;
+                    }
+                }
+
+                n = walker.nextNode();
+            }
+            return !hasContent;
+        };
+
+        // Helper to check if cursor is at the very end of an element
+        const isAtEnd = (el, r) => {
+            let hasContent = false;
+            const walker = document.createTreeWalker(el, NodeFilter.SHOW_ALL, null, false);
+            // Fast forward to the end container
+            let n = walker.nextNode();
+            while (n && n !== r.endContainer) {
+                // Check if endContainer is inside n, if so, we must enter it
+                n = walker.nextNode();
+            }
+
+            if (n === r.endContainer) {
+                 if (n.nodeType === Node.TEXT_NODE && r.endOffset < n.textContent.length && n.textContent.substring(r.endOffset).trim().length > 0) {
+                     hasContent = true;
+                 }
+                 n = walker.nextNode();
+            }
+
+            while (n && !hasContent) {
+                if (n.nodeType === Node.TEXT_NODE && n.textContent.trim().length > 0) {
+                    hasContent = true;
+                }
+                if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'img' || n.tagName.toLowerCase() === 'table' || n.tagName.toLowerCase() === 'br')) {
+                    hasContent = true;
+                }
+                if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'td' || n.tagName.toLowerCase() === 'th')) {
+                    hasContent = true;
+                }
+                n = walker.nextNode();
+            }
+            return !hasContent;
+        };
+
+        let blockContainer = null;
+        let p = node;
+        while (p && p !== this.editableArea) {
+            const tag = p.tagName ? p.tagName.toLowerCase() : '';
+            if (tag === 'table' || tag === 'figure') {
+                blockContainer = p;
                 break;
             }
-            curr = curr.parentNode;
+            p = p.parentNode;
         }
 
-        if (td) {
-            const table = td.closest('table');
-            if (table) {
-                // Check if table is the very first element in the editor
-                if (this.editableArea.firstElementChild === table) {
-                    // Check if we are in the first row of the table
-                    const tbody = table.querySelector('tbody') || table;
-                    const firstRow = tbody.querySelector('tr');
+        if (blockContainer) {
+            // Try breakout before
+            if ((e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') && isAtStart(blockContainer, range)) {
+                // If it's already preceeded by a paragraph, no need to break out unless we want to move cursor?
+                // Actually if pressing Enter at the very beginning of a table, we always want to add a paragraph before it.
+                // Or maybe only if there isn't one already? If there is a P, arrow up just goes there.
+                // But Enter should probably push it down and create space.
+                if (e.key === 'Enter' || (!blockContainer.previousElementSibling || !['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(blockContainer.previousElementSibling.tagName.toLowerCase()))) {
+                    e.preventDefault();
+                    const newP = document.createElement('p');
+                    newP.innerHTML = '<br>';
+                    this.editableArea.insertBefore(newP, blockContainer);
+                    sel.removeAllRanges();
+                    const newRange = document.createRange();
+                    newRange.setStart(newP, 0);
+                    newRange.collapse(true);
+                    sel.addRange(newRange);
 
-                    if (firstRow && firstRow.contains(td)) {
-                        // Check if cursor is at the very beginning of the cell content
-                        // Meaning there is no text before the cursor in this cell
-                        const preRange = document.createRange();
-                        preRange.selectNodeContents(td);
-                        preRange.setEnd(range.startContainer, range.startOffset);
-                        const textBeforeCursor = preRange.cloneContents().textContent;
-
-                        if (textBeforeCursor.length === 0) {
-                            e.preventDefault();
-
-                            // Create a new paragraph and insert it BEFORE the table
-                            const p = document.createElement('p');
-                            this.editableArea.insertBefore(p, table);
-
-                            // Move cursor to the new paragraph
-                            sel.removeAllRanges();
-                            const newRange = document.createRange();
-                            newRange.setStart(p, 0);
-                            newRange.collapse(true);
-                            sel.addRange(newRange);
-
-                            if (this.history) {
-                              this.history.pushImmediate();
-                            }
-                            this.emit('change', this.getContent());
-                            this._syncToTextarea();
-                            return; // Stop further Enter key processing
-                        }
+                    if (this.history) {
+                      this.history.pushImmediate();
                     }
+                    this.emit('change', this.getContent());
+                    this._syncToTextarea();
+                    return;
+                }
+            }
+
+            // Try breakout after
+            if ((e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowRight') && isAtEnd(blockContainer, range)) {
+                if (e.key === 'Enter' || (!blockContainer.nextElementSibling || !['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(blockContainer.nextElementSibling.tagName.toLowerCase()))) {
+                    e.preventDefault();
+                    const newP = document.createElement('p');
+                    newP.innerHTML = '<br>';
+                    if (blockContainer.nextSibling) {
+                        this.editableArea.insertBefore(newP, blockContainer.nextSibling);
+                    } else {
+                        this.editableArea.appendChild(newP);
+                    }
+                    sel.removeAllRanges();
+                    const newRange = document.createRange();
+                    newRange.setStart(newP, 0);
+                    newRange.collapse(true);
+                    sel.addRange(newRange);
+
+                    if (this.history) {
+                        this.history.pushImmediate();
+                    }
+                    this.emit('change', this.getContent());
+                    this._syncToTextarea();
+                    return;
                 }
             }
         }
