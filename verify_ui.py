@@ -85,6 +85,50 @@ def test_editor_table_plugin_e2e(page: Page):
   first_row_cells = rows.nth(0).locator("td")
   expect(first_row_cells).to_have_count(2)
 
+def test_editor_format_plugin_e2e(page: Page):
+  page.goto(URL)
+  editable = page.locator(".penman-editor-area")
+  editable.click()
+  editable.evaluate("node => node.innerHTML = '<p>Test text</p>'")
+
+  # Select text and apply bold
+  page.keyboard.press("Control+A")
+  page.locator(".penman-btn-bold").click()
+
+  # CommandManager normalizes 'b' to 'strong'
+  expect(editable.locator("strong")).to_be_visible()
+
+def test_editor_list_plugin_e2e(page: Page):
+  page.goto(URL)
+  editable = page.locator(".penman-editor-area")
+  editable.click()
+  editable.evaluate("node => node.innerHTML = '<p>List item 1</p>'")
+
+  # Apply bullet list
+  page.locator(".penman-btn-bullist").click()
+
+  expect(editable.locator("ul")).to_be_visible()
+  expect(editable.locator("ul > li")).to_have_text("List item 1")
+
+def test_editor_link_plugin_e2e(page: Page):
+  page.goto(URL)
+  editable = page.locator(".penman-editor-area")
+  editable.click()
+  editable.evaluate("node => node.innerHTML = '<p>Link me</p>'")
+
+  page.keyboard.press("Control+A")
+  page.locator(".penman-btn-link").click()
+
+  modal = page.locator(".penman-modal")
+  expect(modal).to_be_visible()
+
+  page.locator("#penman-link-url").fill("https://example.com")
+  page.locator(".penman-modal-btn-submit").click()
+
+  link = editable.locator("a")
+  expect(link).to_be_visible()
+  expect(link).to_have_attribute("href", "https://example.com")
+
 if __name__ == "__main__":
   with sync_playwright() as p:
     browser = p.chromium.launch(headless=True)
@@ -94,6 +138,9 @@ if __name__ == "__main__":
       test_editor_find_replace_e2e(page)
       test_editor_image_plugin_e2e(page)
       test_editor_table_plugin_e2e(page)
+      test_editor_format_plugin_e2e(page)
+      test_editor_list_plugin_e2e(page)
+      test_editor_link_plugin_e2e(page)
       print("Playwright E2E tests passed successfully. Full integrations validated.")
     finally:
       browser.close()

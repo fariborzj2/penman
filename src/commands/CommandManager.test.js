@@ -16,7 +16,7 @@ describe('CommandManager', () => {
     commandManager = editor.commands;
 
     // Mock execCommand to avoid actual browser document manipulation side-effects during some tests
-    document.execCommand = vi.fn();
+    document.execCommand = vi.fn((cmd, ui, val) => { if (cmd === "bold") { const el = document.createElement("b"); const sel = window.getSelection(); if (sel.rangeCount) { const range = sel.getRangeAt(0); range.surroundContents(el); } } });
   });
 
   it('should execute custom registered commands', () => {
