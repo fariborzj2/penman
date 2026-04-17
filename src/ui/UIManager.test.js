@@ -73,8 +73,16 @@ describe('UIManager', () => {
     expect(boldButton.className).not.toContain('penman-btn-active');
     expect(italicButton.className).not.toContain('penman-btn-active');
 
-    // Spy queryState to return true for 'bold'
-    editor.commands.queryState = vi.fn().mockImplementation(cmd => cmd === 'bold');
+    // Mock the state query instead of mocking the entire DOM tree
+    editor.commands.register('bold', {
+        execute: () => {},
+        queryState: () => true
+    });
+
+    editor.commands.register('italic', {
+        execute: () => {},
+        queryState: () => false
+    });
 
     // Simulate selection change
     editor.emit('selectionChange');
@@ -85,20 +93,20 @@ describe('UIManager', () => {
   });
 
   it('should call editor.execCommand when a button is clicked', () => {
-    // Spy execCommand to avoid Uncaught Exception when JSDOM evaluates the fallback
-    document.execCommand = vi.fn();
-
     editor = new Editor({
       selector: '#editor',
       toolbar: 'bold'
     });
 
-    const execCommandSpy = vi.spyOn(editor, 'execCommand');
+    let executedCommand = null;
+    editor.commands.register('bold', {
+        execute: () => { executedCommand = 'bold'; }
+    });
 
     const button = document.querySelector('.penman-btn-bold');
     button.click();
 
-    expect(execCommandSpy).toHaveBeenCalledWith('bold');
+    expect(executedCommand).toBe('bold');
   });
 
   it('should destroy the toolbar element when editor is destroyed', () => {

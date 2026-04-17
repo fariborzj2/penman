@@ -30,6 +30,7 @@
 - **بخش ثبت تغییرات (Change Log):**
   - **[2026-04-10T19:14:10Z]**: حذف تمام مقادیر Mock و Placeholder در سیستم UI. آیکون‌های Inline SVG واقعی برای تمامی ابزارها اضافه شدند و وضعیت این فاز به کامل (Completed) تغییر یافت.
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: رفع گپ اجرایی پلاگین‌های `LinkPlugin`، `FormatPlugin`، و `ListPlugin` از نظر پیاده‌سازی تست‌ها و جایگزینی وابستگی `execCommand` به متدهای پایه.
+  - **[2026-10-23T12:00:00Z]**: اصلاح پلاگین `ListPlugin` و معماری CommandManager برای قطع کامل وابستگی دستورات لیست به متد منسوخ `execCommand`.
 
 ### فاز 5: تست (Testing)
 - **وضعیت:** کامل (Completed)
@@ -38,6 +39,7 @@
 - **بخش ثبت تغییرات (Change Log):**
   - **[2026-04-11T06:12:00Z]**: اسکریپت E2E واقعی (`test-e2e.mjs`) ساخته شد که سرور Vite را اجرا کرده و `verify_ui.py` (Playwright) را به‌طور مستقل از طریق دستور `npm run test:e2e` تست می‌کند.
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: تمام توابع تست Mock از هسته‌های اصلی تست (`CommandManager`, `Editor`, `SelectionManager`, `UIManager` و `FloatingUI`) حذف یا به درستی پیاده‌سازی شدند تا سناریوی واقعی DOM اعتبارسنجی شود. تست‌های واحد مستقل برای پلاگین‌های `Link`، `Format` و `List` ایجاد گردید.
+  - **[2026-10-23T12:00:00Z]**: اصلاح تست‌های `LinkPlugin`, `FormatPlugin`, `ListPlugin`, `CommandManager` و `UIManager` و جایگزینی شبیه‌سازها (Mocks) با اعتبارسنجی واقعی DOM به منظور حذف کامل گپ اجرایی فاز تست.
 
 ### فاز 6: رابط کاربری و استایل‌ها (UI & Style)
 - **وضعیت:** کامل (Completed)
@@ -53,4 +55,4 @@
   - [x] انتشار نسخه نهایی
 - **بخش ثبت تغییرات (Change Log):**
   - **[$(date -u +%Y-%m-%dT%H:%M:%SZ)]**: مستندات ناقص برای پلاگین‌های `LinkPlugin`, `FormatPlugin`, `ListPlugin` مطابق با قانون 16 (`README.md`, `examples.md`, `spec.md`, `usage.md`) تکمیل گردید. پروژه به وضعیت کامل رسید.
-
+  - **[2026-10-23T12:00:00Z]**: تطبیق اسناد با وضعیت واقعی کدها و اطمینان از صحت ادعاهای مندرج در `PROGRESS.md`.

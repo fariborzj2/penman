@@ -20,15 +20,33 @@ describe('ListPlugin', () => {
     expect(editor.ui.registry.buttons['numlist']).toBeDefined();
   });
 
-  it('should execute command when list buttons are clicked', () => {
-    const executeSpy = vi.spyOn(editor, 'execCommand').mockImplementation(() => {});
+  it('should create unordered list when bullist button is clicked', () => {
+    editor.editableArea.innerHTML = '<p id="target">List item</p>';
+    const target = editor.editableArea.querySelector('#target');
+
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
     editor.ui.registry.buttons['bullist'].onAction();
-    expect(executeSpy).toHaveBeenCalledWith('insertUnorderedList');
+
+    expect(editor.editableArea.innerHTML).toContain('<ul><li>List item</li></ul>');
+  });
+
+  it('should create ordered list when numlist button is clicked', () => {
+    editor.editableArea.innerHTML = '<p id="target">List item</p>';
+    const target = editor.editableArea.querySelector('#target');
+
+    const range = document.createRange();
+    range.selectNodeContents(target);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
     editor.ui.registry.buttons['numlist'].onAction();
-    expect(executeSpy).toHaveBeenCalledWith('insertOrderedList');
 
-    executeSpy.mockRestore();
+    expect(editor.editableArea.innerHTML).toContain('<ol><li>List item</li></ol>');
   });
 });
