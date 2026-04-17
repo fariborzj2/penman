@@ -59,7 +59,7 @@ describe('FindReplacePlugin', () => {
   it('should auto-fill find input if text is selected', () => {
     editor.setContent('<p>Select this text</p>');
 
-    // Mock getSelection
+    // Spy getSelection
     let originalGetSelection = window.getSelection;
     window.getSelection = () => ({
       rangeCount: 1,
@@ -165,7 +165,7 @@ describe('FindReplacePlugin', () => {
   });
 
   it('should efficiently execute replace all on a stress test without timing out', () => {
-    // Generate massive mock DOM content with inline tags
+    // Generate massive fake DOM content with inline tags
     let html = '';
     for(let i=0; i < 500; i++) {
         html += `<p>This is a <b>strict</b> test number ${i} for the <i>strict</i> system.</p>`;

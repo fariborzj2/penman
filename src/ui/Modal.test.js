@@ -40,18 +40,18 @@ describe('Modal Component', () => {
   });
 
   it('should collect input data and trigger onSubmit', () => {
-    const onSubmitMock = vi.fn();
+    const onSubmitSpy = vi.fn();
     const modal = new Modal({
       title: 'Form Modal',
       body: '<input type="text" name="username" value="testuser">',
-      onSubmit: onSubmitMock
+      onSubmit: onSubmitSpy
     });
     modal.open();
 
     const submitBtn = document.querySelector('.penman-modal-btn-submit');
     submitBtn.click();
 
-    expect(onSubmitMock).toHaveBeenCalledWith({ username: 'testuser' });
+    expect(onSubmitSpy).toHaveBeenCalledWith({ username: 'testuser' });
     // Should close after submit
     expect(document.querySelector('.penman-modal-overlay')).toBeNull();
   });
