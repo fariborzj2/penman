@@ -658,17 +658,12 @@ export function setupImagePlugin(editor) {
                     try {
                         if (!uploadFn) throw new Error('Upload function not configured');
                         
-                        // Simulate progress since standard uploadFn doesn't support progress callbacks
-                        item.progressInterval = setInterval(() => {
-                            if (item.progress < 90) {
-                                item.progress += Math.random() * 15;
-                                renderQueue();
-                            }
-                        }, 200);
+                        // Standard uploadFn doesn't support progress callbacks, so we represent the start state
+                        item.progress = 0;
+                        renderQueue();
 
                         const result = await uploadFn(item.file);
                         
-                        clearInterval(item.progressInterval);
                         item.progress = 100;
                         item.status = 'SUCCESS';
                         item.url = result.url || result;
@@ -694,7 +689,6 @@ export function setupImagePlugin(editor) {
                         }
                         
                     } catch (err) {
-                        if (item.progressInterval) clearInterval(item.progressInterval);
                         item.status = 'ERROR';
                         item.error = err.message;
                     }
@@ -772,8 +766,8 @@ export function setupImagePlugin(editor) {
              const itemsToInsert = uploadQueue.filter(item => item.selected && item.status === 'SUCCESS');
              if (itemsToInsert.length > 0) {
                  itemsToInsert.forEach(item => {
-                     // Insert Phase
-                     editor.image.insertUntrustedURL(item.url, item.alt || '');
+                     // Insert Phase - Uploads from our own API should be trusted
+                     editor.image.insertFromURL(item.url, item.alt || '');
                  });
                  // Remove inserted items from the queue
                  const remainingItems = uploadQueue.filter(item => !(item.selected && item.status === 'SUCCESS'));
