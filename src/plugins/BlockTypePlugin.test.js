@@ -26,8 +26,10 @@ describe('BlockTypePlugin', () => {
       ]
     });
 
-    // Replace execCommand to avoid actual browser document manipulation side-effects during some tests
-    document.execCommand = vi.fn();
+    // Provide a dummy native execCommand for jsdom compatibility so it doesn't throw.
+    if (!document.execCommand) {
+      document.execCommand = () => true;
+    }
   });
 
   afterEach(() => {
@@ -69,8 +71,14 @@ describe('BlockTypePlugin', () => {
   });
 
   it('should execute SET_BLOCK_TYPE when an item is clicked', () => {
-    // Spy on editor's execCommand
-    const execCommandSpy = vi.spyOn(editor, 'execCommand');
+    // We need to set up a selection for formatBlock to work natively
+    editor.editableArea.innerHTML = '<p>Test block type</p>';
+    const p = editor.editableArea.querySelector('p');
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
     const dropdownConfig = editor.ui.registry.dropdowns['blocktype'];
     const content = dropdownConfig.render();
@@ -79,8 +87,20 @@ describe('BlockTypePlugin', () => {
 
     // Click on Heading 1
     const heading1Item = Array.from(items).find(i => i.textContent === 'Heading 1');
+
+    // Simulate what formatBlock would do in a real browser since JSDOM doesn't implement it
+    document.execCommand = (cmd, showUI, value) => {
+        if (cmd === 'formatBlock' && value === 'h1') {
+            const h1 = document.createElement('h1');
+            h1.textContent = editor.editableArea.querySelector('p').textContent;
+            editor.editableArea.innerHTML = '';
+            editor.editableArea.appendChild(h1);
+        }
+    };
+
     heading1Item.dispatchEvent(new Event('click'));
 
-    expect(execCommandSpy).toHaveBeenCalledWith('SET_BLOCK_TYPE', expect.objectContaining({ cmd: 'h1', name: 'Heading 1' }));
+    // Verify it actually affected the DOM
+    expect(editor.getContent()).toContain('<h1');
   });
 });

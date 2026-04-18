@@ -61,6 +61,58 @@ def test_editor_image_plugin_e2e(page: Page):
   img = figure.locator("img")
   expect(img).to_have_attribute("src", "https://via.placeholder.com/150")
 
+  # Wait a bit for UI to settle
+  page.wait_for_timeout(50)
+
+  # Test Image Alignment
+
+  # We can't easily click the exact element since it might be covered or not firing event due to playwright mechanics
+  img.click()
+  # Wait for UI
+  page.wait_for_timeout(200)
+
+  align_center_btn = page.locator(".penman-floating-ui .penman-btn-align-center")
+  expect(align_center_btn).to_be_visible()
+  align_center_btn.click()
+
+  # Verify alignment class applied to figure
+  import re
+  expect(figure).to_have_class(re.compile(r"penman-align-center"))
+
+  # Test Image Upload Tab (Mocking network request for upload)
+  page.locator(".penman-btn-image").click()
+  page.locator(".penman-image-tab[data-tab='upload']").click()
+  upload_input = page.locator("#penman-image-file-input")
+
+  import tempfile
+  import re
+  with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
+      f.write(b"fake image content")
+      temp_path = f.name
+
+  try:
+      # Mock the upload endpoint
+      page.route("**/upload", lambda route: route.fulfill(
+          status=200,
+          json={"url": "https://via.placeholder.com/200"}
+      ))
+      upload_input.set_input_files(temp_path)
+
+      # Wait for the item to appear in the gallery/queue
+      # Wait for progress bar to finish (it sets status to SUCCESS)
+      page.wait_for_timeout(200)
+
+      # Click "Insert"
+      page.locator("#penman-image-upload-submit").click()
+
+      # Check if the new image is inserted
+      figures = page.locator(".penman-editor-area figure.penman-image")
+      expect(figures).to_have_count(2)
+      img2 = figures.nth(1).locator("img")
+      expect(img2).to_have_attribute("src", "https://via.placeholder.com/200")
+  finally:
+      os.remove(temp_path)
+
 def test_editor_table_plugin_e2e(page: Page):
   page.goto(URL)
   editable = page.locator(".penman-editor-area")
@@ -84,6 +136,71 @@ def test_editor_table_plugin_e2e(page: Page):
   expect(rows).to_have_count(2)
   first_row_cells = rows.nth(0).locator("td")
   expect(first_row_cells).to_have_count(2)
+
+  # Test Table Operations: Merge Cells
+  # 1. Select two cells
+  cell1 = first_row_cells.nth(0)
+  cell2 = first_row_cells.nth(1)
+
+  # We can't easily drag in playwright for this custom logic, so let's programmatically trigger the selection
+  editable.evaluate("""node => {
+      const editor = window.penman.get('#myTextarea');
+      const table = node.querySelector('table');
+      const cells = table.querySelectorAll('td');
+      editor.tableSelectionManager.selectRange(table, cells[0].getAttribute('data-cell-id'), cells[1].getAttribute('data-cell-id'));
+  }""")
+
+  page.wait_for_timeout(50)
+
+  # Click merge button on floating toolbar
+  merge_btn = page.locator(".penman-floating-ui .penman-btn-merge-cells")
+  expect(merge_btn).to_be_visible()
+  merge_btn.click()
+
+  # Verify merge (1 cell in first row, colspan 2)
+  expect(rows.nth(0).locator("td")).to_have_count(1)
+  expect(rows.nth(0).locator("td").first).to_have_attribute("colspan", "2")
+
+  # Test Table Operations: Split Cells
+  # Select the merged cell
+  editable.evaluate("""node => {
+      const editor = window.penman.get('#myTextarea');
+      const table = node.querySelector('table');
+      const cells = table.querySelectorAll('td');
+      editor.tableSelectionManager.selectCell(table, cells[0].getAttribute('data-cell-id'));
+  }""")
+
+  page.wait_for_timeout(50)
+
+  split_btn = page.locator(".penman-floating-ui .penman-btn-split-cell")
+  expect(split_btn).to_be_visible()
+  split_btn.click()
+
+  # Verify split (2 cells in first row again)
+  expect(rows.nth(0).locator("td")).to_have_count(2)
+  expect(rows.nth(0).locator("td").first).not_to_have_attribute("colspan", "2")
+
+  # Test Table Operations: Add Row below
+  editable.evaluate("""node => {
+      const editor = window.penman.get('#myTextarea');
+      const table = node.querySelector('table');
+      const cells = table.querySelectorAll('td');
+      editor.tableSelectionManager.selectCell(table, cells[0].getAttribute('data-cell-id'));
+  }""")
+  page.wait_for_timeout(50)
+
+  add_row_btn = page.locator(".penman-floating-ui .penman-btn-add-row")
+  expect(add_row_btn).to_be_visible()
+  add_row_btn.click()
+
+  expect(table.locator("tr")).to_have_count(3)
+
+  # Test Table Operations: Remove Row
+  remove_row_btn = page.locator(".penman-floating-ui .penman-btn-remove-row")
+  expect(remove_row_btn).to_be_visible()
+  remove_row_btn.click()
+
+  expect(table.locator("tr")).to_have_count(2)
 
 def test_editor_format_plugin_e2e(page: Page):
   page.goto(URL)
