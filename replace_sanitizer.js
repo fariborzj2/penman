@@ -1,4 +1,6 @@
-export class Sanitizer {
+const fs = require('fs');
+
+const newContent = `export class Sanitizer {
   constructor(editor = null) {
     this.editor = editor;
 
@@ -89,7 +91,7 @@ export class Sanitizer {
         // optionStyle properties
         if (block.optionStyle) {
             this.allowedTags[cmd].push('style');
-            const styleKey = classAdded ? `${cmd}.${block.class}` : cmd;
+            const styleKey = classAdded ? \`\${cmd}.\${block.class}\` : cmd;
             if (!this.allowedStylesByTagClass[styleKey]) {
                  this.allowedStylesByTagClass[styleKey] = new Set();
             }
@@ -97,7 +99,10 @@ export class Sanitizer {
                 // Convert camelCase to kebab-case
                 const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
                 this.allowedStylesByTagClass[styleKey].add(kebabKey);
-
+                // Also add to global allowed styles just in case
+                if (!this.allowedStyles.includes(kebabKey)) {
+                     this.allowedStyles.push(kebabKey);
+                }
             });
         }
     });
@@ -170,7 +175,7 @@ export class Sanitizer {
       if (!allowedAttrs.includes(attrName)) {
         el.removeAttribute(attrName);
       } else if (attrName === 'href') {
-        const val = attr.value.replace(/\s/g, '').toLowerCase();
+        const val = attr.value.replace(/\\s/g, '').toLowerCase();
         if (val.startsWith('javascript:')) {
           el.removeAttribute(attrName);
         }
@@ -199,7 +204,7 @@ export class Sanitizer {
     // Clean Styles strictly
     if (el.hasAttribute('style')) {
         const currentClass = el.getAttribute('class');
-        const styleKeyWithClass = currentClass ? `${tag}.${currentClass}` : null;
+        const styleKeyWithClass = currentClass ? \`\${tag}.\${currentClass}\` : null;
 
         let customAllowedStyles = new Set();
         if (styleKeyWithClass && this.allowedStylesByTagClass[styleKeyWithClass]) {
@@ -213,7 +218,7 @@ export class Sanitizer {
             const prop = el.style[i];
             // Allow if it's in the global allowed list, OR in the custom allowed list for this blockType
             if (this.allowedStyles.includes(prop) || customAllowedStyles.has(prop)) {
-                validStyles.push(`${prop}: ${el.style.getPropertyValue(prop)}`);
+                validStyles.push(\`\${prop}: \${el.style.getPropertyValue(prop)}\`);
             }
         }
 
@@ -267,18 +272,26 @@ export class Sanitizer {
   }
 
   _flattenInvalidNesting(root) {
-      // Headings cannot contain block elements structurally
-      const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
+      // Headings cannot contain blocks.
+      const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6, p');
 
       const elementsToUnwrap = [];
 
       headings.forEach(heading => {
+          const isParagraph = heading.tagName.toLowerCase() === 'p';
           const walker = document.createTreeWalker(heading, NodeFilter.SHOW_ELEMENT);
           let node;
           while (node = walker.nextNode()) {
               const tag = node.tagName.toLowerCase();
               if (this.blockTags.has(tag)) {
-                  elementsToUnwrap.push(node);
+                  // For headings, unwrap ALL inner blocks
+                  if (!isParagraph) {
+                      elementsToUnwrap.push(node);
+                  } else {
+                      // For paragraphs, unwrap inner blocks IF they are not br/img/etc (but they aren't in blockTags anyway)
+                      // A paragraph shouldn't contain a div or ul.
+                      elementsToUnwrap.push(node);
+                  }
               }
           }
       });
@@ -461,7 +474,7 @@ export class Sanitizer {
     let node;
     while ((node = walker.nextNode())) {
       // Allow whitespace
-      node.nodeValue = node.nodeValue.replace(/\s{2,}/g, " ");
+      node.nodeValue = node.nodeValue.replace(/\\s{2,}/g, " ");
     }
   }
 
@@ -481,3 +494,6 @@ export class Sanitizer {
     }
   }
 }
+`;
+
+fs.writeFileSync('src/sanitization/Sanitizer.js', newContent);
