@@ -720,11 +720,15 @@ export function setupImagePlugin(editor) {
                     try {
                         if (!uploadFn) throw new Error('Upload function not configured');
                         
-                        // Standard uploadFn doesn't support progress callbacks, so we represent the start state
                         item.progress = 0;
                         renderQueue();
 
-                        const result = await uploadFn(item.file);
+                        const result = await uploadFn(item.file, (loaded, total) => {
+                             if (total) {
+                                 item.progress = Math.max(0, Math.min(100, (loaded / total) * 100));
+                                 renderQueue();
+                             }
+                        });
                         
                         item.progress = 100;
                         item.status = 'SUCCESS';
