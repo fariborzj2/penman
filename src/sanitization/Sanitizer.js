@@ -41,14 +41,15 @@ export class Sanitizer {
       span: ["style"]
     };
 
-    // Which style properties are allowed natively across tags that allow "style"
-    this.allowedStyles = [
-        'width', 'height', 'border', 'border-color', 'border-width', 'border-style',
-        'background-color', 'background', 'color', 'text-align', 'float', 'margin',
-        'margin-left', 'margin-right', 'margin-top', 'margin-bottom',
-        'padding', 'padding-left', 'padding-right', 'padding-top', 'padding-bottom',
-        'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration'
-    ];
+    // Strict allowed styles natively per tag. Global arbitrary styles are forbidden.
+    this.nativeStylesByTag = {
+        img: ['width', 'height', 'float', 'margin', 'margin-left', 'margin-right', 'margin-top', 'margin-bottom'],
+        table: ['width', 'border', 'border-color', 'border-width', 'border-style', 'border-collapse', 'margin-left', 'margin-right', 'float'],
+        tr: ['background-color', 'background'],
+        th: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
+        td: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
+        span: ['color', 'background-color', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration']
+    };
 
     this.blockTags = new Set([
       "p", "div", "ul", "ol", "li", "blockquote",
@@ -81,14 +82,14 @@ export class Sanitizer {
 
         let classAdded = false;
         if (block.class) {
-            this.allowedTags[cmd].push('class'); // Ensure class is allowed for this tag
+            if (!this.allowedTags[cmd].includes('class')) this.allowedTags[cmd].push('class');
             this.allowedClassesByTag[cmd].add(block.class);
             classAdded = true;
         }
 
         // optionStyle properties
         if (block.optionStyle) {
-            this.allowedTags[cmd].push('style');
+            if (!this.allowedTags[cmd].includes('style')) this.allowedTags[cmd].push('style');
             const styleKey = classAdded ? `${cmd}.${block.class}` : cmd;
             if (!this.allowedStylesByTagClass[styleKey]) {
                  this.allowedStylesByTagClass[styleKey] = new Set();
@@ -97,7 +98,6 @@ export class Sanitizer {
                 // Convert camelCase to kebab-case
                 const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
                 this.allowedStylesByTagClass[styleKey].add(kebabKey);
-
             });
         }
     });
@@ -121,7 +121,9 @@ export class Sanitizer {
     // 4. Final Cleanup
     this._cleanup(root);
 
-    return root.innerHTML;
+    // 5. Post-Cleanup Rebuild Step to ensure reserialization
+    const rebuiltDoc = new DOMParser().parseFromString(root.innerHTML, "text/html");
+    return rebuiltDoc.body.innerHTML;
   }
 
   /* ================= SANITIZE ================= */
@@ -179,7 +181,6 @@ export class Sanitizer {
           if (tag === 'div' || tag === 'span' || this.allowedClassesByTag[tag]) {
               const allowedClasses = this.allowedClassesByTag[tag] || new Set();
 
-              // Only figure and figcaption have natively allowed classes without dynamic config right now
               const isNativeClassTag = ['figure', 'figcaption'].includes(tag);
 
               if (!isNativeClassTag) {
@@ -208,11 +209,12 @@ export class Sanitizer {
             customAllowedStyles = this.allowedStylesByTagClass[tag];
         }
 
+        const nativeAllowedStyles = this.nativeStylesByTag[tag] || [];
+
         const validStyles = [];
         for (let i = 0; i < el.style.length; i++) {
             const prop = el.style[i];
-            // Allow if it's in the global allowed list, OR in the custom allowed list for this blockType
-            if (this.allowedStyles.includes(prop) || customAllowedStyles.has(prop)) {
+            if (nativeAllowedStyles.includes(prop) || customAllowedStyles.has(prop)) {
                 validStyles.push(`${prop}: ${el.style.getPropertyValue(prop)}`);
             }
         }
@@ -233,8 +235,6 @@ export class Sanitizer {
   }
 
   _unwrapUnconfiguredElements(root) {
-      // Unwrap divs that don't have allowed classes (and aren't part of the core structure like table cells if they existed, but div is not)
-      // Unwrap spans that have no attributes (meaning no valid style or class)
       const elementsToUnwrap = [];
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
       let node;
@@ -242,7 +242,7 @@ export class Sanitizer {
           const tag = node.tagName.toLowerCase();
 
           if (tag === 'div') {
-             // If div has no attributes, it's just a redundant wrapper
+             // If div has no attributes (meaning no matching configured class/style), it's a redundant wrapper
              if (node.attributes.length === 0) {
                  elementsToUnwrap.push(node);
              }
@@ -267,11 +267,9 @@ export class Sanitizer {
   }
 
   _flattenInvalidNesting(root) {
-      // Headings cannot contain block elements structurally
+      // 1. Headings cannot contain block elements structurally
       const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
-
-      const elementsToUnwrap = [];
-
+      let elementsToUnwrap = [];
       headings.forEach(heading => {
           const walker = document.createTreeWalker(heading, NodeFilter.SHOW_ELEMENT);
           let node;
@@ -283,7 +281,6 @@ export class Sanitizer {
           }
       });
 
-      // Unwrap bottom-up to handle nested blocks safely
       elementsToUnwrap.reverse().forEach(el => {
           if (el.parentNode) {
              const parent = el.parentNode;
@@ -291,6 +288,29 @@ export class Sanitizer {
                  parent.insertBefore(el.firstChild, el);
              }
              parent.removeChild(el);
+          }
+      });
+
+      // 2. <li> cannot contain <p>. It should be pure text/inline or nested <ul>/<ol>.
+      // We unwrap <p> inside <li> to conform to strict normalization.
+      const listItems = root.querySelectorAll('li');
+      let paragraphsToUnwrap = [];
+      listItems.forEach(li => {
+          const ps = li.querySelectorAll('p');
+          ps.forEach(p => paragraphsToUnwrap.push(p));
+      });
+
+      paragraphsToUnwrap.reverse().forEach(p => {
+          if (p.parentNode) {
+             const parent = p.parentNode;
+             while(p.firstChild) {
+                 parent.insertBefore(p.firstChild, p);
+             }
+             // Insert a br if there are multiple paragraphs being unwrapped to maintain visual separation
+             if (p.nextSibling && p.nextSibling.nodeType === Node.TEXT_NODE) {
+                 parent.insertBefore(document.createElement('br'), p.nextSibling);
+             }
+             parent.removeChild(p);
           }
       });
   }

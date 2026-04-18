@@ -101,7 +101,7 @@ describe('Sanitizer Strict Structural Normalization', () => {
   it('should preserve configured blockTypes (e.g. warning-block) but unwrap invalid wrappers', () => {
     const html = '<div class="message-container"><div class="warning-block" style="color: red; font-size: 20px;"><p>Text</p></div></div>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<div class="warning-block" style="color: red; font-size: 20px"><p>Text</p></div>');
+    expect(clean).toBe('<div class="warning-block" style="color: red"><p>Text</p></div>');
   });
 
   it('should remove unconfigured classes and styles', () => {
@@ -152,5 +152,57 @@ describe('Sanitizer Leak and Restructure tests', () => {
     const invalidHtml = '<p style="z-index: 99">Invalid</p>';
     const cleanInvalid = sanitizer.sanitize(invalidHtml);
     expect(cleanInvalid).toBe('<p>Invalid</p>');
+  });
+});
+
+describe('Sanitizer Ultimate Strictness', () => {
+  let sanitizer;
+
+  beforeEach(() => {
+    sanitizer = new Sanitizer({
+      options: {
+        blockTypes: [
+          { name: 'Warning', cmd: 'div', class: 'warning-block', optionStyle: { color: 'red' } }
+        ]
+      }
+    });
+  });
+
+  it('should remove root wrapper div', () => {
+    const html = '<div><p>Content</p></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).toBe('<p>Content</p>');
+  });
+
+  it('should completely strip arbitrary inline styles and unused spans', () => {
+    const html = '<p><span style="margin: 50px; font-size: 16px;">Text</span></p>';
+    const clean = sanitizer.sanitize(html);
+    // margin is not allowed on span. font-size is.
+    expect(clean).toBe('<p><span style="font-size: 16px">Text</span></p>');
+
+    const html2 = '<p><span style="margin: 50px;">Text</span></p>';
+    const clean2 = sanitizer.sanitize(html2);
+    // margin removed -> span empty -> span unwrapped
+    expect(clean2).toBe('<p>Text</p>');
+  });
+
+  it('should fix invalid nesting of p inside li', () => {
+    const html = '<ul><li><p>Item 1</p></li><li><p>Item 2</p></li></ul>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).toBe('<ul><li>Item 1</li><li>Item 2</li></ul>');
+  });
+
+  it('should enforce strict blockTypes matching', () => {
+    // Has class warning-block, but tag is p -> strip class
+    const html1 = '<p class="warning-block">Text</p>';
+    expect(sanitizer.sanitize(html1)).toBe('<p>Text</p>');
+
+    // Tag div, but class error-block -> unwrap div
+    const html2 = '<div class="error-block"><p>Text</p></div>';
+    expect(sanitizer.sanitize(html2)).toBe('<p>Text</p>');
+
+    // Exact match: div + warning-block
+    const html3 = '<div class="warning-block" style="color: red"><p>Text</p></div>';
+    expect(sanitizer.sanitize(html3)).toBe('<div class="warning-block" style="color: red"><p>Text</p></div>');
   });
 });
