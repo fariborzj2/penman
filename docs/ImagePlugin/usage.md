@@ -16,12 +16,41 @@
 const editor = penman.init({
   selector: '#editor',
   plugins: ['image'],
-  imageUploadFn: async (file) => {
-    const formData = new FormData();
-    formData.append('file', file);
-    const response = await fetch('/upload', { method: 'POST', body: formData });
-    const data = await response.json();
-    return data.url;
+  imageUploadFn: (file, onProgress) => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', '/upload', true);
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          onProgress(e.loaded, e.total);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const data = JSON.parse(xhr.responseText);
+            resolve({
+              url: data.url,
+              alt: file.name
+            });
+          } catch (err) {
+            reject(new Error('Invalid JSON response'));
+          }
+        } else {
+          reject(new Error('Upload failed with status: ' + xhr.status));
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error('Network error during upload'));
+      };
+
+      const formData = new FormData();
+      formData.append('file', file);
+      xhr.send(formData);
+    });
   }
 });
 ```
