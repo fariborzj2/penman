@@ -225,9 +225,10 @@ export function setupImagePlugin(editor) {
 
   // 3. Expose API to Editor (Registry approach or directly)
   const gallerySystem = new GallerySystem();
-  let globalUploadQueue = [];
+
 
   editor.image = {
+    _uploadQueue: [],
     gallery: gallerySystem,
     insertFromURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.TRUSTED }), // From API, it might be trusted? Spec says "trustLevel is explicitly defined at PluginManager registration time". Let's assume UNTRUSTED by default for manual API calls unless specified.
     insertUntrustedURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.UNTRUSTED }),
@@ -346,12 +347,22 @@ export function setupImagePlugin(editor) {
         const contents = elModal.querySelectorAll('.penman-image-tab-content');
 
         
-        function renderGalleryItems(items, galleryContainer, modal, editor) {
-            galleryContainer.innerHTML = ''; // clear loading
+        function renderGalleryItems(items, galleryContainer, modal, editor, source, elModal, isAppending = false) {
+            if (!isAppending) {
+                galleryContainer.innerHTML = '';
+            } else {
+                const emptyState = galleryContainer.querySelector('.penman-gallery-empty');
+                if (emptyState) emptyState.remove();
+            }
+
             galleryContainer.dataset.loaded = 'true';
             
             items.forEach(item => {
+                // Prevent duplicate rendering
+                if (galleryContainer.querySelector(`[data-gallery-id="${item.id}"]`)) return;
+
                 const imgDiv = document.createElement('div');
+                imgDiv.dataset.galleryId = item.id;
                 imgDiv.style.cursor = 'pointer';
                 imgDiv.style.border = '2px solid transparent';
                 imgDiv.style.borderRadius = '4px';
@@ -360,9 +371,9 @@ export function setupImagePlugin(editor) {
                 imgDiv.style.position = 'relative';
                 imgDiv.style.backgroundColor = '#f0f0f0';
                 
-                // Fix: Implement Native Lazy Loading to improve delay and performance
+                // Native Lazy Loading
                 imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;" title="${item.title || ''}" onload="this.style.opacity=1" onerror="this.style.opacity=0">`;
-                // Set initial opacity to 0 in HTML string, actually it's easier to just use standard loading="lazy"
+
                 const img = imgDiv.querySelector('img');
                 img.style.opacity = '0';
                 img.onload = () => img.style.opacity = '1';
@@ -377,6 +388,55 @@ export function setupImagePlugin(editor) {
                 
                 galleryContainer.appendChild(imgDiv);
             });
+
+            // Handle Load More Button
+            let loadMoreBtn = elModal.querySelector('.penman-gallery-load-more');
+            if (!isAppending && loadMoreBtn) {
+                loadMoreBtn.remove();
+                loadMoreBtn = null;
+            }
+            if (source && source._nextCursor) {
+                if (!loadMoreBtn) {
+                    loadMoreBtn = document.createElement('button');
+                    loadMoreBtn.className = 'penman-btn penman-gallery-load-more';
+                    loadMoreBtn.textContent = 'Load More';
+                    loadMoreBtn.style.gridColumn = '1 / -1';
+                    loadMoreBtn.style.marginTop = '10px';
+                    loadMoreBtn.style.padding = '8px';
+
+                    loadMoreBtn.addEventListener('click', () => {
+                        const originalText = loadMoreBtn.textContent;
+                        loadMoreBtn.textContent = 'Loading...';
+                        loadMoreBtn.disabled = true;
+
+                        source.list(source._nextCursor).then(res => {
+                            if (res && res.items && res.items.length > 0) {
+                                source._cachedItems = source._cachedItems.concat(res.items);
+                                source._nextCursor = res.nextCursor || null;
+                                renderGalleryItems(res.items, galleryContainer, modal, editor, source, elModal, true);
+                            }
+                            if (!source._nextCursor) {
+                                loadMoreBtn.remove();
+                            } else {
+                                loadMoreBtn.textContent = originalText;
+                                loadMoreBtn.disabled = false;
+                                // Move button to the end
+                                galleryContainer.appendChild(loadMoreBtn);
+                            }
+                        }).catch(err => {
+                            loadMoreBtn.textContent = originalText;
+                            loadMoreBtn.disabled = false;
+                            console.error('Failed to load more items:', err);
+                        });
+                    });
+                    galleryContainer.appendChild(loadMoreBtn);
+                } else {
+                    // Ensure it stays at the bottom
+                    galleryContainer.appendChild(loadMoreBtn);
+                }
+            } else if (loadMoreBtn) {
+                loadMoreBtn.remove();
+            }
         }
 
         tabs.forEach(tab => {
@@ -397,7 +457,7 @@ export function setupImagePlugin(editor) {
                 if (sources.length > 0) {
                    editor.image.gallery.getSource(sources[0].id).then(source => {
                        if (source._cachedItems) {
-                           renderGalleryItems(source._cachedItems, galleryContainer, modal, editor);
+                           renderGalleryItems(source._cachedItems, galleryContainer, modal, editor, source, elModal, false);
                        }
                    }).catch(() => {});
                 }
@@ -418,14 +478,16 @@ export function setupImagePlugin(editor) {
             editor.image.gallery.getSource(sourceInfo.id).then(source => {
                 // Fix: Check cache on the source object itself to persist across modal reopens
                 if (source._cachedItems) {
-                    renderGalleryItems(source._cachedItems, galleryContainer, modal, editor);
+                    galleryContainer.innerHTML = '';
+                    renderGalleryItems(source._cachedItems, galleryContainer, modal, editor, source, elModal, false);
                     return;
                 }
 
                 source.list().then(res => {
                     if (res && res.items && res.items.length > 0) {
-                        source._cachedItems = res.items; // Cache in memory
-                        renderGalleryItems(res.items, galleryContainer, modal, editor);
+                        source._cachedItems = res.items;
+                        source._nextCursor = res.nextCursor || null;
+                        renderGalleryItems(res.items, galleryContainer, modal, editor, source, elModal, false);
                     } else {
                          galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>Gallery is empty.</p></div>';
                          galleryContainer.dataset.loaded = 'true';
@@ -483,7 +545,7 @@ export function setupImagePlugin(editor) {
         const queueContainer = elModal.querySelector('#penman-image-upload-queue');
         const uploadFn = editor.options.imageUploadFn;
         
-        let uploadQueue = globalUploadQueue;
+        let uploadQueue = editor.image._uploadQueue;
         
         // Immediately render queue to restore state visually upon reopen
         setTimeout(() => {
@@ -788,7 +850,7 @@ export function setupImagePlugin(editor) {
         // Clear queue on modal close so old state isn't preserved incorrectly
         modal.onClose = () => {
              // We no longer clear the queue on close, preserving state.
-             globalUploadQueue = uploadQueue;
+             editor.image._uploadQueue = uploadQueue;
         };
 
         // Cancel Buttons Logic
