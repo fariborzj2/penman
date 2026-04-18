@@ -42,7 +42,7 @@ export class Editor extends EventEmitter {
     this.commands = new CommandManager(this);
     this.history = new HistoryManager(this);
     this.ui = new UIManager(this);
-    this.sanitizer = new Sanitizer();
+    this.sanitizer = new Sanitizer(this);
 
     // Register built-in commands
     this.commands.register('undo', {

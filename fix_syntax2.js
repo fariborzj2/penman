@@ -1,4 +1,6 @@
-/**
+const fs = require('fs');
+
+const content = `/**
  * @vitest-environment jsdom
  */
 import { describe, it, expect, beforeEach } from 'vitest';
@@ -62,8 +64,8 @@ describe('Sanitizer normalizes orphaned text', () => {
 
   it('wraps raw text when next to div', () => {
     const sanitizer = new Sanitizer();
-    const html = sanitizer.sanitize("<div>متن داخل div</div>\nمتن بیرون از تگ");
-    expect(html).toBe("<p>متن داخل div\nمتن بیرون از تگ</p>");
+    const html = sanitizer.sanitize("<div>متن داخل div</div>\\nمتن بیرون از تگ");
+    expect(html).toBe("<p>متن داخل div\\nمتن بیرون از تگ</p>");
   });
 
   it('does not double wrap paragraphs', () => {
@@ -154,3 +156,6 @@ describe('Sanitizer Leak and Restructure tests', () => {
     expect(cleanInvalid).toBe('<p>Invalid</p>');
   });
 });
+`;
+
+fs.writeFileSync('src/sanitization/Sanitizer.test.js', content);
