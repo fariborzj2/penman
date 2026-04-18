@@ -59,23 +59,13 @@ describe('FindReplacePlugin', () => {
   it('should auto-fill find input if text is selected', () => {
     editor.setContent('<p>Select this text</p>');
 
-    // Spy getSelection
-    let originalGetSelection = window.getSelection;
-    window.getSelection = () => ({
-      rangeCount: 1,
-      isCollapsed: false,
-      toString: () => 'Select this text',
-      getRangeAt: () => ({
-          cloneRange: () => ({ insertNode: () => {}, collapse: () => {}, setStart: () => {}, setEnd: () => {} }),
-          commonAncestorContainer: editor.editableArea,
-          startContainer: editor.editableArea,
-          endContainer: editor.editableArea,
-          startOffset: 0,
-          endOffset: 0
-      }),
-      removeAllRanges: () => {},
-      addRange: () => {}
-    });
+    // Use actual DOM selection API
+    const p = editor.editableArea.querySelector('p');
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
 
     const action = editor.ui.registry.buttons['findreplace'].onAction;
     action();
@@ -83,8 +73,6 @@ describe('FindReplacePlugin', () => {
     const overlay = document.querySelector('.penman-modal-overlay');
     const inputFind = overlay.querySelector('#fr-find');
     expect(inputFind.value).toBe('Select this text');
-
-    window.getSelection = originalGetSelection;
   });
 
   it('should execute search and enable secondary buttons when results are found', () => {
