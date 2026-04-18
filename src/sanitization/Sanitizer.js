@@ -95,7 +95,6 @@ export class Sanitizer {
                  this.allowedStylesByTagClass[styleKey] = new Set();
             }
             Object.keys(block.optionStyle).forEach(key => {
-                // Convert camelCase to kebab-case
                 const kebabKey = key.replace(/([A-Z])/g, "-$1").toLowerCase();
                 this.allowedStylesByTagClass[styleKey].add(kebabKey);
             });
@@ -118,12 +117,34 @@ export class Sanitizer {
     // 3. Normalization Engine
     this._normalize(root);
 
-    // 4. Final Cleanup
+    // 4. Final Cleanup (Aggressively strips empty structures, orphans, and broken formatting)
     this._cleanup(root);
 
-    // 5. Post-Cleanup Rebuild Step to ensure reserialization
+    // 5. Post-Cleanup Rebuild Step to ensure full browser reserialization
     const rebuiltDoc = new DOMParser().parseFromString(root.innerHTML, "text/html");
-    return rebuiltDoc.body.innerHTML;
+
+    // Clean root div wrapper if DOMParser inserted one incorrectly or if user content was totally wrapped
+    const rebuiltRoot = rebuiltDoc.body;
+    if (rebuiltRoot.childNodes.length === 1 && rebuiltRoot.firstChild.tagName && rebuiltRoot.firstChild.tagName.toLowerCase() === 'div') {
+        const rootDiv = rebuiltRoot.firstChild;
+        // If it's not a configured block type, unwrap it.
+        if (rootDiv.attributes.length === 0 || !this._isConfiguredBlock(rootDiv)) {
+             while(rootDiv.firstChild) {
+                 rebuiltRoot.insertBefore(rootDiv.firstChild, rootDiv);
+             }
+             rebuiltRoot.removeChild(rootDiv);
+        }
+    }
+
+    return rebuiltRoot.innerHTML;
+  }
+
+  _isConfiguredBlock(el) {
+      const tag = el.tagName.toLowerCase();
+      if (!this.allowedClassesByTag[tag]) return false;
+      const allowedClasses = this.allowedClassesByTag[tag];
+      const classes = Array.from(el.classList);
+      return classes.some(c => allowedClasses.has(c));
   }
 
   /* ================= SANITIZE ================= */
@@ -180,7 +201,6 @@ export class Sanitizer {
           // Strictly enforce classes if a tag has restricted classes
           if (tag === 'div' || tag === 'span' || this.allowedClassesByTag[tag]) {
               const allowedClasses = this.allowedClassesByTag[tag] || new Set();
-
               const isNativeClassTag = ['figure', 'figcaption'].includes(tag);
 
               if (!isNativeClassTag) {
@@ -306,10 +326,8 @@ export class Sanitizer {
              while(p.firstChild) {
                  parent.insertBefore(p.firstChild, p);
              }
-             // Insert a br if there are multiple paragraphs being unwrapped to maintain visual separation
-             if (p.nextSibling && p.nextSibling.nodeType === Node.TEXT_NODE) {
-                 parent.insertBefore(document.createElement('br'), p.nextSibling);
-             }
+             // Instead of a <br>, just unwrap. The li gives visual separation.
+             // If we inject <br>, it breaks block rules in <li>.
              parent.removeChild(p);
           }
       });
@@ -385,7 +403,7 @@ export class Sanitizer {
 
     for (const p of ps) {
       // remove empty <p>
-      if (!p.textContent.trim() && !p.querySelector("img,br,hr")) {
+      if (!p.textContent.trim() && !p.querySelector("img,br,hr,table,ul,ol")) {
         p.remove();
         continue;
       }
@@ -488,16 +506,31 @@ export class Sanitizer {
   /* ================= CLEANUP ================= */
 
   _cleanup(root) {
-    this._removeEmptyTextNodes(root);
+    this._removeEmptyNodesRecursively(root);
   }
 
-  _removeEmptyTextNodes(node) {
-    for (const child of Array.from(node.childNodes)) {
-      if (child.nodeType === Node.TEXT_NODE) {
-        if (!child.nodeValue.trim() && child.nodeValue !== " ") child.remove();
-      } else if (child.nodeType === Node.ELEMENT_NODE) {
-        this._removeEmptyTextNodes(child);
-      }
+  _removeEmptyNodesRecursively(node) {
+    const children = Array.from(node.childNodes);
+    for (const child of children) {
+        if (child.nodeType === Node.ELEMENT_NODE) {
+            this._removeEmptyNodesRecursively(child);
+            const tag = child.tagName.toLowerCase();
+
+            // Exception tags that can be empty functionally
+            if (['br', 'img', 'hr', 'td', 'th', 'tr', 'table', 'tbody', 'thead', 'tfoot', 'figure', 'figcaption'].includes(tag)) continue;
+
+            let hasContent = false;
+            if (child.textContent.trim().length > 0) hasContent = true;
+            if (child.querySelector('img, br, hr, table')) hasContent = true;
+
+            if (!hasContent) {
+                child.remove();
+            }
+        } else if (child.nodeType === Node.TEXT_NODE) {
+            if (!child.nodeValue.trim() && child.nodeValue !== " ") {
+                child.remove();
+            }
+        }
     }
   }
 }
