@@ -79,28 +79,27 @@ def test_editor_image_plugin_e2e(page: Page):
   import re
   expect(figure).to_have_class(re.compile(r"penman-align-center"))
 
-  # Test Image Upload Tab (Mocking network request for upload)
+  # Test Image Upload Tab (Using REAL network request to local server)
   page.locator(".penman-btn-image").click()
   page.locator(".penman-image-tab[data-tab='upload']").click()
   upload_input = page.locator("#penman-image-file-input")
 
   import tempfile
   import re
+
+  # Create a real valid tiny PNG to pass sharp/multer validation if any
+  tiny_png = b'\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\rIDATx\x9cc\xfc\xcf\xc0\x00\x00\x03\x01\x01\x00\x18\xdd\x8d\xb0\x00\x00\x00\x00IEND\xaeB`\x82'
   with tempfile.NamedTemporaryFile(suffix=".png", delete=False) as f:
-      f.write(b"fake image content")
+      f.write(tiny_png)
       temp_path = f.name
 
   try:
-      # Mock the upload endpoint
-      page.route("**/upload", lambda route: route.fulfill(
-          status=200,
-          json={"url": "https://via.placeholder.com/200"}
-      ))
       upload_input.set_input_files(temp_path)
 
-      # Wait for the item to appear in the gallery/queue
-      # Wait for progress bar to finish (it sets status to SUCCESS)
-      page.wait_for_timeout(200)
+      # Wait for the item to appear in the gallery/queue and for real upload to complete
+      # The UI shows "SUCCESS" when the upload finishes. There's no specific class, just span text.
+      success_indicator = page.locator("span:has-text('SUCCESS')")
+      expect(success_indicator).to_be_visible(timeout=5000)
 
       # Click "Insert"
       page.locator("#penman-image-upload-submit").click()
@@ -109,9 +108,31 @@ def test_editor_image_plugin_e2e(page: Page):
       figures = page.locator(".penman-editor-area figure.penman-image")
       expect(figures).to_have_count(2)
       img2 = figures.nth(1).locator("img")
-      expect(img2).to_have_attribute("src", "https://via.placeholder.com/200")
+      # Ensure it's a real local server URL
+      expect(img2).to_have_attribute("src", re.compile(r"http://localhost:3000/uploads/.*\.png"))
   finally:
       os.remove(temp_path)
+
+  # Test Image Gallery Tab
+  # Ensure clean slate again to avoid counting previous images
+  editable.evaluate("node => node.innerHTML = '<p><br></p>'")
+
+  page.locator(".penman-btn-image").click()
+  page.locator(".penman-image-tab[data-tab='gallery']").click()
+
+  # Wait for gallery items to load from the local backend
+  # Look for the div with data-gallery-id which is how items are rendered
+  gallery_item = page.locator(".penman-gallery-container div[data-gallery-id]").first
+  expect(gallery_item).to_be_visible(timeout=5000)
+
+  # Clicking the gallery item directly inserts it and closes the modal
+  gallery_item.click()
+
+  # Verify image insertion from gallery
+  gallery_figure = page.locator(".penman-editor-area figure.penman-image")
+  expect(gallery_figure).to_be_visible()
+  gallery_img = gallery_figure.locator("img")
+  expect(gallery_img).to_have_attribute("src", re.compile(r"http://localhost:3000/uploads/.*\.png"))
 
 def test_editor_table_plugin_e2e(page: Page):
   page.goto(URL)
@@ -202,6 +223,125 @@ def test_editor_table_plugin_e2e(page: Page):
 
   expect(table.locator("tr")).to_have_count(2)
 
+  # Test Table Background Color using Standalone ColorPicker
+
+  # Before setting color, we need to ensure a cell is selected via the TableSelectionManager
+  editable.evaluate("""node => {
+      const editor = window.penman.get('#myTextarea');
+      const table = node.querySelector('table');
+      const cells = table.querySelectorAll('td');
+      editor.tableSelectionManager.selectCell(table, cells[0].getAttribute('data-cell-id'));
+  }""")
+  page.wait_for_timeout(50)
+
+  # Open background color picker
+  bg_color_trigger = page.locator(".penman-floating-ui .penman-btn-bg-color-trigger")
+  expect(bg_color_trigger).to_be_visible()
+  bg_color_trigger.click()
+
+  # Ensure the standalone ColorPicker popup appears
+  color_picker_container = page.locator(".penman-color-picker-container")
+  expect(color_picker_container).to_be_visible()
+
+  # Hex input should exist
+  hex_input = color_picker_container.locator("input[type='text']")
+  expect(hex_input).to_be_visible()
+
+  # Fill the hex value. Note that it triggers update on final event (Enter key)
+  hex_input.fill("#ff0000")
+  page.keyboard.press("Enter")
+
+  # Wait for DOM to update
+  page.wait_for_timeout(50)
+
+  # Verify the selected cell background color changed
+  expect(table.locator("td").first).to_have_css("background-color", "rgb(255, 0, 0)")
+
+def test_editor_new_plugins_e2e(page: Page):
+  page.goto(URL)
+  editable = page.locator(".penman-editor-area")
+  editable.click()
+  editable.evaluate("node => node.innerHTML = '<p>Test text <a href=\"#\">with link</a></p>'")
+
+  # 1. Test Font Size Plugin
+  # Select all
+  page.keyboard.press("Control+A")
+
+  fontsize_dropdown = page.locator(".penman-btn-fontsize")
+  expect(fontsize_dropdown).to_be_visible()
+  fontsize_dropdown.click()
+
+  # Select 24px
+  # The classes are .penman-fontsize-list and .penman-fontsize-item
+  page.locator(".penman-fontsize-list .penman-fontsize-item:has-text('24px')").click()
+
+  # Verify font size wrapper
+  expect(editable.locator("span").first).to_have_css("font-size", "24px")
+
+  # 2. Test Remove Format Plugin
+  # Select all again
+  page.keyboard.press("Control+A")
+
+  removeformat_btn = page.locator(".penman-btn-removeformat")
+  expect(removeformat_btn).to_be_visible()
+  removeformat_btn.click()
+
+  # Verify span is removed (format cleared)
+  expect(editable.locator("span")).to_have_count(0)
+
+  # Before proceeding, we need to recreate the link since it might have been cleared by Remove Format if selection wasn't exact.
+  # Let's just make sure we have a link to test.
+  editable.evaluate("node => node.innerHTML = '<p>Test text <a href=\"#\">with link</a></p>'")
+
+  # 3. Test Unlink Plugin
+  # Click inside the link
+  editable.evaluate("""node => {
+    const a = node.querySelector('a');
+    const range = document.createRange();
+    range.setStart(a.firstChild, 1);
+    range.collapse(true);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }""")
+
+  unlink_btn = page.locator(".penman-btn-unlink")
+  expect(unlink_btn).to_be_visible()
+  unlink_btn.click()
+
+  # Verify link is removed but text remains
+  expect(editable.locator("a")).to_have_count(0)
+  expect(editable).to_contain_text("Test text with link")
+
+  # 4. Test Horizontal Rule Plugin
+  hr_btn = page.locator(".penman-btn-hr")
+  expect(hr_btn).to_be_visible()
+  hr_btn.click()
+
+  expect(editable.locator("hr")).to_be_visible()
+
+  # 5. Test Block Type Plugin
+  # Select paragraph text
+  editable.evaluate("""node => {
+    const p = node.querySelector('p');
+    const range = document.createRange();
+    range.selectNodeContents(p);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }""")
+
+  blocktype_dropdown = page.locator(".penman-btn-blocktype")
+  expect(blocktype_dropdown).to_be_visible()
+  blocktype_dropdown.click()
+
+  # Select Warning block type (from config)
+  # The classes are .penman-blocktype-list and .penman-blocktype-item
+  page.locator(".penman-blocktype-list .penman-blocktype-item:has-text('Warning')").click()
+
+  # Verify div with class warning-block is created
+  expect(editable.locator("div.warning-block")).to_be_visible()
+
 def test_editor_format_plugin_e2e(page: Page):
   page.goto(URL)
   editable = page.locator(".penman-editor-area")
@@ -264,6 +404,7 @@ if __name__ == "__main__":
       test_editor_find_replace_e2e(page)
       test_editor_image_plugin_e2e(page)
       test_editor_table_plugin_e2e(page)
+      test_editor_new_plugins_e2e(page)
       test_editor_format_plugin_e2e(page)
       test_editor_list_plugin_e2e(page)
       test_editor_link_plugin_e2e(page)
