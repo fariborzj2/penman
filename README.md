@@ -1,81 +1,31 @@
+# BlockTypePlugin
 
-# ادیتور پنمن / Penman Editor
+## Exact purpose of the plugin
+Allows users to change the block-level HTML tag of the currently selected text (e.g., Paragraph, Headings 1-6, Blockquote). Also supports applying optional CSS classes and inline styles to blocks when configured via `blockTypes`.
 
-ادیتور Penman یک ویرایشگر متن غنی (Rich Text Editor) سبک، قابل توسعه و بدون وابستگی به فریمورک است که مستقیماً در HTML ساده قابل استفاده است.
+## System role
+Registers a searchable `blocktype` UI dropdown menu. It listens to editor `selectionChange` events to dynamically update the active block type displayed in the toolbar based on cursor position. It uses `document.execCommand('formatBlock')` to apply block tag changes, then applies any configured CSS class via `classList`.
 
-## هدف پروژه
+## Clear boundary of what it DOES NOT do
+- Does NOT apply inline formatting (e.g., bold, italic).
+- Does NOT handle list creation or mutation.
+- Does NOT allow custom block tags outside of the configured `blockTypes` array.
+- Does NOT apply `style` attributes directly to blocks (only CSS classes from the `class` field in `blockTypes`).
 
-ساخت یک ادیتور قابل اتکا برای محیط‌های وب که:
-- بدون React / Vue / Angular کار کند
-- فقط با یک فایل JS قابل استفاده باشد
-- وابسته به هیچ کتابخانه خارجی نباشد
-- قابل توسعه از طریق پلاگین باشد
-- API ساده اما قدرتمند داشته باشد
+## Applying CSS classes (FIX: previously incorrect documentation)
+When a `blockTypes` entry includes a `class` property, the plugin **does** apply that CSS class to the
+formatted block element via `block.classList.add(blockDef.class)`. Classes from other `blockTypes`
+entries are removed before the new class is applied, preventing style pollution.
 
-## نمونه استفاده
-``` html
-<textarea name="fullstory" id="myTextarea"></textarea>
-
-<script src="js/penman.js"></script>
-
-<script>
-penman.init({
-  selector: '#myTextarea',
-  lang: 'fa', // fa | en
-  direction: 'auto', // rtl | ltr | auto
-  height: 300,
-  plugins: [
-    'advlist', 'autolink', 'link', 'image', 'lists',
-    'charmap', 'preview', 'anchor', 'pagebreak',
-    'searchreplace', 'wordcount', 'visualblocks',
-    'visualchars', 'code','source', 'fullscreen', 'insertdatetime',
-    'media', 'table', 'emoticons', 'help'
-  ],
-  toolbar:
-    'undo redo | styles | bold italic | alignleft aligncenter alignright alignjustify | ' +
-    'bullist numlist outdent indent | link image | print preview media fullscreen | ' +
-    'forecolor backcolor emoticons | help',
-  menubar: 'file edit view insert format tools table help',
-  content_css: 'css/content.css'
-});
-</script>
+Example:
+```javascript
+blockTypes: [
+  { name: 'Warning', cmd: 'div', class: 'warning-block', optionStyle: { color: 'red' } }
+]
 ```
-## ویژگی‌ها
+Selecting "Warning" will produce `<div class="warning-block">...</div>`.
 
-- هسته سبک و مستقل (بدون dependency)
-- مبتنی بر contentEditable
-- سیستم پلاگین
-- toolbar قابل تنظیم
-- sync با textarea
-
-## معماری
-
-- Core Engine
-- Command System
-- Selection Manager
-- Plugin System
-- History Stack
-- Sanitization Layer
-
-## محدودیت‌ها
-
-- بدون collaboration
-- بدون block editor
-- فقط HTML editing
-- execCommand فقط fallback
-
-## فلسفه
-
-کنترل کامل در دست توسعه‌دهنده، بدون پیچیدگی اضافی
-
-## وضعیت
-
-در مرحله طراحی و توسعه اولیه
-
-## مجوز
-
-در حال تعریف
-
-## مشارکت
-
-فعلاً بسته
+## Dependencies
+- `editor.ui.registry` (UIManager)
+- `editor.options.blockTypes`
+- `editor.selection` (SelectionManager)

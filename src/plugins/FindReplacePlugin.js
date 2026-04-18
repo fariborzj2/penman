@@ -6,41 +6,32 @@ export function setupFindReplacePlugin(editor) {
       this.root = root;
       this.normalizeRTL = normalizeRTL;
       this.text = '';
-      this.mapping = []; // Array of length `this.text.length` mapping to { node, offset }
+      this.mapping = [];
       this.build();
     }
 
     normalizeChar(char) {
       if (!this.normalizeRTL) return char;
 
-      // Remove Arabic Diacritics (Fatha, Kasra, Damma, Tanween, Shadda, Sukun, Superscript Alef)
       if (/[\u064B-\u065F\u0670]/.test(char)) return '';
-
-      // Remove Kashida / Tatweel
       if (char === '\u0640') return '';
-
-      // Remove ZWNJ, ZWJ
       if (char === '\u200C' || char === '\u200D') return '';
 
-      // Normalize Yeh/Kaf to Persian
       if (char === 'ي') return 'ی';
       if (char === 'ك') return 'ک';
 
-      // Normalize Alef variants
       if (char === 'أ' || char === 'إ' || char === 'آ') return 'ا';
-
-      // Normalize Teh Marbuta to Heh
       if (char === 'ة') return 'ه';
 
       return char;
     }
 
     normalizeString(str) {
-       let res = '';
-       for(let i=0; i<str.length; i++) {
-           res += this.normalizeChar(str[i]);
-       }
-       return res;
+      let res = '';
+      for (let i = 0; i < str.length; i++) {
+        res += this.normalizeChar(str[i]);
+      }
+      return res;
     }
 
     build() {
@@ -51,16 +42,13 @@ export function setupFindReplacePlugin(editor) {
       while ((node = walker.nextNode())) {
         const nodeText = node.nodeValue;
         for (let i = 0; i < nodeText.length; i++) {
-            const char = nodeText[i];
-            const normalized = this.normalizeChar(char);
+          const char = nodeText[i];
+          const normalized = this.normalizeChar(char);
 
-            // If the character is removed by normalization (e.g. ZWNJ or diacritic),
-            // it doesn't get added to `this.text`, and therefore doesn't get an index in `this.mapping`.
-            // However, we MUST map the visual string we search against back to the exact DOM offsets.
-            if (normalized.length > 0) {
-               this.text += normalized;
-               this.mapping.push({ node, offset: i });
-            }
+          if (normalized.length > 0) {
+            this.text += normalized;
+            this.mapping.push({ node, offset: i });
+          }
         }
       }
     }
@@ -77,52 +65,46 @@ export function setupFindReplacePlugin(editor) {
 
       const endMap = this.mapping[endGlobalIndex];
       const endNode = endMap.node;
-      // The end offset for a range should be exclusive (after the character)
-      // We must account for trailing diacritics or ZWNJ in the original text that were stripped!
-      // To find the true end offset, we look at the original node's length.
-      // If this is the last character we mapped in that node, we could just say offset + 1.
-      // But what if there are trailing unmapped characters (diacritics) before the next mapped char or node end?
-      // We include them by looking at the next mapped character's offset.
+
       let endOffset = endMap.offset + 1;
 
       if (endGlobalIndex + 1 < this.mapping.length) {
-          const nextMap = this.mapping[endGlobalIndex + 1];
-          if (nextMap.node === endNode) {
-              endOffset = nextMap.offset; // Everything up to the next valid character
-          } else {
-              endOffset = endNode.nodeValue.length; // Consume trailing diacritics to end of node
-          }
-      } else {
+        const nextMap = this.mapping[endGlobalIndex + 1];
+        if (nextMap.node === endNode) {
+          endOffset = nextMap.offset;
+        } else {
           endOffset = endNode.nodeValue.length;
+        }
+      } else {
+        endOffset = endNode.nodeValue.length;
       }
 
       if (startNode && endNode) {
-         const range = document.createRange();
-         try {
-             // Safe bound check for JSDOM strictly
-             startOffset = Math.min(startOffset, startNode.nodeValue.length);
-             endOffset = Math.min(endOffset, endNode.nodeValue.length);
-             range.setStart(startNode, startOffset);
-             range.setEnd(endNode, endOffset);
-             return range;
-         } catch(e) {
-             console.warn('Range creation failed', e);
-         }
+        const range = document.createRange();
+        try {
+          startOffset = Math.min(startOffset, startNode.nodeValue.length);
+          endOffset = Math.min(endOffset, endNode.nodeValue.length);
+          range.setStart(startNode, startOffset);
+          range.setEnd(endNode, endOffset);
+          return range;
+        } catch (e) {
+          console.warn('Range creation failed', e);
+        }
       }
       return null;
     }
 
-    // Convert a global offset back to a native DOM selection marker
     resolveGlobalOffsetToNative(globalOffset) {
-        if (this.mapping.length === 0) return null;
-        if (globalOffset >= this.mapping.length) {
-            const last = this.mapping[this.mapping.length - 1];
-            // Ensure offset is bounded by nodeValue length to avoid JSDOM IndexSizeError
-            return { node: last.node, offset: Math.min(last.node.nodeValue.length, globalOffset - last.globalOffset + last.offset) };
-        }
-        const map = this.mapping[globalOffset];
-        // Ensure the returned offset is within the bounds of the node
-        return { node: map.node, offset: Math.min(map.node.nodeValue.length, map.offset) };
+      if (this.mapping.length === 0) return null;
+      if (globalOffset >= this.mapping.length) {
+        const last = this.mapping[this.mapping.length - 1];
+        return {
+          node: last.node,
+          offset: Math.min(last.node.nodeValue.length, globalOffset - last.globalOffset + last.offset)
+        };
+      }
+      const map = this.mapping[globalOffset];
+      return { node: map.node, offset: Math.min(map.node.nodeValue.length, map.offset) };
     }
   }
 
@@ -132,102 +114,104 @@ export function setupFindReplacePlugin(editor) {
     let initialFindText = '';
     const sel = window.getSelection();
     if (sel && sel.rangeCount > 0 && !sel.isCollapsed) {
-        const text = sel.toString().trim();
-        if (text && text.length < 150 && !text.includes('\n')) {
-             initialFindText = text;
-        }
+      const text = sel.toString().trim();
+      if (text && text.length < 150 && !text.includes('\n')) {
+        initialFindText = text;
+      }
     }
 
     editor.selection.save();
 
-    let results = []; // Array of { globalStart, length }
+    let results = [];
     let currentIndex = -1;
 
     const performSearch = (query, matchCase, normalizeRTL) => {
-        results = [];
-        if (!query) return results;
+      results = [];
+      if (!query) return results;
 
-        const mapper = new TextMapper(editor.editableArea, normalizeRTL);
-        let textStr = mapper.text;
-        let searchStr = normalizeRTL ? mapper.normalizeString(query) : query;
+      const mapper = new TextMapper(editor.editableArea, normalizeRTL);
+      let textStr = mapper.text;
+      let searchStr = normalizeRTL ? mapper.normalizeString(query) : query;
 
-        if (!matchCase) {
-             textStr = textStr.toLowerCase();
-             searchStr = searchStr.toLowerCase();
-        }
+      if (!matchCase) {
+        textStr = textStr.toLowerCase();
+        searchStr = searchStr.toLowerCase();
+      }
 
-        let startIndex = 0;
-        let index;
-        while ((index = textStr.indexOf(searchStr, startIndex)) > -1) {
-             results.push({ globalStart: index, length: searchStr.length });
-             startIndex = index + searchStr.length;
-        }
-        return results;
+      let startIndex = 0;
+      let index;
+      while ((index = textStr.indexOf(searchStr, startIndex)) > -1) {
+        results.push({ globalStart: index, length: searchStr.length });
+        startIndex = index + searchStr.length;
+      }
+      return results;
     };
 
     const highlightResult = (index, selectAll = false, normalizeRTL = false) => {
-         if (results.length === 0) return;
+      if (results.length === 0) return;
 
-         const sel = window.getSelection();
-         sel.removeAllRanges();
-         const mapper = new TextMapper(editor.editableArea, normalizeRTL);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      const mapper = new TextMapper(editor.editableArea, normalizeRTL);
 
-         if (selectAll) {
-             const limit = Math.min(results.length, 100); // Browser safety limit
-             for(let i=0; i<limit; i++) {
-                 const res = results[i];
-                 const range = mapper.getRangeForMatch(res.globalStart, res.length);
-                 if (range) sel.addRange(range);
-             }
+      if (selectAll) {
+        const limit = Math.min(results.length, 100);
+        for (let i = 0; i < limit; i++) {
+          const res = results[i];
+          const range = mapper.getRangeForMatch(res.globalStart, res.length);
+          if (range) sel.addRange(range);
+        }
 
-             if (results[0]) {
-                 const firstRange = mapper.getRangeForMatch(results[0].globalStart, results[0].length);
-                 if (firstRange && firstRange.startContainer.parentElement && firstRange.startContainer.parentElement.scrollIntoView) {
-                     firstRange.startContainer.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                 }
-             }
-         } else {
-             if (index < 0 || index >= results.length) return;
-             const result = results[index];
-             const range = mapper.getRangeForMatch(result.globalStart, result.length);
+        if (results[0]) {
+          const firstRange = mapper.getRangeForMatch(results[0].globalStart, results[0].length);
+          if (firstRange && firstRange.startContainer.parentElement &&
+              firstRange.startContainer.parentElement.scrollIntoView) {
+            firstRange.startContainer.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      } else {
+        if (index < 0 || index >= results.length) return;
+        const result = results[index];
+        const range = mapper.getRangeForMatch(result.globalStart, result.length);
 
-             if (range) {
-                 sel.addRange(range);
-                 if (range.startContainer.parentElement && range.startContainer.parentElement.scrollIntoView) {
-                    range.startContainer.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                 }
-             }
-         }
+        if (range) {
+          sel.addRange(range);
+          if (range.startContainer.parentElement && range.startContainer.parentElement.scrollIntoView) {
+            range.startContainer.parentElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }
+        }
+      }
     };
 
     const doReplaceAt = (index, replacement, normalizeRTL) => {
-         if (index >= 0 && index < results.length) {
-            const result = results[index];
-            const mapper = new TextMapper(editor.editableArea, normalizeRTL);
-            const range = mapper.getRangeForMatch(result.globalStart, result.length);
+      if (index >= 0 && index < results.length) {
+        const result = results[index];
+        const mapper = new TextMapper(editor.editableArea, normalizeRTL);
+        const range = mapper.getRangeForMatch(result.globalStart, result.length);
 
-            if (range) {
-                if (range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE) {
-                    const node = range.startContainer;
-                    const text = node.nodeValue;
-                    node.nodeValue = text.substring(0, range.startOffset) + replacement + text.substring(range.endOffset);
-                    return true;
-                } else {
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    sel.addRange(range);
+        if (range) {
+          if (range.startContainer === range.endContainer &&
+              range.startContainer.nodeType === Node.TEXT_NODE) {
+            const node = range.startContainer;
+            const text = node.nodeValue;
+            node.nodeValue = text.substring(0, range.startOffset) + replacement + text.substring(range.endOffset);
+            return true;
+          } else {
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
 
-                    try {
-                        range.deleteContents();
-                        range.insertNode(document.createTextNode(replacement));
-                        return true;
-                    } catch(e) {
-                        console.warn('Find and Replace native DOM split failed', e);
-                    }
-                }
+            try {
+              range.deleteContents();
+              range.insertNode(document.createTextNode(replacement));
+              return true;
+            } catch (e) {
+              console.warn('Find and Replace native DOM split failed', e);
             }
-         }
-         return false;
+          }
+        }
+      }
+      return false;
     };
 
     const modalHtml = `
@@ -250,125 +234,144 @@ export function setupFindReplacePlugin(editor) {
     let executeSearch;
 
     const modal = editor.ui.createModal({
-        title: 'Find and Replace',
-        body: modalHtml,
-        buttons: [
-          { text: 'Next', id: 'fr-btn-next', align: 'left', disabled: true, onClick: () => {
-             if (results.length === 0) return;
-             currentIndex = (currentIndex + 1) % results.length;
-             const elModal = modal.modalElement;
-             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, elModal.querySelector('#fr-normalize-rtl').checked);
-          }},
-          { text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true, onClick: () => {
-             if (results.length === 0) return;
-             currentIndex = (currentIndex - 1 + results.length) % results.length;
-             const elModal = modal.modalElement;
-             highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, elModal.querySelector('#fr-normalize-rtl').checked);
-          }},
-          { text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right', onClick: () => {
-             editor.selection.restore();
-             executeSearch();
-          }},
-          { text: 'Replace', id: 'fr-btn-replace', align: 'right', disabled: true, onClick: () => {
-             if (results.length === 0 || currentIndex < 0 || currentIndex >= results.length) return;
-             const elModal = modal.modalElement;
-             const replacement = elModal.querySelector('#fr-replace').value;
-             const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
+      title: 'Find and Replace',
+      body: modalHtml,
+      buttons: [
+        {
+          text: 'Next', id: 'fr-btn-next', align: 'left', disabled: true,
+          onClick: () => {
+            if (results.length === 0) return;
+            currentIndex = (currentIndex + 1) % results.length;
+            const elModal = modal.modalElement;
+            highlightResult(currentIndex,
+              elModal.querySelector('#fr-all-words').checked,
+              elModal.querySelector('#fr-normalize-rtl').checked);
+          }
+        },
+        {
+          text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true,
+          onClick: () => {
+            if (results.length === 0) return;
+            currentIndex = (currentIndex - 1 + results.length) % results.length;
+            const elModal = modal.modalElement;
+            highlightResult(currentIndex,
+              elModal.querySelector('#fr-all-words').checked,
+              elModal.querySelector('#fr-normalize-rtl').checked);
+          }
+        },
+        {
+          text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right',
+          onClick: () => {
+            editor.selection.restore();
+            executeSearch();
+          }
+        },
+        {
+          text: 'Replace', id: 'fr-btn-replace', align: 'right', disabled: true,
+          onClick: () => {
+            if (results.length === 0 || currentIndex < 0 || currentIndex >= results.length) return;
+            const elModal = modal.modalElement;
+            const replacement = elModal.querySelector('#fr-replace').value;
+            const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
 
-             // Save logical cursor position
-             const currentResult = results[currentIndex];
-             const originalStart = currentResult.globalStart;
+            const currentResult = results[currentIndex];
+            const originalStart = currentResult.globalStart;
 
-             if (doReplaceAt(currentIndex, replacement, normalizeRTL)) {
-                if (editor.history) {
-                    editor.history.pushImmediate();
-                }
-                editor._syncToTextarea();
-                editor.emit('change', editor.getContent());
-
-                performSearch(elModal.querySelector('#fr-find').value, elModal.querySelector('#fr-match-case').checked, normalizeRTL);
-                if (results.length > 0) {
-                    // Find the next logical match after our replacement
-                    // The replacement changed string lengths, so we just pick the first result whose globalStart >= our original cursor
-                    let nextIdx = results.findIndex(r => r.globalStart >= originalStart);
-                    if (nextIdx === -1) nextIdx = 0; // Wrap around
-                    currentIndex = nextIdx;
-                    highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, normalizeRTL);
-                } else {
-                    currentIndex = -1;
-                    // Restore cursor to right after the replacement safely
-                    const finalMapper = new TextMapper(editor.editableArea, normalizeRTL);
-                    const sel = window.getSelection();
-                    sel.removeAllRanges();
-                    const marker = finalMapper.resolveGlobalOffsetToNative(originalStart + replacement.length);
-                    if (marker) {
-                    try {
-                        const range = document.createRange();
-                        range.setStart(marker.node, marker.offset);
-                        range.collapse(true);
-                        sel.addRange(range);
-                    } catch(e) {}
-                    }
-                    editor.selection.save();
-                }
-                updateButtonsState();
-             }
-          }},
-          { text: 'Replace all', id: 'fr-btn-replace-all', align: 'right', disabled: true, onClick: () => {
-              if (results.length === 0) return;
-              const elModal = modal.modalElement;
-              const replacement = elModal.querySelector('#fr-replace').value;
-              const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
-
-              if (editor.history && typeof editor.history.takeSnapshot === 'function') {
-                  editor.history.takeSnapshot();
-              }
-
-              // We instantiate the TextMapper ONCE
-              let mapper = new TextMapper(editor.editableArea, normalizeRTL);
-              const sel = window.getSelection();
-
-              // Iterate strictly backwards to prevent invalidating upstream DOM nodes
-              for (let i = results.length - 1; i >= 0; i--) {
-                  const result = results[i];
-                  const range = mapper.getRangeForMatch(result.globalStart, result.length);
-
-                  if (range) {
-                      if (range.startContainer === range.endContainer && range.startContainer.nodeType === Node.TEXT_NODE) {
-                          // Fast path
-                          const node = range.startContainer;
-                          const text = node.nodeValue;
-                          node.nodeValue = text.substring(0, range.startOffset) + replacement + text.substring(range.endOffset);
-                      } else {
-                          // Fallback path
-                          try {
-                             // Use native DOM mutation for complex replacements.
-                             // Backward iteration guarantees previous nodes in the array are unaffected by these structural changes
-                             range.deleteContents();
-                             range.insertNode(document.createTextNode(replacement));
-                          } catch(e) {
-                             console.warn('Find and Replace native DOM split failed', e);
-                          }
-                      }
-                  }
-              }
-
+            if (doReplaceAt(currentIndex, replacement, normalizeRTL)) {
+              // FIX: pushImmediate replaces the non-existent takeSnapshot call
               if (editor.history) {
-                 editor.history.pushImmediate();
+                editor.history.pushImmediate();
               }
               editor._syncToTextarea();
               editor.emit('change', editor.getContent());
 
-              results = [];
-              currentIndex = -1;
+              performSearch(
+                elModal.querySelector('#fr-find').value,
+                elModal.querySelector('#fr-match-case').checked,
+                normalizeRTL
+              );
+
+              if (results.length > 0) {
+                let nextIdx = results.findIndex(r => r.globalStart >= originalStart);
+                if (nextIdx === -1) nextIdx = 0;
+                currentIndex = nextIdx;
+                highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, normalizeRTL);
+              } else {
+                currentIndex = -1;
+                const finalMapper = new TextMapper(editor.editableArea, normalizeRTL);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                const marker = finalMapper.resolveGlobalOffsetToNative(originalStart + replacement.length);
+                if (marker) {
+                  try {
+                    const range = document.createRange();
+                    range.setStart(marker.node, marker.offset);
+                    range.collapse(true);
+                    sel.addRange(range);
+                  } catch (e) {}
+                }
+                editor.selection.save();
+              }
               updateButtonsState();
-              elModal.querySelector('#fr-find').focus();
-          }}
-        ],
-        onCancel: () => {
-          activeModal = null;
-          editor.selection.restore();
+            }
+          }
+        },
+        {
+          text: 'Replace all', id: 'fr-btn-replace-all', align: 'right', disabled: true,
+          onClick: () => {
+            if (results.length === 0) return;
+            const elModal = modal.modalElement;
+            const replacement = elModal.querySelector('#fr-replace').value;
+            const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
+
+            // FIX: Use pushImmediate (takeSnapshot does not exist on HistoryManager)
+            // Push a snapshot BEFORE the replacement to allow undo
+            if (editor.history) {
+              editor.history.pushImmediate();
+            }
+
+            let mapper = new TextMapper(editor.editableArea, normalizeRTL);
+
+            for (let i = results.length - 1; i >= 0; i--) {
+              const result = results[i];
+              const range = mapper.getRangeForMatch(result.globalStart, result.length);
+
+              if (range) {
+                if (range.startContainer === range.endContainer &&
+                    range.startContainer.nodeType === Node.TEXT_NODE) {
+                  const node = range.startContainer;
+                  const text = node.nodeValue;
+                  node.nodeValue = text.substring(0, range.startOffset) +
+                    replacement + text.substring(range.endOffset);
+                } else {
+                  try {
+                    range.deleteContents();
+                    range.insertNode(document.createTextNode(replacement));
+                  } catch (e) {
+                    console.warn('Find and Replace native DOM split failed', e);
+                  }
+                }
+              }
+            }
+
+            // Push a second snapshot AFTER all replacements are complete
+            if (editor.history) {
+              editor.history.pushImmediate();
+            }
+            editor._syncToTextarea();
+            editor.emit('change', editor.getContent());
+
+            results = [];
+            currentIndex = -1;
+            updateButtonsState();
+            elModal.querySelector('#fr-find').focus();
+          }
         }
+      ],
+      onCancel: () => {
+        activeModal = null;
+        editor.selection.restore();
+      }
     });
 
     activeModal = modal;
@@ -385,38 +388,38 @@ export function setupFindReplacePlugin(editor) {
     const btnPrev = elModal.querySelector('#fr-btn-prev');
 
     updateButtonsState = () => {
-         const hasResults = results.length > 0;
-         btnReplace.disabled = !hasResults;
-         btnReplaceAll.disabled = !hasResults;
-         btnNext.disabled = !hasResults;
-         btnPrev.disabled = !hasResults;
+      const hasResults = results.length > 0;
+      btnReplace.disabled = !hasResults;
+      btnReplaceAll.disabled = !hasResults;
+      btnNext.disabled = !hasResults;
+      btnPrev.disabled = !hasResults;
     };
 
     executeSearch = () => {
-         performSearch(inputFind.value, cbMatchCase.checked, cbNormalizeRTL.checked);
-         if (results.length > 0) {
-            currentIndex = 0;
-            highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
-         } else {
-            currentIndex = -1;
-            editor.selection.restore();
-            editor.selection.save();
-         }
-         updateButtonsState();
+      performSearch(inputFind.value, cbMatchCase.checked, cbNormalizeRTL.checked);
+      if (results.length > 0) {
+        currentIndex = 0;
+        highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
+      } else {
+        currentIndex = -1;
+        editor.selection.restore();
+        editor.selection.save();
+      }
+      updateButtonsState();
     };
 
     cbAllWords.addEventListener('change', () => {
-         if (results.length > 0) {
-            highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
-         }
+      if (results.length > 0) {
+        highlightResult(currentIndex, cbAllWords.checked, cbNormalizeRTL.checked);
+      }
     });
 
     cbNormalizeRTL.addEventListener('change', () => {
-        executeSearch();
+      executeSearch();
     });
 
     if (inputFind.value) {
-         executeSearch();
+      executeSearch();
     }
   };
 
@@ -427,7 +430,8 @@ export function setupFindReplacePlugin(editor) {
 
   editor.editableArea.addEventListener('keydown', (e) => {
     const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-    const isFind = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey;
+    const isFind = (isMac ? e.metaKey : e.ctrlKey) &&
+      e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey;
 
     if (isFind) {
       e.preventDefault();
