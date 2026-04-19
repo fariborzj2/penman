@@ -16,6 +16,7 @@ export class Modal {
       cancelText: 'Cancel',
       hideFooter: false,
       buttons: null,
+      width: null,
       ...options
     };
 
@@ -41,6 +42,11 @@ export class Modal {
     const body = document.createElement('div');
     body.className = 'penman-modal-body';
     body.innerHTML = this.options.body || '';
+
+    if (this.options.width) {
+        this.modalElement.style.width = this.options.width;
+        this.modalElement.style.maxWidth = '95vw';
+    }
 
     this.modalElement.appendChild(header);
     this.modalElement.appendChild(body);

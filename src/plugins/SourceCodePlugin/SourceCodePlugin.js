@@ -2,6 +2,7 @@ import { basicSetup, EditorView } from 'codemirror';
 import { html } from '@codemirror/lang-html';
 import { EditorState } from '@codemirror/state';
 import { SearchQuery, setSearchQuery, openSearchPanel, closeSearchPanel, findNext, findPrevious } from '@codemirror/search';
+import { formatHTML } from './formatHTML.js';
 
 export function setupSourceCodePlugin(editor) {
   // 1. Register Button in Toolbar
@@ -36,20 +37,21 @@ function openSourceCodeModal(editor) {
   }
 
   let cmView = null;
-  const initialHtml = editor.getContent();
+  const initialHtml = formatHTML(editor.getContent());
 
   let isSaved = false;
 
   // Create UI modal for source code
   const modal = editor.ui.createModal({
     title: 'Source Code',
+    width: '800px',
     body: `
-      <div class="penman-source-code-header" style="display: flex; gap: 8px; margin-bottom: 10px;">
-         <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px;">
+      <div class="penman-source-code-header" style="display: flex; gap: 8px; margin-bottom: 10px;" dir="ltr">
+         <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace;">
          <button type="button" id="penman-cm-search-prev" class="penman-btn">&uarr;</button>
          <button type="button" id="penman-cm-search-next" class="penman-btn">&darr;</button>
       </div>
-      <div id="penman-source-code-container" style="height: 60vh; border: 1px solid #ccc; overflow: hidden; text-align: left;" dir="rtl"></div>
+      <div id="penman-source-code-container" style="height: 60vh; border: 1px solid #ccc; overflow: hidden; text-align: left;" dir="ltr"></div>
     `,
     submitText: 'Save',
     cancelText: 'Cancel',
@@ -109,18 +111,23 @@ function openSourceCodeModal(editor) {
   // by searching within the modalElement to prevent global collisions.
   const container = modal.modalElement.querySelector('#penman-source-code-container');
   
-  // RTL Direction Support for CodeMirror
-  const rtlTheme = EditorView.theme({
+  // Theme configuration for CodeMirror
+  const cmTheme = EditorView.theme({
     "&": {
       direction: "ltr"
     },
     ".cm-content": {
       fontFamily: "monospace",
       textAlign: "left",
-      direction: "ltr"
+      direction: "ltr",
+      lineHeight: "1.6"
+    },
+    ".cm-line": {
+      direction: "ltr",
+      textAlign: "left"
     },
     ".cm-scroller": {
-        overflow: "auto"
+      overflow: "auto"
     }
   });
 
@@ -129,7 +136,7 @@ function openSourceCodeModal(editor) {
     extensions: [
       basicSetup,
       html(),
-      rtlTheme
+      cmTheme
     ]
   });
 
