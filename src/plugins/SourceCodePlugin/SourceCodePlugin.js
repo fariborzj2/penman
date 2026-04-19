@@ -46,12 +46,12 @@ function openSourceCodeModal(editor) {
     title: 'Source Code',
     width: '800px',
     body: `
-      <div class="penman-source-code-header" style="display: flex; gap: 8px; margin-bottom: 10px;" dir="ltr">
+      <div class="penman-source-code-header" style="display: flex; gap: 8px; padding: 5px 15px 0; margin-bottom: 10px;" dir="ltr">
          <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace;">
          <button type="button" id="penman-cm-search-prev" class="penman-btn">&uarr;</button>
          <button type="button" id="penman-cm-search-next" class="penman-btn">&darr;</button>
       </div>
-      <div id="penman-source-code-container" style="height: 60vh; border: 1px solid #ccc; overflow: hidden; text-align: left;" dir="ltr"></div>
+      <div id="penman-source-code-container" style="border: 1px solid #ccc; overflow: auto; text-align: left;" dir="ltr"></div>
     `,
     submitText: 'Save',
     cancelText: 'Cancel',
@@ -127,7 +127,14 @@ function openSourceCodeModal(editor) {
       textAlign: "left"
     },
     ".cm-scroller": {
-      overflow: "auto"
+      overflow: "auto",
+      minHeight: "400px",
+      maxHeight: "400px"
+    },
+    ".cm-scroller": {
+      overflow: "auto",
+      minHeight: "400px",
+      maxHeight: "400px"
     }
   });
 
