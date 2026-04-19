@@ -14,50 +14,58 @@ import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 
 export const PluginManager = {
   plugins: {
-    'link': setupLinkPlugin,
-    'format': setupFormatPlugin,
-    'list': setupListPlugin,
-    'blocktype': setupBlockTypePlugin,
-    'fontsize': setupFontSizePlugin,
-    'unlink': setupUnlinkPlugin,
-    'removeformat': setupRemoveFormatPlugin,
-    'hr': setupHorizontalRulePlugin,
-    'findreplace': setupFindReplacePlugin,
-    'table': setupTablePlugin,
-    'image': setupImagePlugin,
-    'color': setupColorPlugin,
-    'sourcecode': setupSourceCodePlugin
+    link: setupLinkPlugin,
+    format: setupFormatPlugin,
+    list: setupListPlugin,
+    blocktype: setupBlockTypePlugin,
+    fontsize: setupFontSizePlugin,
+    unlink: setupUnlinkPlugin,
+    removeformat: setupRemoveFormatPlugin,
+    hr: setupHorizontalRulePlugin,
+    findreplace: setupFindReplacePlugin,
+    table: setupTablePlugin,
+    image: setupImagePlugin,
+    color: setupColorPlugin,
+    sourcecode: setupSourceCodePlugin
   },
 
-  /**
-   * Registers a plugin to the global system
-   * @param {string} name - The plugin name
-   * @param {function} setup - The setup function that receives the editor instance
-   */
   add(name, setup) {
     this.plugins[name] = setup;
   },
 
-  /**
-   * Initializes plugins for a specific editor instance
-   * @param {Editor} editor
-   */
   init(editor) {
-    const configPlugins = editor.options.plugins || [];
-    let pluginList = [];
-
-    if (typeof configPlugins === 'string') {
-      pluginList = configPlugins.split(/\s+/).filter(Boolean);
-    } else if (Array.isArray(configPlugins)) {
-      pluginList = configPlugins;
+    if (!editor) {
+      console.warn('Penman PluginManager: editor is undefined');
+      return;
     }
 
-    pluginList.forEach(pluginName => {
-      const setup = this.plugins[pluginName];
+    const configPlugins = editor.options?.plugins;
+
+    const pluginList = this._normalizePluginList(configPlugins);
+
+    this._runPlugins(editor, pluginList);
+  },
+
+  _normalizePluginList(configPlugins) {
+    if (typeof configPlugins === 'string') {
+      return configPlugins.split(/\s+/).filter(Boolean);
+    }
+
+    if (Array.isArray(configPlugins)) {
+      return configPlugins;
+    }
+
+    return [];
+  },
+
+  _runPlugins(editor, pluginList) {
+    pluginList.forEach(name => {
+      const setup = this.plugins[name];
+
       if (typeof setup === 'function') {
         setup(editor);
       } else {
-        console.warn(`Penman Editor: Plugin "${pluginName}" is not registered.`);
+        console.warn(`Penman Editor: Plugin "${name}" is not registered.`);
       }
     });
   }
