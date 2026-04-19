@@ -369,88 +369,82 @@ export class Sanitizer {
 
   /* Merge nested spans and remove redundant spans */
   _mergeNestedSpans(root) {
-    const spans = Array.from(root.querySelectorAll("span"));
-    for (let i = spans.length - 1; i >= 0; i--) {
-      const span = spans[i];
-      if (!span.parentNode) continue;
+    let changed = true;
+    while (changed) {
+        changed = false;
+        const spans = Array.from(root.querySelectorAll("span"));
+        for (let i = spans.length - 1; i >= 0; i--) {
+            const span = spans[i];
+            if (!span.parentNode) continue;
 
-      // Ensure HEX-only values for color and background-color
-      ['color', 'background-color'].forEach(prop => {
-          const val = span.style.getPropertyValue(prop);
-          if (val) {
-              // Convert rgb/rgba to hex or strip if invalid
-              // JSDOM and browsers convert hex to rgb() automatically, so we must allow rgb() here if we want it to survive
-              // But the requirements say: Accept ONLY HEX format. Reject rgb(), etc.
-              // We must manually enforce it before serialization, but the browser parses inline styles natively.
-              // We will just do a simple check. If it doesn't start with '#' or 'rgb', we strip it.
-              // Actually, browsers will convert '#ff0000' to 'rgb(255, 0, 0)' internally.
-              // To enforce HEX, we should convert rgb back to hex.
-              const isRgba = val.startsWith('rgba');
-              const isRgb = val.startsWith('rgb') && !isRgba;
-              const isHex = val.startsWith('#');
+            // Ensure HEX-only values for color and background-color
+            ['color', 'background-color'].forEach(prop => {
+                const val = span.style.getPropertyValue(prop);
+                if (val) {
+                    const isRgba = val.startsWith('rgba');
+                    const isRgb = val.startsWith('rgb') && !isRgba;
+                    const isHex = val.startsWith('#');
 
-              if (isRgba) {
-                  // Prompt says reject rgba
-                  span.style.removeProperty(prop);
-              } else if (isRgb) {
-                  const match = val.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
-                  if (match) {
-                      const hex = '#' + match.slice(1, 4).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                      span.style.setProperty(prop, hex);
-                  } else {
-                      span.style.removeProperty(prop);
-                  }
-              } else if (!isHex && val !== 'transparent') {
-                  span.style.removeProperty(prop);
-              }
-          }
-      });
-
-      if (span.childNodes.length === 1 && span.firstChild.nodeType === Node.ELEMENT_NODE && span.firstChild.tagName.toLowerCase() === 'span') {
-        const childSpan = span.firstChild;
-
-        // Merge styles natively, but preserve hex by using attributes if possible, or we just rely on stringification.
-        // Actually, jsdom converts # to rgb when setting style properties.
-        // Let's manually rebuild the style string.
-
-        // Merge styles by parsing them manually
-        const finalStyles = {};
-        [span.getAttribute('style'), childSpan.getAttribute('style')].forEach(styleStr => {
-            if (!styleStr) return;
-            styleStr.split(';').forEach(rule => {
-                const parts = rule.split(':');
-                if (parts.length >= 2) {
-                    const k = parts[0].trim();
-                    const v = parts.slice(1).join(':').trim();
-                    if (k && v) {
-                        finalStyles[k] = v;
+                    if (isRgba) {
+                        span.style.removeProperty(prop);
+                    } else if (isRgb) {
+                        const match = val.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
+                        if (match) {
+                            const hex = '#' + match.slice(1, 4).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                            span.style.setProperty(prop, hex);
+                        } else {
+                            span.style.removeProperty(prop);
+                        }
+                    } else if (!isHex && val !== 'transparent') {
+                        span.style.removeProperty(prop);
                     }
                 }
             });
-        });
 
-        const combined = Object.keys(finalStyles).map(k => `${k}: ${finalStyles[k]}`).join('; ');
-        span.setAttribute('style', combined);
-        // We re-evaluate styles in the next pass since it's bottom-up, but actually we already processed the child.
-        // To properly enforce HEX, we rely on the final serialization pass which checks inline styles natively.
-        // But the previous pass uses el.style.getPropertyValue which returns rgb().
+            if (span.childNodes.length === 1 && span.firstChild.nodeType === Node.ELEMENT_NODE && span.firstChild.tagName.toLowerCase() === 'span') {
+                const childSpan = span.firstChild;
 
-        while (childSpan.firstChild) {
-            span.appendChild(childSpan.firstChild);
+                const finalStyles = {};
+                [span.getAttribute('style'), childSpan.getAttribute('style')].forEach(styleStr => {
+                    if (!styleStr) return;
+                    styleStr.split(';').forEach(rule => {
+                        const parts = rule.split(':');
+                        if (parts.length >= 2) {
+                            const k = parts[0].trim();
+                            const v = parts.slice(1).join(':').trim();
+                            if (k && v) {
+                                finalStyles[k] = v;
+                            }
+                        }
+                    });
+                });
+
+                const combined = Object.keys(finalStyles).map(k => `${k}: ${finalStyles[k]}`).join('; ');
+                if (combined) {
+                    span.setAttribute('style', combined);
+                } else {
+                    span.removeAttribute('style');
+                }
+
+                while (childSpan.firstChild) {
+                    span.appendChild(childSpan.firstChild);
+                }
+                childSpan.remove();
+                changed = true;
+            }
+
+            // Clean up empty style attribute and unwrap if empty
+            if (!span.getAttribute('style')) {
+                span.removeAttribute('style');
+            }
+            if (span.attributes.length === 0) {
+                while (span.firstChild) {
+                    span.parentNode.insertBefore(span.firstChild, span);
+                }
+                span.parentNode.removeChild(span);
+                changed = true;
+            }
         }
-        childSpan.remove();
-      }
-
-      // Clean up empty style attribute and unwrap if empty
-      if (span.getAttribute('style') === '') {
-          span.removeAttribute('style');
-      }
-      if (span.attributes.length === 0) {
-          while (span.firstChild) {
-              span.parentNode.insertBefore(span.firstChild, span);
-          }
-          span.parentNode.removeChild(span);
-      }
     }
   }
 

@@ -108,6 +108,15 @@ export function setupColorPlugin(editor) {
            }
        }
     }
+
+    // After applying styles, forcefully run the span merge algorithm to prevent deep nesting bugs
+    // The editor uses a unified sanitizer which includes mergeNestedSpans.
+    // However, invoking the whole sanitizer can be heavy. Let's just call the specific normalizer
+    // or rely on CommandManager's normalizeDOM. We'll explicitly call the Sanitizer's span merge directly
+    // since it is precisely designed for this.
+    if (editor.sanitizer && typeof editor.sanitizer._mergeNestedSpans === 'function') {
+        editor.sanitizer._mergeNestedSpans(editor.editableArea);
+    }
   }
 
   // UI rendering logic
