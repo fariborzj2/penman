@@ -59,7 +59,7 @@ function registerUI(editor) {
   editor.ui.registry.addButton("sourcecode", {
     icon: "sourcecode",
     tooltip: "Source Code (Ctrl+Shift+S)",
-    onClick: () => {
+    onAction: () => {
       // 👇 همیشه از command استفاده کن
       if (editor.execCommand) {
         editor.execCommand("sourcecode");
