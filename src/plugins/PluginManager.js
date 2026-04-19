@@ -10,6 +10,7 @@ import { setupFindReplacePlugin } from './FindReplacePlugin.js';
 import { setupTablePlugin } from './TablePlugin.js';
 import { setupImagePlugin } from './ImagePlugin/index.js';
 import { setupColorPlugin } from './ColorPlugin/index.js';
+import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 
 export const PluginManager = {
   plugins: {
@@ -24,7 +25,8 @@ export const PluginManager = {
     findreplace: setupFindReplacePlugin,
     table: setupTablePlugin,
     image: setupImagePlugin,
-    color: setupColorPlugin
+    color: setupColorPlugin,
+    sourcecode: setupSourceCodePlugin
   },
 
   add(name, setup) {
