@@ -22,8 +22,8 @@ export class IconProvider {
       hr: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M4 11h16v2H4z" fill-rule="evenodd"></path></svg>',
       findreplace: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M16 17.3a8 8 0 1 1 1.4-1.4l4.3 4.4a1 1 0 0 1-1.4 1.4l-4.4-4.3Zm-5-.3a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" fill-rule="nonzero"></path></svg>',
       table: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M19 4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h14ZM5 14v4h6v-4H5Zm14 0h-6v4h6v-4Zm0-6h-6v4h6V8ZM5 12h6V8H5v4Z" fill-rule="evenodd"></path></svg>',
-      textcolor: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M12 3L4 19h2.5l2-5h7l2 5H20L12 3zm-2.2 10.5L12 6.5l2.2 7H9.8z" fill="currentColor"/><rect x="4" y="20" width="16" height="3" fill="currentColor"/></svg>',
-      highlight: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a2 2 0 0 0-2.83 0L9 10.83l4.17 4.17 7.54-7.54a2 2 0 0 0 0-2.83z" fill="currentColor"/></svg>'
+      textcolor: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 18h18v3H3z" ></path><path fill-rule="evenodd" d="M8.7 16h-.8a.5.5 0 0 1-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 0 1-.5.6h-.8a.5.5 0 0 1-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4Zm2.6-7.6-.6 2a.5.5 0 0 0 .5.6h1.6a.5.5 0 0 0 .5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4Z"></path></g></svg>',
+      highlight: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 18h18v3H3z" fill="#000000"></path><path fill-rule="evenodd" d="M7.7 16.7H3l3.3-3.3-.7-.8L10.2 8l4 4.1-4 4.2c-.2.2-.6.2-.8 0l-.6-.7-1.1 1.1zm5-7.5L11 7.4l3-2.9a2 2 0 0 1 2.6 0L18 6c.7.7.7 2 0 2.7l-2.9 2.9-1.8-1.8-.5-.6"></path></svg>'
     };
   }
 
