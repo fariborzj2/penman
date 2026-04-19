@@ -9,6 +9,7 @@ import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
 import { setupFindReplacePlugin } from './FindReplacePlugin.js';
 import { setupTablePlugin } from './TablePlugin.js';
 import { setupImagePlugin } from './ImagePlugin/index.js';
+import { setupColorPlugin } from './ColorPlugin/index.js';
 
 export const PluginManager = {
   plugins: {
@@ -22,7 +23,8 @@ export const PluginManager = {
     'hr': setupHorizontalRulePlugin,
     'findreplace': setupFindReplacePlugin,
     'table': setupTablePlugin,
-    'image': setupImagePlugin
+    'image': setupImagePlugin,
+    'color': setupColorPlugin
   },
 
   /**

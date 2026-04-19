@@ -105,9 +105,9 @@ describe('Sanitizer Strict Structural Normalization', () => {
   });
 
   it('should remove unconfigured classes and styles', () => {
-    const html = '<span class="some-class" style="color: blue; animation: test 1s;">Test</span>';
+    const html = '<span class="some-class" style="color: #0000ff; animation: test 1s;">Test</span>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<p><span style="color: blue">Test</span></p>');
+    expect(clean).toBe('<p><span style="color: #0000ff">Test</span></p>');
   });
 
   it('should unwrap empty spans that have no attributes', () => {
@@ -117,9 +117,9 @@ describe('Sanitizer Strict Structural Normalization', () => {
   });
 
   it('should preserve spans with allowed styles', () => {
-    const html = '<p><span style="color: red;">Text</span></p>';
+    const html = '<p><span style="color: #ff0000;">Text</span></p>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<p><span style="color: red">Text</span></p>');
+    expect(clean).toBe('<p><span style="color: #ff0000">Text</span></p>');
   });
 });
 

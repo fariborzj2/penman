@@ -21,7 +21,9 @@ export class IconProvider {
       removeformat: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M13.2 6a1 1 0 0 1 0 .2l-2.6 10a1 1 0 0 1-1 .8h-.2a.8.8 0 0 1-.8-1l2.6-10H8a1 1 0 1 1 0-2h9a1 1 0 0 1 0 2h-3.8ZM5 18h7a1 1 0 0 1 0 2H5a1 1 0 0 1 0-2Zm13 1.5L16.5 18 15 19.5a.7.7 0 0 1-1-1l1.5-1.5-1.5-1.5a.7.7 0 0 1 1-1l1.5 1.5 1.5-1.5a.7.7 0 0 1 1 1L17.5 17l1.5 1.5a.7.7 0 0 1-1 1Z" fill-rule="evenodd"></path></svg>',
       hr: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M4 11h16v2H4z" fill-rule="evenodd"></path></svg>',
       findreplace: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M16 17.3a8 8 0 1 1 1.4-1.4l4.3 4.4a1 1 0 0 1-1.4 1.4l-4.4-4.3Zm-5-.3a6 6 0 1 0 0-12 6 6 0 0 0 0 12Z" fill-rule="nonzero"></path></svg>',
-      table: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M19 4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h14ZM5 14v4h6v-4H5Zm14 0h-6v4h6v-4Zm0-6h-6v4h6V8ZM5 12h6V8H5v4Z" fill-rule="evenodd"></path></svg>'
+      table: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M19 4a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6c0-1.1.9-2 2-2h14ZM5 14v4h6v-4H5Zm14 0h-6v4h6v-4Zm0-6h-6v4h6V8ZM5 12h6V8H5v4Z" fill-rule="evenodd"></path></svg>',
+      textcolor: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M12 3L4 19h2.5l2-5h7l2 5H20L12 3zm-2.2 10.5L12 6.5l2.2 7H9.8z" fill="currentColor"/><rect x="4" y="20" width="16" height="3" fill="currentColor"/></svg>',
+      highlight: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M7 14c-1.66 0-3 1.34-3 3 0 1.31-1.16 2-2 2 .92 1.22 2.49 2 4 2 2.21 0 4-1.79 4-4 0-1.66-1.34-3-3-3zm13.71-9.37l-1.34-1.34a2 2 0 0 0-2.83 0L9 10.83l4.17 4.17 7.54-7.54a2 2 0 0 0 0-2.83z" fill="currentColor"/></svg>'
     };
   }
 
