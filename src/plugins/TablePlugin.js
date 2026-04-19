@@ -509,10 +509,6 @@ export function setupTablePlugin(editor) {
                  return;
              }
 
-             // Remove any other pickers first
-             const oldPickers = document.querySelectorAll('.penman-color-picker-container');
-             oldPickers.forEach(p => p.remove());
-
              const container = document.createElement('div');
              container.className = 'penman-color-picker-container';
              container.style.position = 'absolute';
