@@ -23,7 +23,7 @@ export class ColorPicker {
       '#cc4125', '#e06666', '#f6b26b', '#ffd966', '#93c47d', '#76a5af', '#6d9eeb', '#6fa8dc', '#8e7cc3', '#c27ba0',
       '#a61c00', '#cc0000', '#e69138', '#f1c232', '#6aa84f', '#45818e', '#3c78d8', '#3d85c6', '#674ea7', '#a64d79',
       '#85200c', '#990000', '#b45f06', '#bf9000', '#38761d', '#134f5c', '#1155cc', '#0b5394', '#351c75', '#741b47',
-      '#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d', '#4c1130'
+      '#5b0f00', '#660000', '#783f04', '#7f6000', '#274e13', '#0c343d', '#1c4587', '#073763', '#20124d',
     ];
 
     this._createDOM();
@@ -106,7 +106,7 @@ export class ColorPicker {
     style.id = 'penman-color-picker-styles';
     style.innerHTML = `
       .penman-color-picker {
-        width: 170px;
+        width: 174px;
         background: #fff;
         border-radius: 4px;
         box-shadow: 0 2px 8px rgba(0,0,0,0.15);
@@ -119,12 +119,13 @@ export class ColorPicker {
         margin-bottom: 8px;
       }
       .penman-color-picker-hex {
-        width: 100%;
-        padding: 4px;
         border: 1px solid #ccc;
-        border-radius: 3px;
-        font-size: 12px;
-        font-family: monospace;
+        border-radius: 4px;
+        outline: none;
+        font-size: 14px;
+        width: 100%;
+        padding: 5px;
+        direction: ltr;
       }
       .penman-color-picker-palette {
         display: grid;
@@ -135,7 +136,7 @@ export class ColorPicker {
         width: 14px;
         height: 14px;
         border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 2px;
+        border-radius: 4px;
         cursor: pointer;
         padding: 0;
         position: relative;
@@ -157,7 +158,7 @@ export class ColorPicker {
          transform: translateY(-50%) rotate(45deg);
       }
       .penman-color-picker-swatch:hover {
-        border: 1px solid #000;
+        border: 2px solid #454545;
         transform: scale(1.1);
       }
     `;

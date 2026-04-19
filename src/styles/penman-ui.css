@@ -124,7 +124,25 @@
   padding: 8px 0;
   margin-top: 4px;
 }
+.penman-dropdown-panel .penman-color-picker-container {
+  padding: 0 8px;
+}
+.penman-dropdown-panel .penman-color-picker {
+  padding: 0;
+  box-shadow: unset;
+  width: 100%;
+}
+.penman-dropdown-panel .penman-color-picker-palette {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+}
+.penman-dropdown-panel .penman-color-picker-swatch {
+  aspect-ratio: 1/1;
+  height: unset;
+  width: unset;
 
+}
 /* RTL adjustments */
 [dir="rtl"] .penman-dropdown-panel {
   left: auto;
@@ -145,6 +163,7 @@
   width: calc(100% - 16px);
   margin: 0 8px 8px 8px !important;
   font-family: inherit;
+  direction: ltr;
 }
 
 .penman-blocktype-search:focus {
