@@ -132,5 +132,11 @@ export class CommandManager {
          node.parentNode.removeChild(node);
       }
     });
+
+    // Invoke Sanitizer's span merge explicitly if available to flatten any stray spans
+    // This catches stray spans spawned by native execCommand across the entire document
+    if (this.editor.sanitizer && typeof this.editor.sanitizer._mergeNestedSpans === 'function') {
+      this.editor.sanitizer._mergeNestedSpans(area);
+    }
   }
 }
