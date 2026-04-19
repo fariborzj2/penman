@@ -367,82 +367,105 @@ export class Sanitizer {
     this._normalizeText(root);
   }
 
-  /* Merge nested spans and remove redundant spans */
+  /* Merge nested spans and remove redundant spans via style state pushdown */
   _mergeNestedSpans(root) {
-    let changed = true;
-    while (changed) {
-        changed = false;
-        const spans = Array.from(root.querySelectorAll("span"));
-        for (let i = spans.length - 1; i >= 0; i--) {
-            const span = spans[i];
-            if (!span.parentNode) continue;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const nodes = [];
+    let node;
+    while(node = walker.nextNode()) {
+        if (node.nodeValue.trim().length > 0 || node.nodeValue === ' ') {
+            nodes.push(node);
+        }
+    }
 
-            // Ensure HEX-only values for color and background-color
-            ['color', 'background-color'].forEach(prop => {
-                const val = span.style.getPropertyValue(prop);
-                if (val) {
-                    const isRgba = val.startsWith('rgba');
-                    const isRgb = val.startsWith('rgb') && !isRgba;
-                    const isHex = val.startsWith('#');
+    const wrappers = [];
 
-                    if (isRgba) {
-                        span.style.removeProperty(prop);
-                    } else if (isRgb) {
-                        const match = val.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
-                        if (match) {
-                            const hex = '#' + match.slice(1, 4).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
-                            span.style.setProperty(prop, hex);
-                        } else {
-                            span.style.removeProperty(prop);
+    nodes.forEach(textNode => {
+        const styles = {};
+        const classes = new Set();
+        let curr = textNode.parentNode;
+        while(curr && curr !== root) {
+            if (curr.tagName && curr.tagName.toLowerCase() === 'span') {
+                // Extract styles, enforcing HEX logic
+                for (let i = 0; i < curr.style.length; i++) {
+                    const prop = curr.style[i];
+                    let val = curr.style.getPropertyValue(prop);
+
+                    if (prop === 'color' || prop === 'background-color') {
+                        if (val.startsWith('rgba')) {
+                            continue; // drop rgba
+                        } else if (val.startsWith('rgb')) {
+                            const match = val.match(/^rgb\((\d+),\s*(\d+),\s*(\d+)/);
+                            if (match) {
+                                val = '#' + match.slice(1, 4).map(x => parseInt(x).toString(16).padStart(2, '0')).join('');
+                            } else {
+                                continue;
+                            }
+                        } else if (!val.startsWith('#') && val !== 'transparent') {
+                            continue;
                         }
-                    } else if (!isHex && val !== 'transparent') {
-                        span.style.removeProperty(prop);
+                    }
+
+                    if (!styles[prop]) {
+                        styles[prop] = val; // child overrides parent (since we go bottom-up)
                     }
                 }
-            });
 
-            if (span.childNodes.length === 1 && span.firstChild.nodeType === Node.ELEMENT_NODE && span.firstChild.tagName.toLowerCase() === 'span') {
-                const childSpan = span.firstChild;
+                // Extract classes
+                Array.from(curr.classList).forEach(c => classes.add(c));
+            }
+            curr = curr.parentNode;
+        }
 
-                const finalStyles = {};
-                [span.getAttribute('style'), childSpan.getAttribute('style')].forEach(styleStr => {
-                    if (!styleStr) return;
-                    styleStr.split(';').forEach(rule => {
-                        const parts = rule.split(':');
-                        if (parts.length >= 2) {
-                            const k = parts[0].trim();
-                            const v = parts.slice(1).join(':').trim();
-                            if (k && v) {
-                                finalStyles[k] = v;
-                            }
-                        }
-                    });
-                });
+        if (Object.keys(styles).length > 0 || classes.size > 0) {
+            wrappers.push({textNode, styles, classes});
+        }
+    });
 
-                const combined = Object.keys(finalStyles).map(k => `${k}: ${finalStyles[k]}`).join('; ');
-                if (combined) {
-                    span.setAttribute('style', combined);
-                } else {
-                    span.removeAttribute('style');
-                }
+    // Unwrap ALL spans
+    const spans = Array.from(root.querySelectorAll('span'));
+    spans.reverse().forEach(span => {
+        while(span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
+        span.remove();
+    });
 
-                while (childSpan.firstChild) {
-                    span.appendChild(childSpan.firstChild);
-                }
-                childSpan.remove();
-                changed = true;
+    // Re-wrap text nodes with accumulated unified styles
+    wrappers.forEach(({textNode, styles, classes}) => {
+        const span = document.createElement('span');
+            // Explicitly set the style string to avoid jsdom auto-converting hex to rgb
+            const styleString = Object.keys(styles).map(k => `${k}: ${styles[k]}`).join('; ');
+            if (styleString) {
+                span.setAttribute('style', styleString);
             }
 
-            // Clean up empty style attribute and unwrap if empty
-            if (!span.getAttribute('style')) {
-                span.removeAttribute('style');
-            }
-            if (span.attributes.length === 0) {
-                while (span.firstChild) {
-                    span.parentNode.insertBefore(span.firstChild, span);
+        if (classes.size > 0) {
+            span.className = Array.from(classes).join(' ');
+        }
+        textNode.parentNode.insertBefore(span, textNode);
+        span.appendChild(textNode);
+    });
+
+    // Merge adjacent identical spans
+    let changed = true;
+    while(changed) {
+        changed = false;
+        const currentSpans = Array.from(root.querySelectorAll('span'));
+        for (let i = 0; i < currentSpans.length - 1; i++) {
+            const current = currentSpans[i];
+            const next = current.nextSibling;
+
+            if (next && next.nodeType === Node.ELEMENT_NODE && next.tagName.toLowerCase() === 'span') {
+                const currentStyles = current.getAttribute('style') || '';
+                const nextStyles = next.getAttribute('style') || '';
+                const currentClasses = current.getAttribute('class') || '';
+                const nextClasses = next.getAttribute('class') || '';
+
+                if (currentStyles === nextStyles && currentClasses === nextClasses) {
+                    while(next.firstChild) current.appendChild(next.firstChild);
+                    next.remove();
+                    changed = true;
+                    break;
                 }
-                span.parentNode.removeChild(span);
-                changed = true;
             }
         }
     }
