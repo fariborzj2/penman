@@ -146,6 +146,7 @@ export function setupDirectionPlugin(editor) {
    * Locked blocks are respected.
    */
   function processAllBlocks() {
+    if (!editor.editableArea) return;
     const walker = document.createTreeWalker(editor.editableArea, NodeFilter.SHOW_ELEMENT, {
       acceptNode(node) {
         if (isSupportedBlock(node)) return NodeFilter.FILTER_ACCEPT;
