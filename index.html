@@ -5,8 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Penman Editor Example</title>
   <style>
-    body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f5f5f5;}
-    .main { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f9f9f9; height: 100vh; 
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .main { max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; }
     /* All internal styles are now bundled in src/styles via index.js */
   </style>
 </head>
@@ -27,11 +32,11 @@
     // Initialize the editor
     penman.init({
       selector: '#myTextarea',
-      lang: 'fa',
+      lang: 'en',
       direction: 'rtl',
       height: 300,
       plugins: ['link', 'draft', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction'],
-      toolbar: 'undo redo | blocktype fontsize | bold italic underline strikethrough textcolor highlight | justifyleft justifycenter justifyright justifyfull direction | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
+      toolbar: 'undo redo | blocktype fontsize  dirrtl dirltr dirreset| bold italic underline strikethrough textcolor highlight | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
       blockTypes: [
         { name: 'Paragraph', cmd: 'p' },
         { name: 'Subheading', cmd: 'h3' },
