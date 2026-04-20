@@ -27,7 +27,9 @@ describe('BlockTypePlugin', () => {
     });
 
     // Replace execCommand to avoid actual browser document manipulation side-effects during some tests
-    document.execCommand = vi.fn();
+
+    // removed document.execCommand mock
+
   });
 
   afterEach(() => {
@@ -70,7 +72,16 @@ describe('BlockTypePlugin', () => {
 
   it('should execute SET_BLOCK_TYPE when an item is clicked', () => {
     // Spy on editor's execCommand
-    const execCommandSpy = vi.spyOn(editor, 'execCommand');
+
+    let executedCmd = null;
+    let executedVal = null;
+    const originalExec = editor.execCommand.bind(editor);
+    editor.execCommand = (cmd, val) => {
+       executedCmd = cmd;
+       executedVal = val;
+       return originalExec(cmd, val);
+    };
+
 
     const dropdownConfig = editor.ui.registry.dropdowns['blocktype'];
     const content = dropdownConfig.render();
@@ -81,6 +92,10 @@ describe('BlockTypePlugin', () => {
     const heading1Item = Array.from(items).find(i => i.textContent === 'Heading 1');
     heading1Item.dispatchEvent(new Event('click'));
 
-    expect(execCommandSpy).toHaveBeenCalledWith('SET_BLOCK_TYPE', expect.objectContaining({ cmd: 'h1', name: 'Heading 1' }));
+
+    expect(executedCmd).toBe('SET_BLOCK_TYPE');
+    expect(executedVal.cmd).toBe('h1');
+    expect(executedVal.name).toBe('Heading 1');
+
   });
 });

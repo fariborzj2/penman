@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { Dropdown } from './Dropdown.js';
 
 describe('Dropdown', () => {
@@ -12,8 +12,8 @@ describe('Dropdown', () => {
     dropdown = new Dropdown({
       title: 'Test Dropdown',
       content: '<div class="test-item">Item 1</div>',
-      onOpen: vi.fn(),
-      onClose: vi.fn()
+      onOpen: (d) => { dropdown._openCalledWith = d; dropdown._openCalled = (dropdown._openCalled || 0) + 1; },
+      onClose: (d) => { dropdown._closeCalledWith = d; dropdown._closeCalled = (dropdown._closeCalled || 0) + 1; }
     });
     document.body.appendChild(dropdown.element);
   });
@@ -35,14 +35,19 @@ describe('Dropdown', () => {
     expect(dropdown.isOpen).toBe(true);
     expect(dropdown.panelElement.style.display).toBe('block');
     expect(dropdown.buttonElement.classList.contains('penman-btn-active')).toBe(true);
-    expect(dropdown.options.onOpen).toHaveBeenCalledWith(dropdown);
+
+    expect(dropdown._openCalledWith).toBe(dropdown);
+    expect(dropdown._openCalled).toBe(1);
+
 
     dropdown.toggle();
 
     expect(dropdown.isOpen).toBe(false);
     expect(dropdown.panelElement.style.display).toBe('none');
     expect(dropdown.buttonElement.classList.contains('penman-btn-active')).toBe(false);
-    expect(dropdown.options.onClose).toHaveBeenCalledWith(dropdown);
+
+    expect(dropdown._closeCalledWith).toBe(dropdown);
+
   });
 
   it('should close when clicking outside', async () => {
@@ -57,7 +62,9 @@ describe('Dropdown', () => {
     document.body.click();
 
     expect(dropdown.isOpen).toBe(false);
-    expect(dropdown.options.onClose).toHaveBeenCalledWith(dropdown);
+
+    expect(dropdown._closeCalledWith).toBe(dropdown);
+
   });
 
   it('should NOT close when clicking inside the dropdown', async () => {

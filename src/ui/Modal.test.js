@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 
-import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { Modal } from './Modal.js';
 
 describe('Modal Component', () => {
@@ -40,7 +40,10 @@ describe('Modal Component', () => {
   });
 
   it('should collect input data and trigger onSubmit', () => {
-    const onSubmitSpy = vi.fn();
+
+    let submittedData = null;
+    const onSubmitSpy = (data) => { submittedData = data; };
+
     const modal = new Modal({
       title: 'Form Modal',
       body: '<input type="text" name="username" value="testuser">',
@@ -51,7 +54,9 @@ describe('Modal Component', () => {
     const submitBtn = document.querySelector('.penman-modal-btn-submit');
     submitBtn.click();
 
-    expect(onSubmitSpy).toHaveBeenCalledWith({ username: 'testuser' });
+
+    expect(submittedData).toEqual({ username: 'testuser' });
+
     // Should close after submit
     expect(document.querySelector('.penman-modal-overlay')).toBeNull();
   });

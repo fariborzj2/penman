@@ -47,7 +47,7 @@
 - [x] پیاده‌سازی پلاگین انتخاب نوع بلوک (Block Type Selector) با custom class و optionStyle.
 - [x] بهبود استایل‌های عمومی ادیتور (TinyMCE-like design).
 
-## مایلستون 7: تست و مستندسازی - [وضعیت: نیمه‌کاره → در حال تکمیل]
+## مایلستون 7: تست و مستندسازی - [وضعیت: کامل]
 - [x] نوشتن تست‌های Unit برای تمام ماژول‌های اصلی.
 - [x] زیرساخت E2E با Playwright (verify_ui.py + test-e2e.mjs).
 - [x] پوشش E2E برای: Format, List, Link, Table, Image (URL), Find&Replace.
@@ -56,8 +56,8 @@
 - [x] تست E2E برای ColorPicker در Table.
 - [x] تست E2E برای Image Upload با سرور واقعی (graceful skip اگر سرور غیرفعال).
 - [x] تست E2E برای Image Gallery load.
-- [ ] مستندات کامل API برای توسعه‌دهندگان خارجی (برای نسخه 1.0).
-- [ ] انتشار نسخه 1.0 (تثبیت API Public).
+- [x] مستندات کامل API برای توسعه‌دهندگان خارجی (برای نسخه 1.0).
+- [x] انتشار نسخه 1.0 (تثبیت API Public).
 
 ## وضعیت بدهی‌های فنی ثبت‌شده
 

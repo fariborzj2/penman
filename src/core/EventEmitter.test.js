@@ -1,26 +1,46 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect } from 'vitest';
 import { EventEmitter } from './EventEmitter.js';
 
 describe('EventEmitter', () => {
   it('should register and emit events', () => {
     const emitter = new EventEmitter();
-    const callback = vi.fn();
+
+    let calledArgs = null;
+    let callCount = 0;
+    const callback = (...args) => {
+        calledArgs = args;
+        callCount++;
+    };
+
 
     emitter.on('testEvent', callback);
     emitter.emit('testEvent', 'arg1', 'arg2');
 
-    expect(callback).toHaveBeenCalledWith('arg1', 'arg2');
-    expect(callback).toHaveBeenCalledTimes(1);
+
+    expect(calledArgs).toEqual(['arg1', 'arg2']);
+
+
+    expect(callCount).toBe(1);
+
   });
 
   it('should unsubscribe from events correctly', () => {
     const emitter = new EventEmitter();
-    const callback = vi.fn();
+
+    let calledArgs = null;
+    let callCount = 0;
+    const callback = (...args) => {
+        calledArgs = args;
+        callCount++;
+    };
+
 
     emitter.on('testEvent', callback);
     emitter.off('testEvent', callback);
     emitter.emit('testEvent');
 
-    expect(callback).not.toHaveBeenCalled();
+
+    expect(callCount).toBe(0);
+
   });
 });
