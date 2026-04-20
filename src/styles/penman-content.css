@@ -125,7 +125,7 @@ figcaption.penman-image-caption:empty::before {
 .penman-image {
   margin: 15px auto;
   width: fit-content;
-  border: 1px solid #eee
+  border: 1px solid #E2E8F0
 }
 .penman-image.penman-align-center {
   text-align: center;

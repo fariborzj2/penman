@@ -22,7 +22,7 @@ export class TableMenu {
         <div class="penman-table-insert-mode">
           ${gridHTML}
         </div>
-        <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
+        <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 5px 0;">
         <div class="penman-table-menu-list" style="color: #333;">
 
           <!-- CELL -->
@@ -54,7 +54,7 @@ export class TableMenu {
             </div>
           </details>
 
-          <hr style="border: none; border-top: 1px solid #eee; margin: 5px 0;">
+          <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 5px 0;">
           <div class="penman-menu-item penman-menu-item-props" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #777;">
             Table properties
           </div>

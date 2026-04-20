@@ -181,7 +181,7 @@ export class Modal {
       }
       .penman-modal-header {
         padding: 10px 15px;
-        border-bottom: 1px solid #eee;
+        border-bottom: 1px solid #E2E8F0;
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -207,7 +207,7 @@ export class Modal {
       }
       .penman-modal-footer {
         padding: 10px 15px;
-        border-top: 1px solid #eee;
+        border-top: 1px solid #E2E8F0;
         display: flex;
         flex-wrap: wrap;
         justify-content: flex-end;
