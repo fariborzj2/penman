@@ -2,6 +2,11 @@
  * Penman Editor UI CSS
  * Contains styles for the editor container, toolbar, buttons, and dropdowns.
  */
+ :root {
+  --color-background-info: rgba(79, 70, 229, .1);
+--color-border-info: rgba(79, 70, 229, .3);
+--color-text-info: rgba(55, 48, 163, 1);
+ }
 
 .penman-wrapper {
   border: 1px solid #e1e2e4;
@@ -21,12 +26,14 @@
 
 .penman-toolbar {
   padding: 8px 12px;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
   border-bottom: 1px solid #e1e2e4;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  background: #fafafa;
+  background: linear-gradient(0deg , #fff, #fff8f0);
 }
 
 .penman-btn {
@@ -53,10 +60,13 @@
 }
 
 .penman-btn-active {
-  background: #e3effd;
-  color: #0052cc;
+  background-color: rgb(255, 186, 107 , 0.3);
+  color: fill: rgb(240, 145, 37);
+  
 }
-
+.penman-btn-active svg {
+  fill: rgb(240, 145, 37);
+}
 /* Floating UI Flipped State (arrow tail logic) */
 .penman-floating-flipped .penman-floating-tail-inner {
   bottom: auto !important;

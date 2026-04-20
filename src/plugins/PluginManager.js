@@ -11,6 +11,7 @@ import { setupTablePlugin } from './TablePlugin.js';
 import { setupImagePlugin } from './ImagePlugin/index.js';
 import { setupColorPlugin } from './ColorPlugin/index.js';
 import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
+import { setupDraftPlugin } from './DraftPlugin/index.js';
 
 export const PluginManager = {
   plugins: {
@@ -26,7 +27,8 @@ export const PluginManager = {
     table: setupTablePlugin,
     image: setupImagePlugin,
     color: setupColorPlugin,
-    sourcecode: setupSourceCodePlugin
+    sourcecode: setupSourceCodePlugin,
+    draft: setupDraftPlugin
   },
 
   add(name, setup) {

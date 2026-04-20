@@ -13,9 +13,7 @@
 <body>
   <div class="main">
     <h1>Penman Editor Example</h1>
-    <form id="myForm">
-      <textarea name="fullstory" id="myTextarea"><p>متن مقاله را اینجا وارد کنید</p></textarea>
-    </form>
+    <textarea name="fullstory" id="myTextarea"><p>متن مقاله را اینجا وارد کنید</p></textarea>
   </div>
   
 
@@ -32,7 +30,7 @@
       lang: 'fa',
       direction: 'rtl',
       height: 300,
-      plugins: ['link', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode'],
+      plugins: ['link', 'draft', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode'],
       toolbar: 'undo redo | blocktype fontsize | bold italic underline strikethrough textcolor highlight | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
       blockTypes: [
         { name: 'Paragraph', cmd: 'p' },
