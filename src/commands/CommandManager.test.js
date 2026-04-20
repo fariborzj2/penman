@@ -74,14 +74,23 @@ describe('CommandManager', () => {
   it('should block non-whitelisted and non-registered commands', () => {
     let lastCmd = null;
     document.execCommand = (cmd) => { lastCmd = cmd; };
-    const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    let warnMsg = null;
+    const oldWarn = console.warn;
+    console.warn = (msg) => { warnMsg = msg; };
+
 
     commandManager.execute('insertImage', 'http://example.com');
 
     expect(lastCmd).toBeNull();
-    expect(consoleWarnSpy).toHaveBeenCalled();
 
-    consoleWarnSpy.mockRestore();
+    expect(warnMsg).toBeDefined();
+    expect(warnMsg).not.toBeNull();
+
+
+
+    console.warn = oldWarn;
+
   });
 
   it('should normalize DOM elements (e.g., b to strong)', () => {
