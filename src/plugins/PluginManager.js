@@ -12,6 +12,7 @@ import { setupImagePlugin } from './ImagePlugin/index.js';
 import { setupColorPlugin } from './ColorPlugin/index.js';
 import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 import { setupDraftPlugin } from './DraftPlugin/index.js';
+import { setupDirectionPlugin } from './DirectionPlugin/index.js';
 
 export const PluginManager = {
   plugins: {
@@ -28,7 +29,8 @@ export const PluginManager = {
     image: setupImagePlugin,
     color: setupColorPlugin,
     sourcecode: setupSourceCodePlugin,
-    draft: setupDraftPlugin
+    draft: setupDraftPlugin,
+    direction: setupDirectionPlugin,
   },
 
   add(name, setup) {
