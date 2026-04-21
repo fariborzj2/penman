@@ -21,7 +21,12 @@
 <body>
   <div class="main">
     <h1>Penman Editor Example</h1>
-    <textarea name="fullstory" id="myTextarea"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+    <textarea class="mytextarea" name="shortstory"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+  </div>
+
+  <div class="main">
+    <h1>Penman Editor Example</h1>
+    <textarea class="mytextarea" name="fullstory"><p>متن مقاله را اینجا وارد کنید</p></textarea>
   </div>
 
   <!-- Load the built script -->
@@ -33,7 +38,7 @@
 
     // Initialize the editor
     penman.init({
-      selector: '#myTextarea',
+      selector: '.mytextarea',
       lang: 'en',
       direction: 'rtl',
       height: 300,
@@ -96,7 +101,7 @@
       }
     });
 
-    const instance = penman.get('#myTextarea');
+    const instance = penman.get('.myTextarea');
 
     // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
     if (instance.image && instance.image.gallery) {
