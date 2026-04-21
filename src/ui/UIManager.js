@@ -1,11 +1,13 @@
 import { IconProvider } from './IconProvider.js';
 import { Modal } from './Modal.js';
 import { Dropdown } from './Dropdown.js';
+import { ToolbarRenderer } from './toolbar/ToolbarRenderer.js';
 
 export class UIManager {
   constructor(editor) {
     this.editor = editor;
     this.toolbarElement = null;
+    this.toolbarRenderer = null;
     this.buttons = [];
     this.iconProvider = new IconProvider();
 
@@ -49,26 +51,8 @@ export class UIManager {
     const config = this.editor.options.toolbar || '';
     if (!config) return;
 
-    this.toolbarElement = document.createElement('div');
-    this.toolbarElement.className = 'penman-toolbar';
-
-    const groups = config.split('|');
-    groups.forEach((group, index) => {
-      const commands = group.trim().split(/\s+/);
-      commands.forEach(cmd => {
-        if (cmd) {
-          const btn = this._createButton(cmd);
-          this.toolbarElement.appendChild(btn);
-        }
-      });
-
-      // Add separator if not the last group
-      if (index < groups.length - 1) {
-        const separator = document.createElement('span');
-        separator.className = 'penman-separator';
-        this.toolbarElement.appendChild(separator);
-      }
-    });
+    this.toolbarRenderer = new ToolbarRenderer(this.editor, this);
+    this.toolbarElement = this.toolbarRenderer.render(config);
 
     // Inject toolbar above main container
     this.editor.container.insertBefore(this.toolbarElement, this.editor.mainContainer);
@@ -167,6 +151,10 @@ export class UIManager {
   }
 
   destroy() {
+    if (this.toolbarRenderer) {
+      this.toolbarRenderer.destroy();
+      this.toolbarRenderer = null;
+    }
     if (this.toolbarElement && this.toolbarElement.parentNode) {
       this.toolbarElement.parentNode.removeChild(this.toolbarElement);
     }

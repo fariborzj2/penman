@@ -24,16 +24,39 @@
   overflow: hidden;
 }
 
-.penman-toolbar {
-  padding: 8px 12px;
+.penman-toolbar-wrapper {
   border-top-left-radius: 5px;
   border-top-right-radius: 5px;
   border-bottom: 1px solid #E2E8F0;
+  background: #F8FAFC;
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
+}
+
+.penman-toolbar-row {
+  padding: 6px 12px;
+  display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px;
-  background: #F8FAFC;
+  overflow: hidden; /* Ensure items don't leak out */
+  position: relative;
+  min-height: 44px; /* Ensure mobile friendly hit targets */
+}
+
+/* Optional separation if two rows exist */
+.penman-toolbar-wrapper .penman-toolbar-row + .penman-toolbar-row {
+  border-top: 1px dashed #E2E8F0;
+  padding-top: 4px;
+  padding-bottom: 6px;
+}
+
+/* Legacy style mapping */
+.penman-toolbar {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  padding: 0;
 }
 
 .penman-btn {
@@ -123,6 +146,11 @@
   opacity: 0.6;
 }
 
+/* Hide chevron for the overflow button */
+.penman-overflow-btn::after {
+  display: none;
+}
+
 .penman-dropdown-panel {
   position: absolute;
   top: 100%;
@@ -135,6 +163,15 @@
   z-index: 1000;
   padding: 8px 0;
   margin-top: 4px;
+}
+
+/* Specific styling for the overflow panel */
+.penman-overflow-panel {
+  min-width: 150px;
+  padding: 6px;
+  gap: 4px;
+  right: 0;
+  left: auto;
 }
 .penman-dropdown-panel .penman-color-picker-container {
   padding: 0 8px;
@@ -159,6 +196,11 @@
 [dir="rtl"] .penman-dropdown-panel {
   left: auto;
   right: 0;
+}
+
+[dir="rtl"] .penman-overflow-panel {
+  right: auto;
+  left: 0;
 }
 
 [dir="rtl"] .penman-dropdown-trigger::after {

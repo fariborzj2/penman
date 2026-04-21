@@ -68,8 +68,8 @@ describe('Editor Core', () => {
     const toolbar = editor.container.querySelector('div');
     expect(toolbar).not.toBeNull();
 
-    // Check if buttons were created
-    const buttons = toolbar.querySelectorAll('button');
+    // Check if buttons were created (ignoring the dropdown button)
+    const buttons = Array.from(toolbar.querySelectorAll('button')).filter(b => !b.classList.contains('penman-dropdown-trigger'));
     expect(buttons.length).toBe(2);
     expect(buttons[0].title).toBe('bold');
     expect(buttons[1].title).toBe('italic');

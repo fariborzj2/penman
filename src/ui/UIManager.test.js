@@ -25,10 +25,10 @@ describe('UIManager', () => {
       toolbar: 'bold italic | underline'
     });
 
-    const toolbar = document.querySelector('.penman-toolbar');
+    const toolbar = document.querySelector('.penman-toolbar-wrapper');
     expect(toolbar).not.toBeNull();
 
-    const buttons = toolbar.querySelectorAll('button');
+    const buttons = Array.from(toolbar.querySelectorAll('button')).filter(b => !b.classList.contains('penman-dropdown-trigger'));
     expect(buttons.length).toBe(3);
     expect(buttons[0].className).toContain('penman-btn-bold');
     expect(buttons[1].className).toContain('penman-btn-italic');
