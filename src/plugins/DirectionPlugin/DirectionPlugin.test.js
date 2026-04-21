@@ -406,6 +406,28 @@ describe('DirectionPlugin integration', () => {
     expect(editor.direction.detect('Hello')).toBe('ltr');
   });
 
+  it('applies direction to all selected blocks', async () => {
+    editor.setContent('<p>one</p><p>two</p>');
+    await sleep(50);
+
+    const paragraphs = editor.editableArea.querySelectorAll('p');
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    const range = document.createRange();
+    // Select from inside first paragraph to inside second paragraph
+    range.setStart(paragraphs[0], 0);
+    range.setEnd(paragraphs[1], 1);
+    sel.addRange(range);
+
+    editor.direction.set('rtl');
+
+    expect(paragraphs[0].getAttribute('dir')).toBe('rtl');
+    expect(paragraphs[0].getAttribute('data-dir-lock')).toBe('true');
+    expect(paragraphs[1].getAttribute('dir')).toBe('rtl');
+    expect(paragraphs[1].getAttribute('data-dir-lock')).toBe('true');
+  });
+
   it('multiple paragraphs are detected independently', async () => {
     editor.setContent('<p>Hello</p><p>سلام</p>');
     await sleep(50);
