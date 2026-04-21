@@ -111,6 +111,44 @@ export function setupDirectionPlugin(editor) {
   }
 
   /**
+   * Returns all block-level elements fully or partially within the current selection.
+   * @returns {Element[]}
+   */
+  function getSelectedBlocks() {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return [];
+
+    const range = sel.getRangeAt(0);
+    if (range.collapsed) {
+      const b = getBlockAtCursor();
+      return b ? [b] : [];
+    }
+
+    const blocks = [];
+    const walker = document.createTreeWalker(editor.editableArea, NodeFilter.SHOW_ELEMENT, {
+      acceptNode(node) {
+        if (isSupportedBlock(node)) return NodeFilter.FILTER_ACCEPT;
+        return NodeFilter.FILTER_SKIP;
+      }
+    });
+
+    let n = walker.nextNode();
+    while (n) {
+      if (sel.containsNode(n, true)) {
+        blocks.push(n);
+      }
+      n = walker.nextNode();
+    }
+
+    if (blocks.length === 0) {
+      const b = getBlockAtCursor();
+      if (b) blocks.push(b);
+    }
+
+    return blocks;
+  }
+
+  /**
    * Run auto-detection on a single block and apply the result.
    * No-ops if the block is locked, ignored, or forced LTR.
    * @param {Element} block
@@ -165,27 +203,39 @@ export function setupDirectionPlugin(editor) {
 
   /**
    * Called when the user explicitly sets a direction via the toolbar.
-   * Locks the block to prevent auto-override.
-   * @param {Element} block
+   * Locks the blocks to prevent auto-override.
+   * @param {Element[]} blocks
    * @param {'ltr'|'rtl'} dir
    */
-  function onApplyManual(block, dir) {
-    applyDirection(block, dir);
-    lockManager.lock(block);
+  function onApplyManualToBlocks(blocks, dir) {
+    if (!blocks || blocks.length === 0) return;
 
-    if (editor.history) editor.history.pushImmediate();
-    editor.emit('change', editor.getContent());
-    editor._syncToTextarea();
+    let changed = false;
+    blocks.forEach(block => {
+      const changedDir = applyDirection(block, dir);
+      lockManager.lock(block);
+      if (changedDir || lockManager.isLocked(block)) changed = true;
+    });
+
+    if (changed) {
+      if (editor.history) editor.history.pushImmediate();
+      editor.emit('change', editor.getContent());
+      editor._syncToTextarea();
+    }
   }
 
   /**
    * Called when the user clicks the Reset button.
-   * Unlocks the block and immediately re-runs detection.
-   * @param {Element} block
+   * Unlocks the blocks and immediately re-runs detection.
+   * @param {Element[]} blocks
    */
-  function onReset(block) {
-    lockManager.unlock(block);
-    processBlock(block);
+  function onResetBlocks(blocks) {
+    if (!blocks || blocks.length === 0) return;
+
+    blocks.forEach(block => {
+      lockManager.unlock(block);
+      processBlock(block);
+    });
 
     if (editor.history) editor.history.pushImmediate();
     editor.emit('change', editor.getContent());
@@ -196,31 +246,31 @@ export function setupDirectionPlugin(editor) {
 
   editor.commands.register('SET_DIR_RTL', {
     queryState: () => {
-      const block = getBlockAtCursor();
-      return block ? block.getAttribute('dir') === 'rtl' : false;
+      const blocks = getSelectedBlocks();
+      return blocks.length > 0 ? blocks[0].getAttribute('dir') === 'rtl' : false;
     },
     execute: (ed) => {
-      const block = getBlockAtCursor();
-      if (block) onApplyManual(block, 'rtl');
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onApplyManualToBlocks(blocks, 'rtl');
     },
   });
 
   editor.commands.register('SET_DIR_LTR', {
     queryState: () => {
-      const block = getBlockAtCursor();
-      return block ? block.getAttribute('dir') === 'ltr' : false;
+      const blocks = getSelectedBlocks();
+      return blocks.length > 0 ? blocks[0].getAttribute('dir') === 'ltr' : false;
     },
     execute: (ed) => {
-      const block = getBlockAtCursor();
-      if (block) onApplyManual(block, 'ltr');
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onApplyManualToBlocks(blocks, 'ltr');
     },
   });
 
   editor.commands.register('RESET_DIR', {
     queryState: () => false,
     execute: (ed) => {
-      const block = getBlockAtCursor();
-      if (block) onReset(block);
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onResetBlocks(blocks);
     },
   });
 
@@ -228,9 +278,9 @@ export function setupDirectionPlugin(editor) {
 
   registerToolbarButtons(editor, {
     toolbar: cfg.toolbar,
-    onApplyManual,
-    onReset,
-    getBlockAtCursor,
+    onApplyManualToBlocks,
+    onResetBlocks,
+    getSelectedBlocks,
   });
 
   // ── Event bindings ────────────────────────────────────────────────────────
@@ -255,16 +305,16 @@ export function setupDirectionPlugin(editor) {
      * @param {'ltr'|'rtl'} dir
      */
     set: (dir) => {
-      const block = getBlockAtCursor();
-      if (block) onApplyManual(block, dir);
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onApplyManualToBlocks(blocks, dir);
     },
 
     /**
      * Reset the direction of the block containing the cursor (remove lock).
      */
     reset: () => {
-      const block = getBlockAtCursor();
-      if (block) onReset(block);
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onResetBlocks(blocks);
     },
 
     /**

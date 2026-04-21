@@ -12,21 +12,21 @@
  * @param {import('../../core/Editor').Editor} editor
  * @param {Object} config
  * @param {boolean} config.toolbar   Whether to register toolbar buttons
- * @param {Function} config.onApplyManual  Called with (block, dir) when user manually sets
- * @param {Function} config.onReset        Called with (block) when user resets
- * @param {Function} config.getBlockAtCursor  Returns the current block element or null
+ * @param {Function} config.onApplyManualToBlocks  Called with (blocks, dir) when user manually sets
+ * @param {Function} config.onResetBlocks        Called with (blocks) when user resets
+ * @param {Function} config.getSelectedBlocks  Returns the currently selected block elements
  */
 export function registerToolbarButtons(editor, config) {
   if (!config.toolbar) return;
 
-  const { onApplyManual, onReset, getBlockAtCursor } = config;
+  const { onApplyManualToBlocks, onResetBlocks, getSelectedBlocks } = config;
 
   // ── RTL button ──────────────────────────────────────────────────────────
   editor.ui.registry.addButton('dirrtl', {
     text: 'RTL',
     onAction: () => {
-      const block = getBlockAtCursor();
-      if (block) onApplyManual(block, 'rtl');
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onApplyManualToBlocks(blocks, 'rtl');
     },
   });
 
@@ -34,8 +34,8 @@ export function registerToolbarButtons(editor, config) {
   editor.ui.registry.addButton('dirltr', {
     text: 'LTR',
     onAction: () => {
-      const block = getBlockAtCursor();
-      if (block) onApplyManual(block, 'ltr');
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onApplyManualToBlocks(blocks, 'ltr');
     },
   });
 
@@ -43,14 +43,15 @@ export function registerToolbarButtons(editor, config) {
   editor.ui.registry.addButton('dirreset', {
     text: 'Dir Auto',
     onAction: () => {
-      const block = getBlockAtCursor();
-      if (block) onReset(block);
+      const blocks = getSelectedBlocks();
+      if (blocks.length > 0) onResetBlocks(blocks);
     },
   });
 
   // ── Keep button active states in sync with cursor position ─────────────
   editor.on('selectionChange', () => {
-    const block = getBlockAtCursor();
+    const blocks = getSelectedBlocks();
+    const block = blocks.length > 0 ? blocks[0] : null;
     const currentDir = block ? (block.getAttribute('dir') || 'ltr') : 'ltr';
 
     _setActive(editor, 'dirrtl', currentDir === 'rtl');
