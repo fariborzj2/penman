@@ -8,25 +8,26 @@
     * {
       box-sizing: border-box;
     }
-    body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f9f9f9; height: 100vh; 
+    body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f9f9f9; min-height: 100vh; 
       display: flex;
       flex-direction: column;
+      gap: 20px;
       justify-content: center;
       align-items: center;
     }
-    .main { width: 100%; max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgb(64, 113, 162,0.06) }
+    .main { width: 100%; max-width: 800px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgb(64, 113, 162,0.06) }
     /* All internal styles are now bundled in src/styles via index.js */
   </style>
 </head>
 <body>
   <div class="main">
-    <h1>Penman Editor Example</h1>
-    <textarea class="mytextarea" name="shortstory"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+    <h1>Short Story Editor (RTL)</h1>
+    <textarea class="mytextarea" name="shortstory" data-height="250" data-direction="rtl"><p>متن مقاله را اینجا وارد کنید</p></textarea>
   </div>
 
   <div class="main">
-    <h1>Penman Editor Example</h1>
-    <textarea class="mytextarea" name="fullstory"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+    <h1>Full Story Editor (LTR)</h1>
+    <textarea class="mytextarea" name="fullstory" data-height="400" data-direction="ltr"><p>Enter your full story here</p></textarea>
   </div>
 
   <!-- Load the built script -->
@@ -36,14 +37,10 @@
     // Assign to window for console access if needed, simulating real usage
     // window.penman = penman;
 
-    // Initialize the editor
-    penman.init({
-      selector: '.mytextarea',
+    // Define the global default configurations
+    const penmanDefaults = {
       lang: 'en',
-      direction: 'rtl',
-      height: 300,
       plugins: ['link', 'draft', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction'],
-      // toolbar: 'undo redo | blocktype fontsize  dirrtl dirltr | bold italic underline strikethrough  | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
       toolbar: {
         rows: [
           ['undo', 'redo', 'blocktype', 'fontsize', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr'], 
@@ -99,28 +96,44 @@
           xhr.send(formData);
         });
       }
+    };
+
+    // Initialize all matching editors dynamically, using data attributes to customize behavior per-editor
+    penman.init({
+      selector: '.mytextarea',
+      config: penmanDefaults,
+      resolveConfig: (el, defaultConfig) => {
+        return {
+          ...defaultConfig,
+          height: parseInt(el.dataset.height, 10) || 300,
+          direction: el.dataset.direction || 'auto'
+        };
+      }
     });
 
-    const instance = penman.get('.myTextarea');
+    const allInstances = penman.getAll();
 
-    // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
-    if (instance.image && instance.image.gallery) {
-      instance.image.gallery.registerSource({
-        id: 'local-uploads',
-        name: 'Local Uploads',
-        trustLevel: 'TRUSTED', // Since it comes from our own server
-        list: async (cursor = null, limit = 20) => {
-          // در سرور local که راه‌اندازی کردیم، endpoint به نام /gallery ایجاد کردیم
-          const response = await fetch('http://localhost:3000/gallery');
-          const data = await response.json();
-          return data; // { items: [...], nextCursor: null }
-        },
-        get: async (id) => {
-          // در این مثال ساده get به صورت dummy کار می‌کند چون لیست همه فیلدها را دارد
-          return { id, url: `http://localhost:3000/uploads/${id}` };
-        }
-      });
-    }
+    allInstances.forEach(instance => {
+      // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
+      if (instance.image && instance.image.gallery) {
+        instance.image.gallery.registerSource({
+          id: 'local-uploads',
+          name: 'Local Uploads',
+          trustLevel: 'TRUSTED', // Since it comes from our own server
+          list: async (cursor = null, limit = 20) => {
+            // در سرور local که راه‌اندازی کردیم، endpoint به نام /gallery ایجاد کردیم
+            const response = await fetch('http://localhost:3000/gallery');
+            const data = await response.json();
+            return data; // { items: [...], nextCursor: null }
+          },
+          get: async (id) => {
+            // در این مثال ساده get به صورت dummy کار می‌کند چون لیست همه فیلدها را دارد
+            return { id, url: `http://localhost:3000/uploads/${id}` };
+          }
+        });
+      }
+    });
+
   </script>
 </body>
 </html>

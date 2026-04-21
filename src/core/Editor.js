@@ -16,7 +16,12 @@ export class Editor extends EventEmitter {
       ...options
     };
 
-    this.textarea = document.querySelector(this.options.selector);
+    if (this.options.element) {
+      this.textarea = this.options.element;
+    } else {
+      this.textarea = document.querySelector(this.options.selector);
+    }
+    
     if (!this.textarea) {
       throw new Error(`Penman Editor: Could not find element with selector "${this.options.selector}"`);
     }

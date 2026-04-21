@@ -14,7 +14,7 @@
 
 const STORAGE_KEY_PREFIX = 'penman:draft:';
 const DEFAULT_TTL_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
-const DEFAULT_DEBOUNCE_DELAY_MS = 750;
+const DEFAULT_DEBOUNCE_DELAY_MS = 1000;
 const MIN_SAVE_LENGTH = 10; // characters stripped of HTML tags
 
 export class DraftManager {

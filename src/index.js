@@ -5,28 +5,58 @@ import './styles/penman-ui.css';
 import './styles/penman-content.css';
 
 // Registry for instance management
-const instances = {};
+const instances = new Map();
+
+// Global defaults for configuration
+export const penmanDefaults = {
+  plugins: [],
+  toolbar: '',
+  blockTypes: []
+};
 
 const penman = {
   init: (options) => {
-    const editor = new Editor(options);
+    const selector = options.selector;
+    const isSingleConfig = !options.resolveConfig;
+    const elements = document.querySelectorAll(selector);
 
-    // Store in registry by textarea id if available
-    const id = editor.textarea.id;
-    if (id) {
-      instances[id] = editor;
+    if (elements.length === 0) {
+      throw new Error(`Penman Editor: Could not find any element with selector "${selector}"`);
     }
 
-    // Keep a reference to the selector for getting
-    if (options.selector) {
-      instances[options.selector] = editor;
-    }
+    const createdEditors = [];
 
-    editor.on('destroy', (instance) => {
+    elements.forEach(el => {
+      let instanceConfig = { ...penmanDefaults, ...options };
+      if (options.config) {
+        instanceConfig = { ...instanceConfig, ...options.config };
+      }
+
+      if (options.resolveConfig) {
+        instanceConfig = options.resolveConfig(el, instanceConfig);
+      }
+
+      // Explicitly pass the element to avoid double querySelectors inside Editor
+      instanceConfig.element = el;
+      // Provide backwards compatibility for existing plugins using `options.selector`
+      instanceConfig.selector = selector;
+
+      const editor = new Editor(instanceConfig);
+
+      instances.set(el, editor);
+      createdEditors.push(editor);
+
+      editor.on('destroy', (instance) => {
         penman.remove(instance);
+      });
     });
 
-    return editor;
+    // Backwards compatibility: return single instance if only one is requested/matched without resolveConfig
+    if (createdEditors.length === 1 && !options.resolveConfig) {
+      return createdEditors[0];
+    }
+
+    return createdEditors;
   },
 
   /**
@@ -35,46 +65,68 @@ const penman = {
    * @returns {Editor|null} The editor instance or null if not found
    */
   get: (selector) => {
-    // If passed without '#', try with '#'
-    if (instances[selector]) {
-      return instances[selector];
+    let target = document.querySelector(selector);
+    if (!target) {
+        target = document.getElementById(selector.replace(/^#/, ''));
     }
-    if (instances['#' + selector]) {
-      return instances['#' + selector];
+    
+    if (target && instances.has(target)) {
+      return instances.get(target);
     }
-
-    // Fallback: search by actual textarea element matches
-    for (const key in instances) {
-      const editor = instances[key];
-      if (editor.textarea.matches(selector)) {
-        return editor;
-      }
-    }
+    
     return null;
+  },
+  
+  /**
+   * Get all initialized editor instances
+   * @returns {Editor[]} Array of all editor instances
+   */
+  getAll: () => {
+    return Array.from(instances.values());
+  },
+  
+  /**
+   * Get an editor instance by its DOM element
+   * @param {HTMLElement} el - The textarea element
+   * @returns {Editor|null} The editor instance or null if not found
+   */
+  getByElement: (el) => {
+    return instances.get(el) || null;
+  },
+
+  /**
+   * Get an editor instance by the name attribute of its textarea
+   * @param {string} name - The name attribute of the textarea
+   * @returns {Editor|null} The editor instance or null if not found
+   */
+  getByName: (name) => {
+    const el = document.querySelector(`textarea[name="${name}"]`);
+    return el ? instances.get(el) || null : null;
   },
 
   /**
    * Remove an instance from the registry
-   * @param {string|Editor} identifier - The selector, id or editor instance
+   * @param {string|HTMLElement|Editor} identifier - The selector, id, element, or editor instance
    */
   remove: (identifier) => {
     if (identifier instanceof Editor) {
-      for (const key in instances) {
-        if (instances[key] === identifier) {
-          delete instances[key];
-        }
-      }
-    } else {
-      if (instances[identifier]) {
-        delete instances[identifier];
-      }
-      if (instances['#' + identifier]) {
-        delete instances['#' + identifier];
-      }
+      instances.delete(identifier.textarea);
+      return;
+    }
+    
+    if (identifier instanceof HTMLElement) {
+      instances.delete(identifier);
+      return;
+    }
+    
+    const target = document.querySelector(identifier) || document.getElementById(identifier.replace(/^#/, ''));
+    if (target) {
+      instances.delete(target);
     }
   },
 
-  PluginManager: PluginManager
+  PluginManager: PluginManager,
+  defaults: penmanDefaults
 };
 
 export default penman;
