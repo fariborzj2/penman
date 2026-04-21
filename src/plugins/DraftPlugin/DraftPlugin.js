@@ -31,7 +31,6 @@
 import { DraftStorage } from './DraftStorage.js';
 import { DraftManager } from './DraftManager.js';
 
-const BANNER_ID = 'penman-draft-recovery-banner';
 const STYLE_ID = 'penman-draft-styles';
 
 // ─── Style injection (idempotent) ─────────────────────────────────────────────
@@ -70,11 +69,6 @@ function formatDateTime(ts) {
   }
 }
 
-function removeBanner() {
-  const el = document.getElementById(BANNER_ID);
-  if (el && el.parentNode) el.parentNode.removeChild(el);
-}
-
 // ─── Plugin setup ─────────────────────────────────────────────────────────────
 
 export function setupDraftPlugin(editor) {
@@ -93,7 +87,8 @@ export function setupDraftPlugin(editor) {
   const documentId =
     editor.options.draftDocumentId ||
     editor.options.documentId ||
-    (editor.textarea && editor.textarea.id ? editor.textarea.id : null);
+    (editor.textarea && editor.textarea.id ? editor.textarea.id : null) ||
+    (editor.textarea && editor.textarea.name ? editor.textarea.name : null);
 
   if (!documentId) {
     console.warn(
@@ -154,15 +149,24 @@ export function setupDraftPlugin(editor) {
 
   // ── Recovery banner ───────────────────────────────────────────────────────
 
+  let bannerEl = null;
+
+  function removeBanner() {
+    if (bannerEl && bannerEl.parentNode) {
+      bannerEl.parentNode.removeChild(bannerEl);
+    }
+    bannerEl = null;
+  }
+
   function showRecoveryBanner(draft) {
     if (!editor.container || !editor.container.parentNode) return;
     removeBanner();
 
-    const banner = document.createElement('div');
-    banner.id = BANNER_ID;
-    banner.className = 'penman-draft-banner';
-    banner.setAttribute('role', 'alert');
-    banner.setAttribute('aria-live', 'polite');
+    bannerEl = document.createElement('div');
+    bannerEl.id = `penman-draft-recovery-banner-${documentId}`;
+    bannerEl.className = 'penman-draft-banner';
+    bannerEl.setAttribute('role', 'alert');
+    bannerEl.setAttribute('aria-live', 'polite');
 
     const msg = document.createElement('div');
     msg.className = 'penman-draft-banner-msg';
@@ -188,11 +192,11 @@ export function setupDraftPlugin(editor) {
 
     actions.appendChild(restoreBtn);
     actions.appendChild(discardBtn);
-    banner.appendChild(msg);
-    banner.appendChild(actions);
+    bannerEl.appendChild(msg);
+    bannerEl.appendChild(actions);
 
     // Insert the banner immediately above the editor wrapper
-    editor.container.parentNode.insertBefore(banner, editor.container);
+    editor.container.parentNode.insertBefore(bannerEl, editor.container);
 
     restoreBtn.addEventListener('click', async () => {
       editor.setContent(draft.content);

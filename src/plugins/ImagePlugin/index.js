@@ -69,7 +69,7 @@ export function setupImagePlugin(editor) {
           // Trigger a history snapshot before removal as per standard operations
           editor.history.pushImmediate();
           floatingUI.anchorNode.remove();
-          editor.emit('change');
+          editor.emit('change', editor.getContent());
           floatingUI.hide();
        }
     });
@@ -190,7 +190,7 @@ export function setupImagePlugin(editor) {
             figure.remove();
             floatingUI.hide();
             editor.history.pushImmediate();
-            editor.emit('change');
+            editor.emit('change', editor.getContent());
         }
     }
   });
@@ -522,7 +522,7 @@ export function setupImagePlugin(editor) {
                         else img.removeAttribute('alt');
                         
                         editor.history.pushImmediate();
-                        editor.emit('change');
+                        editor.emit('change', editor.getContent());
                         modal.close();
                         return;
                     }
