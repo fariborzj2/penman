@@ -312,7 +312,7 @@ describe('DraftPlugin', () => {
 
     await sleep(50); // let setTimeout(checkForExistingDraft, 0) run
 
-    const banner = document.getElementById('penman-draft-recovery-banner');
+    const banner = document.querySelector('.penman-draft-banner');
     expect(banner).not.toBeNull();
     expect(banner.textContent).toContain('newer unsaved version');
 
@@ -345,7 +345,7 @@ describe('DraftPlugin', () => {
 
     await sleep(20);
 
-    expect(document.getElementById('penman-draft-recovery-banner')).toBeNull();
+    expect(document.querySelector('.penman-draft-banner')).toBeNull();
     expect(localStorage.getItem('penman:draft:discard-test')).toBeNull();
     e3.destroy();
   });
@@ -379,7 +379,7 @@ describe('DraftPlugin', () => {
     await sleep(20);
 
     expect(e4.getContent()).toBe(draftContent);
-    expect(document.getElementById('penman-draft-recovery-banner')).toBeNull();
+    expect(document.querySelector('.penman-draft-banner')).toBeNull();
     e4.destroy();
   });
 
@@ -407,7 +407,7 @@ describe('DraftPlugin', () => {
 
     await sleep(50);
 
-    expect(document.getElementById('penman-draft-recovery-banner')).toBeNull();
+    expect(document.querySelector('.penman-draft-banner')).toBeNull();
     e5.destroy();
   });
 
@@ -430,7 +430,7 @@ describe('DraftPlugin', () => {
     setupDraftPlugin(e6);
     await sleep(50);
 
-    expect(document.getElementById('penman-draft-recovery-banner')).toBeNull();
+    expect(document.querySelector('.penman-draft-banner')).toBeNull();
     e6.destroy();
   });
 
