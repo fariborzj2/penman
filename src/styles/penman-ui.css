@@ -31,6 +31,7 @@
   background: #F8FAFC;
   display: flex;
   flex-direction: column;
+  position: relative; /* Make wrapper the containing block for full-width overflow panel */
 }
 
 .penman-toolbar-row {
@@ -39,8 +40,7 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 4px;
-  overflow: hidden; /* Ensure items don't leak out */
-  position: relative;
+  position: static; /* Let the wrapper be the relative parent for the absolute dropdown */
   min-height: 44px; /* Ensure mobile friendly hit targets */
 }
 
@@ -166,12 +166,21 @@
 }
 
 /* Specific styling for the overflow panel */
+.penman-toolbar-dropdown {
+  position: static; /* Override default relative to allow absolute child to escape to wrapper */
+}
+
 .penman-overflow-panel {
-  min-width: 150px;
-  padding: 6px;
+  left: 0;
+  right: 0; /* Full width of .penman-toolbar-wrapper */
+  top: 100%;
+  margin-top: 0;
+  padding: 6px 12px;
   gap: 4px;
-  right: 0;
-  left: auto;
+  border-radius: 0 0 6px 6px;
+  border-top: 1px solid #E2E8F0;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  background: #F8FAFC; /* Match toolbar background */
 }
 .penman-dropdown-panel .penman-color-picker-container {
   padding: 0 8px;
@@ -199,8 +208,7 @@
 }
 
 [dir="rtl"] .penman-overflow-panel {
-  right: auto;
-  left: 0;
+  /* No changes needed since it spans 100% via left:0 and right:0 */
 }
 
 [dir="rtl"] .penman-dropdown-trigger::after {
