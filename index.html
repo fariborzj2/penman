@@ -5,13 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Penman Editor Example</title>
   <style>
+    * {
+      box-sizing: border-box;
+    }
     body { box-sizing: border-box; font-family: sans-serif; padding: 20px; background-color: #f9f9f9; height: 100vh; 
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
     }
-    .main { width: 100%; max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; border: 1px solid #E2E8F0; }
+    .main { width: 100%; max-width: 800px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 20px rgb(64, 113, 162,0.06) }
     /* All internal styles are now bundled in src/styles via index.js */
   </style>
 </head>
@@ -20,9 +23,6 @@
     <h1>Penman Editor Example</h1>
     <textarea name="fullstory" id="myTextarea"><p>متن مقاله را اینجا وارد کنید</p></textarea>
   </div>
-
-  <svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M 514.25183,32.312286 C 462.60025,45.101496 371.31924,46.452526 290.41665,36.354476 C 214.66567,33.966956 32.54136,14.648006 32.2604,209.54198 C 31.97944,405.4461 231.17596,389.05565 290.41665,392.63573 C 292.7273,441.3511 291.72308,654.51476 290.41665,702.41698 C 246.34903,721.94286 167.80215,759.60919 244.91269,758.95917 L 499.67695,758.95917 C 580.35791,759.03405 498.28983,719.68404 462.2604,702.41698 L 462.2604,85.010726 C 492.80976,82.152126 537.97093,55.651886 514.25183,32.312286 z M 403.15649,87.229476 L 403.15649,701.40683 C 382.26237,716.55909 370.45445,715.54896 348.55022,702.41698 L 348.55022,85.209166 C 372.92675,85.209166 376.9657,86.345606 403.15649,87.229476 z M 290.41665,84.666976 L 290.41665,339.92555 C 246.64853,339.37261 101.07965,334.12564 102.74089,217.01073 C 104.29829,108.16251 185.87658,86.464636 290.41665,84.666976 z " style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"/></svg>
-  
 
   <!-- Load the built script -->
   <script type="module">
@@ -38,17 +38,25 @@
       direction: 'rtl',
       height: 300,
       plugins: ['link', 'draft', 'format', 'list', 'blocktype', 'fontsize', 'unlink', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction'],
-      toolbar: 'undo redo | blocktype fontsize  dirrtl dirltr | bold italic underline strikethrough textcolor highlight | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
+      // toolbar: 'undo redo | blocktype fontsize  dirrtl dirltr | bold italic underline strikethrough  | justifyleft justifycenter justifyright justifyfull | bullist numlist | link unlink image | hr removeformat | findreplace | table sourcecode',
+      toolbar: {
+        rows: [
+          ['undo', 'redo', 'blocktype', 'fontsize', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr'], 
+          ['bold', 'italic', 'underline','strikethrough', 'justifyright', 'justifycenter', 'justifyleft', 'justifyfull', 'bullist', 'numlist', 'link', 'unlink', 'image', 'table', 'removeformat', 'textcolor', 'highlight'], 
+        ]
+      },
       blockTypes: [
         { name: 'Paragraph', cmd: 'p' },
-        { name: 'Subheading', cmd: 'h3' },
+        { name: 'Heading 2', cmd: 'h2' },
+        { name: 'Heading 3', cmd: 'h3' },
+        { name: 'Heading 4', cmd: 'h4' },
+        { name: 'Heading 5', cmd: 'h5' },
+        { name: 'Heading 6', cmd: 'h6' },
         { name: 'Quote', cmd: 'blockquote' },
-        {
-          name: 'Warning',
-          cmd: 'div',
-          class: 'warning-block',
-          optionStyle: { color: '#c73a3a', background: '#fde3e3', fontWeight: 'bold' , borderRight: '2px solid #c73a3a' }
-        }
+        { name: 'Success', cmd: 'div', class: 'green-block', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e' } },
+        { name: 'Info', cmd: 'div', class: 'blue-block', optionStyle: { color: '#1e3a8a', background: '#dbeafe', fontWeight: 'bold', borderRight: '3px solid #3b82f6' } },
+        { name: 'Warning', cmd: 'div', class: 'orange-block', optionStyle: { color: '#9a3412', background: '#ffedd5', fontWeight: 'bold', borderRight: '3px solid #f97316' } },
+        { name: 'Danger', cmd: 'div', class: 'red-block', optionStyle: { color: '#7f1d1d', background: '#fee2e2', fontWeight: 'bold', borderRight: '3px solid #ef4444' } }
       ],
       imageUploadFn: (file, onProgress) => {
         return new Promise((resolve, reject) => {

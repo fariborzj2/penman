@@ -40,15 +40,12 @@
   flex-wrap: nowrap;
   align-items: center;
   gap: 4px;
-  position: static; /* Let the wrapper be the relative parent for the absolute dropdown */
-  min-height: 44px; /* Ensure mobile friendly hit targets */
+  position: static; 
 }
-
 /* Optional separation if two rows exist */
 .penman-toolbar-wrapper .penman-toolbar-row + .penman-toolbar-row {
   border-top: 1px dashed #E2E8F0;
-  padding-top: 4px;
-  padding-bottom: 6px;
+  /*! padding-top: 4px; */
 }
 
 /* Legacy style mapping */
@@ -56,7 +53,7 @@
   background: transparent;
   border: none;
   border-radius: 0;
-  padding: 0;
+  padding: 5px 5px;
 }
 
 .penman-btn {
@@ -83,6 +80,10 @@
 }
 .penman-btn svg {
   fill: #64748B
+}
+.penman-table-toolbar .penman-btn svg {
+  fill: none;
+  stroke: #64748B
 }
 .penman-btn-active {
   background-color: rgb(234, 239, 244);
@@ -164,7 +165,10 @@
   padding: 8px 0;
   margin-top: 4px;
 }
-
+.penman-wrapper[dir="rtl"] .penman-dropdown-panel {
+  left: unset;
+  right: 0;
+}
 /* Specific styling for the overflow panel */
 .penman-toolbar-dropdown {
   position: static; /* Override default relative to allow absolute child to escape to wrapper */
@@ -199,22 +203,8 @@
   aspect-ratio: 1/1;
   height: unset;
   width: unset;
-
-}
-/* RTL adjustments */
-[dir="rtl"] .penman-dropdown-panel {
-  left: auto;
-  right: 0;
 }
 
-[dir="rtl"] .penman-overflow-panel {
-  /* No changes needed since it spans 100% via left:0 and right:0 */
-}
-
-[dir="rtl"] .penman-dropdown-trigger::after {
-  margin-left: 0;
-  margin-right: 6px;
-}
 
 /* BlockType Plugin Styles */
 .penman-blocktype-search {
@@ -284,3 +274,12 @@
 .penman-grid-cell {
   aspect-ratio: 1/1;
 }
+
+.penman-wrapper {
+  scrollbar-width: thin;
+  scrollbar-color: #eaeff4 transparent;
+}
+.penman-wrapper *::-webkit-scrollbar { width: 6px; height: 6px; }
+.penman-wrapper *::-webkit-scrollbar-track { background: transparent; }
+.penman-wrapper *::-webkit-scrollbar-thumb { background: #eaeff4; border-radius: 4px; }
+.penman-wrapper *::-webkit-scrollbar-thumb:hover { background: #eaeff4; }

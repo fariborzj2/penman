@@ -233,6 +233,7 @@ export class Modal {
       /* Generalized structural layout classes for forms inside Modals */
       .penman-modal-form-row {
         display: flex;
+        flex-wrap: wrap;
         align-items: center;
         margin-bottom: 10px;
       }
@@ -250,6 +251,7 @@ export class Modal {
       }
       .penman-modal-checkbox-group {
         display: flex;
+        flex-wrap: wrap;
         gap: 15px;
         margin-bottom: 20px;
       }

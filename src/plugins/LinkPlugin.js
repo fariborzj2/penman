@@ -24,11 +24,11 @@ export function setupLinkPlugin(editor) {
         title: 'Insert Link',
         body: `
           <div style="padding: 15px">
-            <div>
+            <div class="penman-modal-form-row">
               <label for="penman-link-url">URL</label>
               <input type="url" id="penman-link-url" name="url" placeholder="https://example.com" required>
             </div>
-            <div style="margin-top: 10px;">
+            <div class="penman-modal-form-row">
               <label for="penman-link-text">Text to display</label>
               <input type="text" id="penman-link-text" name="text" placeholder="Link text" value="${currentText}">
             </div>

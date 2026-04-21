@@ -145,11 +145,38 @@ figure.penman-selected-image {
   height: auto;
   display: block;
 }
-.penman-fontsize-list, .penman-editor-area {
-  scrollbar-width: thin;
-  scrollbar-color: #e3effd transparent;
+.green-block {
+  color: #166534;
+  background: #dcfce7;
+  border-right: 3px solid #22c55e;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
 }
-.penman-fontsize-list::-webkit-scrollbar , .penman-editor-area::-webkit-scrollbar { width: 6px; height: 6px; }
-.penman-fontsize-list::-webkit-scrollbar-track , .penman-editor-area::-webkit-scrollbar-track { background: transparent; }
-.penman-fontsize-list::-webkit-scrollbar-thumb , .penman-editor-area::-webkit-scrollbar-thumb { background: #e3effd; border-radius: 4px; }
-.penman-fontsize-list::-webkit-scrollbar-thumb:hover , .penman-editor-area::-webkit-scrollbar-thumb:hover { background: #e3effd; }
+
+.blue-block {
+  color: #1e3a8a;
+  background: #dbeafe;
+  border-right: 3px solid #3b82f6;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.orange-block {
+  color: #9a3412;
+  background: #ffedd5;
+  border-right: 3px solid #f97316;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}
+
+.red-block {
+  color: #7f1d1d;
+  background: #fee2e2;
+  border-right: 3px solid #ef4444;
+  padding: 10px;
+  border-radius: 4px;
+  margin-bottom: 15px;
+}

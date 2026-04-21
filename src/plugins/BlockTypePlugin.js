@@ -152,7 +152,8 @@ export function setupBlockTypePlugin(editor) {
         if (block.name.toLowerCase().includes(lowerFilter)) {
           const item = document.createElement('div');
           item.className = 'penman-blocktype-item';
-          item.style.padding = '8px 12px';
+          item.style.padding = '4px 12px';
+          item.style.marginBottom = '4px';
           item.style.cursor = 'pointer';
 
           // Render item specifically based on its tag to mimic how it will look in the editor
