@@ -3,7 +3,7 @@
 ## Options
 The plugin accepts a `directionOptions` object in the editor initialization:
 
-*   `auto` (boolean): Enable auto-detection. Default is `true`.
+*   `auto` (boolean): Enable auto-detection. Default is `false`.
 *   `default` (string): The default direction ('ltr' or 'rtl') for empty or ambiguous blocks. Default is `'ltr'`.
 *   `toolbar` (boolean): Whether to register toolbar buttons. Default is `true`.
 *   `detection` (object): Options for the detection algorithm.

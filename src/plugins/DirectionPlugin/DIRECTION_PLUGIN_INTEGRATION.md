@@ -32,7 +32,7 @@ penman.init({
   toolbar: 'dirrtl dirltr dirreset | bold italic ...',
 
   directionOptions: {
-    auto: true,            // enable auto-detection (default: true)
+    auto: false,           // enable auto-detection (default: false)
     default: 'rtl',        // fallback direction for empty blocks
     toolbar: true,         // register RTL / LTR / Auto toolbar buttons
 

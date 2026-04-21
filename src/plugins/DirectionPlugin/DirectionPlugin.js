@@ -36,7 +36,7 @@ export function setupDirectionPlugin(editor) {
   const raw = editor.options.directionOptions || {};
 
   const cfg = {
-    auto:    raw.auto    !== false,          // default: true
+    auto:    raw.auto === true,              // default: false
     default: raw.default || 'ltr',
     toolbar: raw.toolbar !== false,          // default: true
 
