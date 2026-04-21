@@ -283,7 +283,7 @@ describe('DirectionPlugin integration', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '<textarea id="editor"></textarea>';
-    editor = new Editor({ selector: '#editor', directionOptions: { default: 'ltr', toolbar: true } });
+    editor = new Editor({ selector: '#editor', directionOptions: { auto: true, default: 'ltr', toolbar: true } });
     setupDirectionPlugin(editor);
   });
 
@@ -423,7 +423,7 @@ describe('DirectionPlugin default RTL', () => {
 
   beforeEach(() => {
     document.body.innerHTML = '<textarea id="editor"></textarea>';
-    editor = new Editor({ selector: '#editor', directionOptions: { default: 'rtl' } });
+    editor = new Editor({ selector: '#editor', directionOptions: { auto: true, default: 'rtl' } });
     setupDirectionPlugin(editor);
   });
 
