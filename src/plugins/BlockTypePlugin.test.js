@@ -92,19 +92,92 @@ describe('BlockTypePlugin', () => {
 
   it('should wrap multiple blocks correctly when a wrapper command is used', () => {
     editor.editableArea.innerHTML = '<p>A</p><ul><li>B</li></ul><p>C</p>';
-
+    
     const range = document.createRange();
     range.setStart(editor.editableArea.children[0].firstChild, 0); // Start of <p>A</p>
     range.setEnd(editor.editableArea.children[1].firstChild, 1); // End of <li>B</li>
-
+    
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
-
+    
     editor.execCommand('SET_BLOCK_TYPE', { cmd: 'blockquote' });
-
+    
     // Using string matching since jsdom normalizes attributes weirdly
     expect(editor.editableArea.innerHTML.replace(/\s+/g, '')).toContain('<blockquote><p>A</p><ul><li>B</li></ul></blockquote>');
     expect(editor.editableArea.innerHTML.replace(/\s+/g, '')).toContain('<p>C</p>');
+  });
+
+  it('should exclusively replace existing wrappers to avoid nesting', () => {
+    editor.editableArea.innerHTML = '<div class="warning-block"><blockquote><p>Test</p></blockquote></div>';
+    
+    const range = document.createRange();
+    range.selectNodeContents(editor.editableArea.children[0]);
+    
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    // Replace with a new block wrapper
+    editor.execCommand('SET_BLOCK_TYPE', { cmd: 'div', class: 'info-block' });
+    
+    const html = editor.editableArea.innerHTML.replace(/\s+/g, '');
+    expect(html).not.toContain('warning-block');
+    expect(html).not.toContain('blockquote');
+    expect(html).toContain('<divclass="info-block"><p>Test</p></div>');
+  });
+
+  it('should toggle off a wrapper if the same exact style is applied again', () => {
+    editor.editableArea.innerHTML = '<div class="warning-block"><p>Toggle Me</p></div>';
+    
+    const range = document.createRange();
+    range.selectNodeContents(editor.editableArea.children[0]);
+    
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    // Apply Warning again
+    editor.execCommand('SET_BLOCK_TYPE', { cmd: 'div', class: 'warning-block' });
+    
+    const html = editor.editableArea.innerHTML.replace(/\s+/g, '');
+    expect(html).not.toContain('warning-block');
+    expect(html).not.toContain('div');
+    expect(html).toContain('<p>ToggleMe</p>');
+  });
+
+  it('should unwrap wrappers when an inline-block format (like h1) is applied', () => {
+    editor.editableArea.innerHTML = '<div class="warning-block"><p>Title</p></div>';
+    
+    const range = document.createRange();
+    range.selectNodeContents(editor.editableArea.children[0]);
+    
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+    
+    // Mock native document.execCommand for jsdom environment before executing
+    const originalExecCommand = document.execCommand;
+    document.execCommand = vi.fn((cmd, showUI, value) => {
+        if (cmd === 'formatBlock') {
+            const h1 = document.createElement('h1');
+            h1.innerHTML = editor.editableArea.innerHTML; // Simplistic mock for the test
+            editor.editableArea.innerHTML = '';
+            editor.editableArea.appendChild(h1);
+            return true;
+        }
+        return false;
+    });
+
+    try {
+        // Apply Heading 1
+        editor.execCommand('SET_BLOCK_TYPE', { cmd: 'h1' });
+        
+        const html = editor.editableArea.innerHTML.replace(/\s+/g, '');
+        expect(html).not.toContain('warning-block');
+        expect(html).toContain('<h1>'); // Native execCommand in real browser handles inner content properly
+    } finally {
+        document.execCommand = originalExecCommand;
+    }
   });
 });

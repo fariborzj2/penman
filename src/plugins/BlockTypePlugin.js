@@ -69,15 +69,6 @@ export function setupBlockTypePlugin(editor) {
       const wrapperBlockTypes = ['blockquote', 'div', 'section', 'article', 'aside', 'main', 'header', 'footer'];
       const isWrapper = wrapperBlockTypes.includes(blockDef.cmd.toLowerCase());
 
-      // 1.1 Save cursor selection bounds before modifying DOM
-      // We only save if we are wrapping, but actually CommandManager saves and restores automatically around `execute`!
-      // But we are manually rebuilding the selection. We should clean up any markers we create.
-      // Wait, CommandManager ALREADY does `editor.selection.save()` right after `execute` returns!
-      // And we shouldn't leave stray markers. So we don't need to save/restore markers manually here
-      // if CommandManager handles the macro-level history/selection.
-      // Wait, if we move blocks, standard ranges might break, so we can save/restore, but we MUST clear them!
-      // Let's just use normal native range creation instead of marker-based selection.save().
-
       // Helper to find top-level block in the editor based on container and offset
       const resolveTopLevelBlock = (container, offset, isEnd = false) => {
         if (container === editor.editableArea) {
@@ -86,7 +77,7 @@ export function setupBlockTypePlugin(editor) {
           if (!targetNode) {
             return editor.editableArea.lastElementChild;
           }
-
+          
           while (targetNode && targetNode.nodeType !== Node.ELEMENT_NODE) {
              targetNode = isEnd ? targetNode.previousSibling : targetNode.nextSibling;
           }
@@ -120,11 +111,56 @@ export function setupBlockTypePlugin(editor) {
       const originalEndContainer = range.endContainer;
       const originalEndOffset = range.endOffset;
 
-      if (isWrapper && blocksToStyle.length > 0) {
-        // Wrapper logic: create one parent wrapper for all selected blocks
-        const wrapper = document.createElement(blockDef.cmd);
-        blocksToStyle[0].parentNode.insertBefore(wrapper, blocksToStyle[0]);
-        blocksToStyle.forEach(b => wrapper.appendChild(b));
+      // 1.3 Pre-process blocks to unwrap existing wrappers recursively
+      const unwrappedBlocks = [];
+      let targetWrapperFound = false;
+      let nonTargetWrapperFound = false;
+
+      const unwrapBlock = (block) => {
+        const tagName = block.tagName ? block.tagName.toLowerCase() : '';
+        const isBlockWrapper = wrapperBlockTypes.includes(tagName);
+
+        if (isBlockWrapper) {
+          const hasSameTag = tagName === blockDef.cmd.toLowerCase();
+          const hasSameClass = blockDef.class ? block.classList.contains(blockDef.class) : !block.className;
+          
+          if (hasSameTag && hasSameClass && isWrapper) {
+            targetWrapperFound = true;
+          } else {
+            nonTargetWrapperFound = true;
+          }
+
+          const children = Array.from(block.childNodes);
+          children.forEach(child => {
+            block.parentNode.insertBefore(child, block);
+            if (child.nodeType === Node.ELEMENT_NODE && wrapperBlockTypes.includes(child.tagName.toLowerCase())) {
+              unwrapBlock(child);
+            } else if (child.nodeType === Node.ELEMENT_NODE || (child.nodeType === Node.TEXT_NODE && child.textContent.trim())) {
+              if (!unwrappedBlocks.includes(child)) unwrappedBlocks.push(child);
+            }
+          });
+          block.parentNode.removeChild(block);
+        } else {
+          // It's a non-wrapper top-level block
+          nonTargetWrapperFound = true;
+          if (!unwrappedBlocks.includes(block)) unwrappedBlocks.push(block);
+        }
+      };
+
+      blocksToStyle.forEach(unwrapBlock);
+      const togglingOff = targetWrapperFound && !nonTargetWrapperFound;
+
+      if (isWrapper && unwrappedBlocks.length > 0) {
+        let wrapper = null;
+        if (!togglingOff) {
+          // Wrapper logic: create one parent wrapper for all selected blocks
+          wrapper = document.createElement(blockDef.cmd);
+          if (blockDef.class) {
+            wrapper.className = blockDef.class;
+          }
+          unwrappedBlocks[0].parentNode.insertBefore(wrapper, unwrappedBlocks[0]);
+          unwrappedBlocks.forEach(b => wrapper.appendChild(b));
+        }
 
         // Restore precise original selection (nodes moved, but not destroyed)
         sel.removeAllRanges();
@@ -135,16 +171,29 @@ export function setupBlockTypePlugin(editor) {
           sel.addRange(newRange);
         } catch (e) {
           // Fallback if node structure was somehow compromised
-          newRange.selectNodeContents(wrapper);
+          if (wrapper) {
+            newRange.selectNodeContents(wrapper);
+          } else {
+            newRange.selectNodeContents(unwrappedBlocks[unwrappedBlocks.length - 1]);
+          }
           newRange.collapse(false); // Move to end of block safely
           sel.addRange(newRange);
         }
 
-        // Update blocksToStyle reference for styling
-        blocksToStyle.length = 0;
-        blocksToStyle.push(wrapper);
+        // We already applied the class if creating a new wrapper, so no need for further styling
+        return;
       } else {
         // Standard execCommand formatting (e.g., h1, p)
+        // If we unwrapped wrappers, our native selection might be lost because the wrapper node was removed.
+        // We must ensure the selection is restored onto the unwrapped blocks before calling execCommand.
+        if (unwrappedBlocks.length > 0) {
+           sel.removeAllRanges();
+           const newRange = document.createRange();
+           newRange.setStartBefore(unwrappedBlocks[0]);
+           newRange.setEndAfter(unwrappedBlocks[unwrappedBlocks.length - 1]);
+           sel.addRange(newRange);
+        }
+
         document.execCommand('formatBlock', false, blockDef.cmd);
 
         // Re-calculate blocks after execCommand
@@ -152,13 +201,13 @@ export function setupBlockTypePlugin(editor) {
         if (selAfter && selAfter.rangeCount > 0) {
           const rangeAfter = selAfter.getRangeAt(0);
           blocksToStyle.length = 0; // Clear previous blocks
-
+          
           Array.from(editor.editableArea.children).forEach(child => {
             const nodeRange = document.createRange();
             nodeRange.selectNodeContents(child);
             const intersects = rangeAfter.compareBoundaryPoints(Range.END_TO_START, nodeRange) === -1 &&
                                rangeAfter.compareBoundaryPoints(Range.START_TO_END, nodeRange) === 1;
-
+                               
             if (intersects || selAfter.containsNode(child, true)) {
               if (child.tagName && child.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
                 blocksToStyle.push(child);
