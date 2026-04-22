@@ -31,9 +31,9 @@ export class FloatingUI {
     this.element.style.zIndex = '1000';
     this.element.innerHTML = contentHtml;
 
-    // We append to the editor's main container or document body.
-    // Document body is usually safer for floating elements to avoid `overflow: hidden` issues.
-    document.body.appendChild(this.element);
+    // Append to the editor's main container to keep styling scoped
+    // and correctly contain overflow within the component's boundaries.
+    this.editor.container.appendChild(this.element);
 
     // Listen to resize/scroll to update position
     window.addEventListener('resize', this._handleScrollOrResize);
@@ -86,48 +86,83 @@ export class FloatingUI {
 
     const floatingRect = this.element.getBoundingClientRect();
 
-    // Calculate initial position
+    const containerRect = this.editor.container.getBoundingClientRect();
+
+    // Calculate initial position relative to container
+    // We use getBoundingClientRect for both anchor and container. Both are relative to viewport.
+    // The `.penman-editor-area` scrolls vertically.
+    // Wait, since `this.element` is appended to `this.editor.container` (the wrapper), and the wrapper does NOT scroll,
+    // its absolute children stay fixed relative to the wrapper.
+    // But the anchor node is inside `.penman-editor-area` which scrolls.
+    // So as the user scrolls, `rect.top` changes, but `containerRect.top` does not.
+    // This perfectly calculates the visual offset inside the wrapper.
+    
+    // BUT what if the container is the editable area?
+    // In `FloatingUI.js`, we did `this.editor.container.appendChild(this.element)`.
+    // `this.editor.container` is the wrapper. So it does not scroll.
+    
+    // However, we want Floating UIs to stay attached to their anchor, even if the user scrolls the page.
     let top, left;
 
     if (this.options.placement === 'top') {
-        top = rect.top - floatingRect.height - this.options.offset + window.scrollY;
+        top = rect.top - containerRect.top - floatingRect.height - this.options.offset;
     } else {
         // default bottom
-        top = rect.bottom + this.options.offset + window.scrollY;
+        top = rect.bottom - containerRect.top + this.options.offset;
     }
 
-    left = rect.left + (rect.width / 2) - (floatingRect.width / 2) + window.scrollX;
+    left = rect.left - containerRect.left + (rect.width / 2) - (floatingRect.width / 2);
 
-    // Collision handling (Viewport)
-    const viewportWidth = window.innerWidth;
-    const viewportHeight = window.innerHeight;
+    // If the anchor is scrolled out of view, we should probably hide the floating UI or let it stay clipped.
+    // However, bounding rects natively handle scroll because `rect.top` goes negative if it scrolls up out of view.
+    // We do NOT want to clamp the top position to `visibleTop` if the anchor is out of bounds, because that detaches it from the anchor!
 
+    // Viewport collision bounds (relative to container)
+    // We clamp left/right to stay inside the editor bounds.
+    const visibleLeft = 0;
+    const visibleRight = containerRect.width;
+
+    // Collision handling (Editor Container Bounds)
     // Prevent horizontal overflow
-    if (left < window.scrollX) {
-      left = window.scrollX + this.options.offset;
-    } else if (left + floatingRect.width > window.scrollX + viewportWidth) {
-      left = window.scrollX + viewportWidth - floatingRect.width - this.options.offset;
+    if (left < visibleLeft + this.options.offset) {
+      left = visibleLeft + this.options.offset;
+    } else if (left + floatingRect.width > visibleRight - this.options.offset) {
+      left = visibleRight - floatingRect.width - this.options.offset;
     }
 
-    // Prevent vertical overflow / Flip logic
+    // Flip logic relative to viewport (not container bounds, because container might be tall)
+    // Wait, floating UI should flip if it overflows the WINDOW viewport, but remain bounded inside the container left/right.
+    // If it overflows the top of the *container*, maybe it should flip?
+    // Yes, let's flip based on container bounds to keep it visible inside the editor area if possible.
+    const containerVisibleTop = 0;
+    const containerVisibleBottom = containerRect.height;
+
+    // Prevent vertical overflow / Flip logic relative to editor view
     if (this.options.placement === 'top') {
-        // If it goes above the screen, place it below the anchor
-        if (top < window.scrollY && rect.bottom + floatingRect.height + this.options.offset <= window.scrollY + viewportHeight) {
-            top = rect.bottom + this.options.offset + window.scrollY;
+        // If it goes above the container, place it below the anchor
+        if (top < containerVisibleTop && rect.bottom - containerRect.top + floatingRect.height + this.options.offset <= containerVisibleBottom) {
+            top = rect.bottom - containerRect.top + this.options.offset;
             this.element.classList.add('penman-floating-flipped');
         } else {
             this.element.classList.remove('penman-floating-flipped');
         }
     } else {
-        // If it goes below the screen, place it above the anchor
-        if (top + floatingRect.height > window.scrollY + viewportHeight && rect.top - floatingRect.height - this.options.offset >= window.scrollY) {
-            top = rect.top - floatingRect.height - this.options.offset + window.scrollY;
+        // If it goes below the container, place it above the anchor
+        if (top + floatingRect.height > containerVisibleBottom && rect.top - containerRect.top - floatingRect.height - this.options.offset >= containerVisibleTop) {
+            top = rect.top - containerRect.top - floatingRect.height - this.options.offset;
             this.element.classList.add('penman-floating-flipped');
         } else {
             this.element.classList.remove('penman-floating-flipped');
         }
     }
-
+    
+    // Hide completely if anchor is completely outside the editable area's visible bounding box
+    const editableRect = this.editor.editableArea ? this.editor.editableArea.getBoundingClientRect() : containerRect;
+    if (rect.bottom < editableRect.top || rect.top > editableRect.bottom) {
+        this.element.style.display = 'none';
+        return;
+    }
+    
     this.element.style.top = `${top}px`;
     this.element.style.left = `${left}px`;
   }

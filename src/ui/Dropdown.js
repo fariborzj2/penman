@@ -65,6 +65,8 @@ export class Dropdown {
 
     this.panelElement.style.display = 'block';
     this.buttonElement.classList.add('penman-btn-active');
+    
+    this._adjustPosition();
 
     // Slight delay to avoid capturing the triggering click
     setTimeout(() => {
@@ -73,6 +75,29 @@ export class Dropdown {
 
     if (this.options.onOpen) {
       this.options.onOpen(this);
+    }
+  }
+
+  _adjustPosition() {
+    this.panelElement.style.left = '';
+    this.panelElement.style.right = '';
+    
+    const panelRect = this.panelElement.getBoundingClientRect();
+    const wrapper = this.element.closest('.penman-wrapper');
+    
+    if (!wrapper) return;
+    
+    const wrapperRect = wrapper.getBoundingClientRect();
+    
+    if (panelRect.right > wrapperRect.right) {
+      this.panelElement.style.left = 'auto';
+      this.panelElement.style.right = '0';
+    }
+    
+    const updatedRect = this.panelElement.getBoundingClientRect();
+    if (updatedRect.left < wrapperRect.left) {
+      this.panelElement.style.left = '0';
+      this.panelElement.style.right = 'auto';
     }
   }
 

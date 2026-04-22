@@ -11,9 +11,11 @@ describe('FloatingUI', () => {
   let container;
 
   beforeEach(() => {
-    fakeEditor = {};
     container = document.createElement('div');
     document.body.appendChild(container);
+    fakeEditor = {
+      container: container
+    };
     floatingUI = new FloatingUI(fakeEditor);
   });
 
@@ -50,10 +52,10 @@ describe('FloatingUI', () => {
   it('should destroy and remove from DOM', () => {
     floatingUI.mount('<p>A</p>');
     const el = floatingUI.element;
-    expect(document.body.contains(el)).toBe(true);
+    expect(container.contains(el)).toBe(true);
 
     floatingUI.destroy();
-    expect(document.body.contains(el)).toBe(false);
+    expect(container.contains(el)).toBe(false);
     expect(floatingUI.element).toBeNull();
   });
 });
