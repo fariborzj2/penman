@@ -17,6 +17,7 @@ describe('BlockTypePlugin', () => {
       blockTypes: [
         { name: 'Paragraph', cmd: 'p' },
         { name: 'Heading 1', cmd: 'h1' },
+        { name: 'Blockquote', cmd: 'blockquote' },
         {
           name: 'Warning',
           cmd: 'div',
@@ -25,11 +26,6 @@ describe('BlockTypePlugin', () => {
         }
       ]
     });
-
-    // Replace execCommand to avoid actual browser document manipulation side-effects during some tests
-
-    // removed document.execCommand mock
-
   });
 
   afterEach(() => {
@@ -71,8 +67,6 @@ describe('BlockTypePlugin', () => {
   });
 
   it('should execute SET_BLOCK_TYPE when an item is clicked', () => {
-    // Spy on editor's execCommand
-
     let executedCmd = null;
     let executedVal = null;
     const originalExec = editor.execCommand.bind(editor);
@@ -81,7 +75,6 @@ describe('BlockTypePlugin', () => {
        executedVal = val;
        return originalExec(cmd, val);
     };
-
 
     const dropdownConfig = editor.ui.registry.dropdowns['blocktype'];
     const content = dropdownConfig.render();
@@ -92,10 +85,26 @@ describe('BlockTypePlugin', () => {
     const heading1Item = Array.from(items).find(i => i.textContent === 'Heading 1');
     heading1Item.dispatchEvent(new Event('click'));
 
-
     expect(executedCmd).toBe('SET_BLOCK_TYPE');
     expect(executedVal.cmd).toBe('h1');
     expect(executedVal.name).toBe('Heading 1');
+  });
 
+  it('should wrap multiple blocks correctly when a wrapper command is used', () => {
+    editor.editableArea.innerHTML = '<p>A</p><ul><li>B</li></ul><p>C</p>';
+
+    const range = document.createRange();
+    range.setStart(editor.editableArea.children[0].firstChild, 0); // Start of <p>A</p>
+    range.setEnd(editor.editableArea.children[1].firstChild, 1); // End of <li>B</li>
+
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    editor.execCommand('SET_BLOCK_TYPE', { cmd: 'blockquote' });
+
+    // Using string matching since jsdom normalizes attributes weirdly
+    expect(editor.editableArea.innerHTML.replace(/\s+/g, '')).toContain('<blockquote><p>A</p><ul><li>B</li></ul></blockquote>');
+    expect(editor.editableArea.innerHTML.replace(/\s+/g, '')).toContain('<p>C</p>');
   });
 });

@@ -65,49 +65,125 @@ export function setupBlockTypePlugin(editor) {
       
       const range = sel.getRangeAt(0);
       
-      // Before formatting, let's just use execCommand
-      document.execCommand('formatBlock', false, blockDef.cmd);
-      
-      // Now find all affected blocks in the selection to apply styles/classes
-      // To do this reliably, we should use TreeWalker on the selection range.
-      const selAfter = window.getSelection();
-      if (!selAfter || selAfter.rangeCount === 0) return;
-      const rangeAfter = selAfter.getRangeAt(0);
+      // Determine wrapper blocks vs inline-block formats
+      const wrapperBlockTypes = ['blockquote', 'div', 'section', 'article', 'aside', 'main', 'header', 'footer'];
+      const isWrapper = wrapperBlockTypes.includes(blockDef.cmd.toLowerCase());
 
-      const blocksToStyle = [];
+      // 1.1 Save cursor selection bounds before modifying DOM
+      // We only save if we are wrapping, but actually CommandManager saves and restores automatically around `execute`!
+      // But we are manually rebuilding the selection. We should clean up any markers we create.
+      // Wait, CommandManager ALREADY does `editor.selection.save()` right after `execute` returns!
+      // And we shouldn't leave stray markers. So we don't need to save/restore markers manually here
+      // if CommandManager handles the macro-level history/selection.
+      // Wait, if we move blocks, standard ranges might break, so we can save/restore, but we MUST clear them!
+      // Let's just use normal native range creation instead of marker-based selection.save().
 
-      // Find all top-level blocks in the editable area that intersect the selection
-      Array.from(editor.editableArea.children).forEach(child => {
-         const nodeRange = document.createRange();
-         nodeRange.selectNodeContents(child);
-         // Check if child intersects with the range
-         const intersects = rangeAfter.compareBoundaryPoints(Range.END_TO_START, nodeRange) === -1 &&
-                            rangeAfter.compareBoundaryPoints(Range.START_TO_END, nodeRange) === 1;
-                            
-        if (intersects || selAfter.containsNode(child, true)) {
-           if (child.tagName && child.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
-             blocksToStyle.push(child);
-           }
+      // Helper to find top-level block in the editor based on container and offset
+      const resolveTopLevelBlock = (container, offset, isEnd = false) => {
+        if (container === editor.editableArea) {
+          if (isEnd && offset > 0) offset--;
+          let targetNode = editor.editableArea.childNodes[offset];
+          if (!targetNode) {
+            return editor.editableArea.lastElementChild;
+          }
+
+          while (targetNode && targetNode.nodeType !== Node.ELEMENT_NODE) {
+             targetNode = isEnd ? targetNode.previousSibling : targetNode.nextSibling;
+          }
+          return targetNode || (isEnd ? editor.editableArea.firstElementChild : editor.editableArea.lastElementChild);
         }
-      });
-      
-      // If selection was collapsed, the above might not catch it if containsNode fails.
-      if (blocksToStyle.length === 0) {
-         let node = selAfter.anchorNode;
-         if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
-         while (node && node !== editor.editableArea) {
-           if (node.tagName && node.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
-             blocksToStyle.push(node);
-             break;
-           }
-           node = node.parentNode;
-         }
+
+        let curr = container;
+        while (curr && curr.parentNode !== editor.editableArea && curr !== editor.editableArea) {
+          curr = curr.parentNode;
+        }
+        return curr === editor.editableArea ? null : curr;
+      };
+
+      // Collect all top-level blocks in the selection range
+      const blocksToStyle = [];
+      const startBlock = resolveTopLevelBlock(range.startContainer, range.startOffset) || editor.editableArea.firstElementChild;
+      const endBlock = resolveTopLevelBlock(range.endContainer, range.endOffset, true) || editor.editableArea.lastElementChild;
+
+      if (startBlock && endBlock) {
+        let inRange = false;
+        for (const child of Array.from(editor.editableArea.children)) {
+          if (child === startBlock) inRange = true;
+          if (inRange) blocksToStyle.push(child);
+          if (child === endBlock) break;
+        }
+      }
+
+      // 1.2 Save native range reference variables to restore exact cursor
+      const originalStartContainer = range.startContainer;
+      const originalStartOffset = range.startOffset;
+      const originalEndContainer = range.endContainer;
+      const originalEndOffset = range.endOffset;
+
+      if (isWrapper && blocksToStyle.length > 0) {
+        // Wrapper logic: create one parent wrapper for all selected blocks
+        const wrapper = document.createElement(blockDef.cmd);
+        blocksToStyle[0].parentNode.insertBefore(wrapper, blocksToStyle[0]);
+        blocksToStyle.forEach(b => wrapper.appendChild(b));
+
+        // Restore precise original selection (nodes moved, but not destroyed)
+        sel.removeAllRanges();
+        const newRange = document.createRange();
+        try {
+          newRange.setStart(originalStartContainer, originalStartOffset);
+          newRange.setEnd(originalEndContainer, originalEndOffset);
+          sel.addRange(newRange);
+        } catch (e) {
+          // Fallback if node structure was somehow compromised
+          newRange.selectNodeContents(wrapper);
+          newRange.collapse(false); // Move to end of block safely
+          sel.addRange(newRange);
+        }
+
+        // Update blocksToStyle reference for styling
+        blocksToStyle.length = 0;
+        blocksToStyle.push(wrapper);
+      } else {
+        // Standard execCommand formatting (e.g., h1, p)
+        document.execCommand('formatBlock', false, blockDef.cmd);
+
+        // Re-calculate blocks after execCommand
+        const selAfter = window.getSelection();
+        if (selAfter && selAfter.rangeCount > 0) {
+          const rangeAfter = selAfter.getRangeAt(0);
+          blocksToStyle.length = 0; // Clear previous blocks
+
+          Array.from(editor.editableArea.children).forEach(child => {
+            const nodeRange = document.createRange();
+            nodeRange.selectNodeContents(child);
+            const intersects = rangeAfter.compareBoundaryPoints(Range.END_TO_START, nodeRange) === -1 &&
+                               rangeAfter.compareBoundaryPoints(Range.START_TO_END, nodeRange) === 1;
+
+            if (intersects || selAfter.containsNode(child, true)) {
+              if (child.tagName && child.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
+                blocksToStyle.push(child);
+              }
+            }
+          });
+
+          // Fallback if collapsed
+          if (blocksToStyle.length === 0) {
+            let node = selAfter.anchorNode;
+            if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+            while (node && node !== editor.editableArea) {
+              if (node.tagName && node.tagName.toLowerCase() === blockDef.cmd.toLowerCase()) {
+                blocksToStyle.push(node);
+                break;
+              }
+              node = node.parentNode;
+            }
+          }
+        }
       }
 
       // Apply class and styles
       blocksToStyle.forEach(block => {
         // Find existing block types to remove their classes (prevent style pollution)
-        // Only remove classes that match any of our configured blockTypes
         const blockTypeClasses = blockTypes.map(b => b.class).filter(c => c);
         blockTypeClasses.forEach(c => {
           block.classList.remove(c);
