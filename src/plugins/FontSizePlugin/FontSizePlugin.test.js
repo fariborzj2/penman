@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach } from 'vitest';
-import penman from '../index.js';
+import penman from '../../index.js';
 
 describe('FontSizePlugin', () => {
   let editor;

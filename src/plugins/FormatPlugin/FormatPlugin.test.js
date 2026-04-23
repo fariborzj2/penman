@@ -3,8 +3,8 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { Editor } from '../core/Editor.js';
-import { setupFormatPlugin } from './FormatPlugin.js';
+import { Editor } from '../../core/Editor.js';
+import { setupFormatPlugin } from '../FormatPlugin.js';
 
 describe('FormatPlugin', () => {
   let editor;

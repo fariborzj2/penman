@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import penman from '../index.js';
+import penman from '../../index.js';
 import { setupFindReplacePlugin } from './FindReplacePlugin.js';
 
 describe('FindReplacePlugin', () => {

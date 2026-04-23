@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { Editor } from '../core/Editor.js';
+import { Editor } from '../../core/Editor.js';
 import { setupBlockTypePlugin } from './BlockTypePlugin.js';
 
 describe('BlockTypePlugin', () => {

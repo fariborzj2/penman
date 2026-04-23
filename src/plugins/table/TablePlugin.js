@@ -1,10 +1,10 @@
-import { TableTransaction } from './table/TableTransaction.js';
-import { TableSelectionManager } from './table/TableSelectionManager.js';
-import { FloatingUI } from '../ui/FloatingUI.js';
-import { TableGrid } from './table/TableGrid.js';
+import { TableTransaction } from './TableTransaction.js';
+import { TableSelectionManager } from './TableSelectionManager.js';
+import { FloatingUI } from '../../ui/FloatingUI.js';
+import { TableGrid } from './TableGrid.js';
 
-import { TableMenu } from './table/TableMenu.js';
-import { ColorPicker } from '../ui/ColorPicker.js';
+import { TableMenu } from './TableMenu.js';
+import { ColorPicker } from '../../ui/ColorPicker.js';
 
 export function setupTablePlugin(editor) {
 
