@@ -38,7 +38,7 @@ export function setupSuggestedPostsPlugin(editor) {
     }
 
     const modal = editor.ui.createModal({
-      title: 'مطالب پیشنهادی',
+      title: 'Suggested content',
       hideFooter: true,
       body: buildModalBody(),
     });
@@ -52,7 +52,7 @@ export function setupSuggestedPostsPlugin(editor) {
   // ── Build modal HTML ──────────────────────────────────────────────────────
   function buildModalBody() {
     return `
-      <div class="psp-modal-inner" style="padding: 0 15px 15px; min-width: 420px; direction: rtl;">
+      <div class="psp-modal-inner" style="padding: 0 15px 15px; direction: ltr; overflow: auto; max-height: 350px">
 
         <!-- Items list (rendered dynamically) -->
         <div id="psp-items-list" style="margin-bottom: 12px;"></div>
@@ -60,7 +60,7 @@ export function setupSuggestedPostsPlugin(editor) {
         <!-- Form -->
         <div class="psp-form" style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-url-input" style="font-size:13px; color:#555;">آدرس لینک (URL)</label>
+            <label for="psp-url-input" style="font-size:13px; color:#555;">Link address (URL)</label>
             <input
               id="psp-url-input"
               type="url"
@@ -69,31 +69,26 @@ export function setupSuggestedPostsPlugin(editor) {
             />
           </div>
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-title-input" style="font-size:13px; color:#555;">عنوان مطلب</label>
+            <label for="psp-title-input" style="font-size:13px; color:#555;">Article title</label>
             <input
               id="psp-title-input"
               type="text"
-              placeholder="عنوان مطلب پیشنهادی را بنویسید"
+              placeholder="Enter the title of the proposed article."
               style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;"
             />
           </div>
           <div id="psp-error" style="color:#dc3545; font-size:12px; display:none;"></div>
           <button
             id="psp-add-btn"
-            type="button"
-            style="align-self:flex-start; padding:7px 18px; background:#4285f4; color:#fff; border:none; border-radius:4px; font-size:14px; font-family:inherit; cursor:pointer;"
-          >افزودن</button>
+            type="button" class="penman-btn" style="background:#28a745; color:#fff;">Add link</button>
         </div>
 
+      </div>
+
         <!-- Footer actions -->
-        <div style="border-top:1px solid #E2E8F0; padding-top:12px; display:flex; justify-content:flex-end; gap:8px;">
-          <button id="psp-cancel-btn" type="button"
-            style="padding:7px 16px; background:#fff; color:#555; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; cursor:pointer;"
-          >انصراف</button>
-          <button id="psp-submit-btn" type="button"
-            style="padding:7px 18px; background:#28a745; color:#fff; border:none; border-radius:4px; font-size:14px; font-family:inherit; cursor:pointer;"
-          >ثبت نهایی</button>
-        </div>
+      <div class="penman-modal-footer">
+          <button id="psp-cancel-btn" type="button" class="penman-btn">Cancel</button>
+          <button id="psp-submit-btn" type="button" class="penman-btn penman-btn-primary">insert</button>
       </div>
     `;
   }
@@ -126,11 +121,15 @@ export function setupSuggestedPostsPlugin(editor) {
                 </div>
               </div>
               <button class="psp-edit-btn" data-id="${escapeHtml(item.id)}" type="button"
-                title="ویرایش"
-                style="background:none; border:none; cursor:pointer; padding:4px; color:#4285f4; font-size:16px; line-height:1; flex-shrink:0;">✏️</button>
-              <button class="psp-delete-btn" data-id="${escapeHtml(item.id)}" type="button"
-                title="حذف"
-                style="background:none; border:none; cursor:pointer; padding:4px; color:#dc3545; font-size:16px; line-height:1; flex-shrink:0;">🗑</button>
+                title="Edite"
+                style="background:none; border:none; cursor:pointer; padding:4px; color:#4285f4; font-size:16px; line-height:1; flex-shrink:0;">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-pencil-icon lucide-pencil"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button class="psp-delete-btn" data-id="${escapeHtml(item.id)}" type="button"
+                title="Remove"
+                style="background:none; border:none; cursor:pointer; padding:4px; color:#dc3545; font-size:16px; line-height:1; flex-shrink:0;">
+                  <svg  width="18" height="18" viewBox="0 0 24 24" fill="none"  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-trash-icon lucide-trash"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
             </li>
           `).join('')}
         </ul>
@@ -186,7 +185,7 @@ export function setupSuggestedPostsPlugin(editor) {
           items[idx] = { id: editingId, title, url };
         }
         editingId = null;
-        addBtn.textContent = 'افزودن';
+        addBtn.textContent = 'insert';
         addBtn.style.background = '#4285f4';
       } else {
         // Add new item
@@ -264,7 +263,7 @@ export function setupSuggestedPostsPlugin(editor) {
       if (urlInput)   urlInput.value   = '';
       if (titleInput) titleInput.value = '';
       if (addBtn) {
-        addBtn.textContent = 'افزودن';
+        addBtn.textContent = 'insert';
         addBtn.style.background = '#4285f4';
       }
     }
@@ -311,7 +310,7 @@ export function setupSuggestedPostsPlugin(editor) {
 
     const html = `
       <div class="penman-suggested-posts"
-           style="border:1px solid #E2E8F0; border-radius:6px; padding:12px 16px; margin:12px 0; background:#F8FAFC; direction:rtl;">
+           style="border:1px solid #E2E8F0; border-radius:6px; padding:12px 16px; margin:12px 0; background:#F8FAFC; direction:ltr;">
         <div style="font-size:13px; font-weight:700; color:#374151; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #E2E8F0;">
           مطالب پیشنهادی
         </div>

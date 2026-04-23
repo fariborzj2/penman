@@ -150,7 +150,45 @@ export function setupBlockTypePlugin(editor) {
       blocksToStyle.forEach(unwrapBlock);
       const togglingOff = targetWrapperFound && !nonTargetWrapperFound;
 
-      if (isWrapper && unwrappedBlocks.length > 0) {
+      if (sel.isCollapsed && unwrappedBlocks.length === 0 && !isWrapper) {
+          let node = sel.anchorNode;
+          if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+          let changed = false;
+          while (node && node !== editor.editableArea) {
+             if (node.tagName && ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6'].includes(node.tagName.toUpperCase())) {
+                 if (node.tagName.toLowerCase() !== blockDef.cmd.toLowerCase()) {
+                     const newBlock = document.createElement(blockDef.cmd);
+                     while (node.firstChild) {
+                         newBlock.appendChild(node.firstChild);
+                     }
+                     node.parentNode.replaceChild(newBlock, node);
+                     
+                     // Restore selection accurately
+                     const newRange = document.createRange();
+                     // Use the original text node and offset instead of collapsing to true
+                     try {
+                         newRange.setStart(originalStartContainer, originalStartOffset);
+                         newRange.setEnd(originalEndContainer, originalEndOffset);
+                     } catch(e) {
+                         // Fallback safely if nodes changed
+                         newRange.selectNodeContents(newBlock);
+                         newRange.collapse(false);
+                     }
+                     sel.removeAllRanges();
+                     sel.addRange(newRange);
+                     blocksToStyle.push(newBlock);
+                 } else {
+                     blocksToStyle.push(node);
+                 }
+                 changed = true;
+                 break;
+             }
+             node = node.parentNode;
+          }
+          if (!changed) {
+              document.execCommand('formatBlock', false, blockDef.cmd);
+          }
+      } else if (isWrapper && unwrappedBlocks.length > 0) {
         let wrapper = null;
         if (!togglingOff) {
           // Wrapper logic: create one parent wrapper for all selected blocks
@@ -194,7 +232,9 @@ export function setupBlockTypePlugin(editor) {
            sel.addRange(newRange);
         }
 
-        document.execCommand('formatBlock', false, blockDef.cmd);
+        if (!(sel.isCollapsed && unwrappedBlocks.length === 0 && !isWrapper)) {
+            document.execCommand('formatBlock', false, blockDef.cmd);
+        }
 
         // Re-calculate blocks after execCommand
         const selAfter = window.getSelection();

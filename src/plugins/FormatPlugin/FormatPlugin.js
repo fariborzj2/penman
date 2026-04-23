@@ -80,8 +80,6 @@ export function setupFormatPlugin(editor) {
     // 4. Remove empty tags (unwrap them to preserve markers/spans)
     Array.from(rootNode.querySelectorAll(tagSelector)).forEach(el => {
       if (!el.parentNode) return;
-      // Only contains whitespace or nothing, AND has no text content
-      // Note: textContent ignores elements like spans, so an empty tag with a marker span will have textContent === ''
       if (el.textContent.trim() === '') {
         while(el.firstChild) {
            el.parentNode.insertBefore(el.firstChild, el);
@@ -91,13 +89,85 @@ export function setupFormatPlugin(editor) {
     });
   }
 
+  // Pending formatting state
+  editor._pendingFormats = new Set();
+
+  editor.editableArea.addEventListener('keydown', (e) => {
+    // Only intercept character typing
+    if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey && editor._pendingFormats.size > 0) {
+      const sel = window.getSelection();
+      if (!sel || !sel.isCollapsed) return;
+
+      e.preventDefault();
+      
+      let node = document.createTextNode(e.key);
+      let wrapper = null;
+      let innerMost = null;
+
+      // Create formatting wrappers
+      Array.from(editor._pendingFormats).forEach(format => {
+        const tagName = tagMap[format];
+        if (tagName) {
+          const el = document.createElement(tagName);
+          if (!wrapper) {
+            wrapper = el;
+            innerMost = el;
+          } else {
+            innerMost.appendChild(el);
+            innerMost = el;
+          }
+        }
+      });
+
+      if (wrapper) {
+        innerMost.appendChild(node);
+        const range = sel.getRangeAt(0);
+        range.insertNode(wrapper);
+        range.setStartAfter(node);
+        range.setEndAfter(node);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+
+      editor._pendingFormats.clear();
+      editor.emit('change', editor.getContent());
+    } else if (e.key === 'Backspace' || e.key === 'Delete' || e.key.startsWith('Arrow')) {
+       // Clear pending formats on navigation or deletion
+       editor._pendingFormats.clear();
+    }
+  });
+
+  // Clear pending formats if selection changes by clicking
+  editor.editableArea.addEventListener('mousedown', () => {
+    editor._pendingFormats.clear();
+  });
+
   formats.forEach(format => {
     editor.commands.register(format, {
       queryState: (ed) => {
+        if (ed._pendingFormats.has(format)) return true;
         return document.queryCommandState(format);
       },
       execute: (ed) => {
-        // Core formatting function handling toggle and normalization
+        const sel = window.getSelection();
+        if (sel && sel.isCollapsed) {
+           if (ed._pendingFormats.has(format)) {
+               ed._pendingFormats.delete(format);
+           } else {
+               // If the cursor is already inside the format natively, we should un-format it.
+               if (document.queryCommandState(format)) {
+                  document.execCommand(format); // native toggle off for collapsed
+               } else {
+                  ed._pendingFormats.add(format);
+               }
+           }
+           
+           // Force UI update
+           ed.emit('selectionChange');
+           return;
+        }
+
+        // Core formatting function handling toggle and normalization for non-collapsed
         document.execCommand(format);
         
         // Ensure DOM structure is strictly normalized
