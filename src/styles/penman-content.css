@@ -180,3 +180,32 @@ figure.penman-selected-image {
   border-radius: 4px;
   margin-bottom: 15px;
 }
+
+/* penman suggested posts */
+.penman-suggested-posts {
+  border: 1px solid rgb(226, 232, 240);
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 12px 0px; 
+  background: rgb(248, 250, 252); 
+  direction: rtl; 
+  cursor: pointer; 
+  user-select: none; 
+  outline: none;
+}
+.penman-suggested-posts-header {
+  font-size:13px; 
+  font-weight:700; 
+  color:#374151; 
+  margin-bottom:8px; 
+  padding-bottom:6px; 
+  border-bottom:1px solid #E2E8F0;
+}
+.penman-suggested-posts-list {
+  list-style: none;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.penman-suggested-posts-list li:last-child {
+  margin-bottom: 0 !important;
+}
