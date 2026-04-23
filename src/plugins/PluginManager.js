@@ -13,6 +13,7 @@ import { setupColorPlugin } from './ColorPlugin/index.js';
 import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 import { setupDraftPlugin } from './DraftPlugin/index.js';
 import { setupDirectionPlugin } from './DirectionPlugin/index.js';
+import { setupSuggestedPostsPlugin } from './Suggestedpostsplugin.js';
 
 export const PluginManager = {
   plugins: {
@@ -31,6 +32,7 @@ export const PluginManager = {
     sourcecode: setupSourceCodePlugin,
     draft: setupDraftPlugin,
     direction: setupDirectionPlugin,
+    suggestedposts: setupSuggestedPostsPlugin,
   },
 
   add(name, setup) {

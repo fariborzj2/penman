@@ -14,8 +14,9 @@ describe('FloatingUI', () => {
     container = document.createElement('div');
     document.body.appendChild(container);
     fakeEditor = {
-      container: container
+      container: container,
     };
+    container.getBoundingClientRect = () => ({ top: 0, bottom: 100, left: 0, right: 100, width: 100, height: 100 });
     floatingUI = new FloatingUI(fakeEditor);
   });
 

@@ -28,6 +28,7 @@ export class IconProvider {
       textcolor: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 18h18v3H3z" ></path><path fill-rule="evenodd" d="M8.7 16h-.8a.5.5 0 0 1-.5-.6l2.7-9c.1-.3.3-.4.5-.4h2.8c.2 0 .4.1.5.4l2.7 9a.5.5 0 0 1-.5.6h-.8a.5.5 0 0 1-.4-.4l-.7-2.2c0-.3-.3-.4-.5-.4h-3.4c-.2 0-.4.1-.5.4l-.7 2.2c0 .3-.2.4-.4.4Zm2.6-7.6-.6 2a.5.5 0 0 0 .5.6h1.6a.5.5 0 0 0 .5-.6l-.6-2c0-.3-.3-.4-.5-.4h-.4c-.2 0-.4.1-.5.4Z"></path></g></svg>',
       highlight: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path fill-rule="evenodd" d="M3 18h18v3H3z" fill="#000000"></path><path fill-rule="evenodd" d="M7.7 16.7H3l3.3-3.3-.7-.8L10.2 8l4 4.1-4 4.2c-.2.2-.6.2-.8 0l-.6-.7-1.1 1.1zm5-7.5L11 7.4l3-2.9a2 2 0 0 1 2.6 0L18 6c.7.7.7 2 0 2.7l-2.9 2.9-1.8-1.8-.5-.6"></path></svg>',
       sourcecode: '<svg width="20" height="20" focusable="false" viewBox="0 0 24 24"><path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" fill-rule="evenodd"></path></svg>',
+      suggestedposts: '<svg width="20" height="20" viewBox="0 0 24 24" focusable="false"><path d="M3 5h12M3 10h9M3 15h6M17 13l4 4-4 4M21 17h-8" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round"/></svg>',
       };
   }
 
