@@ -10,10 +10,10 @@ export class Sanitizer {
       u: [],
       strong: [],
       em: [],
-      a: ["href", "target", "rel"],
-      ul: [],
-      ol: [],
-      li: [],
+      a: ["href", "target", "rel", "class"],
+      ul: ["class"],
+      ol: ["class"],
+      li: ["class"],
       br: [],
       hr: [],
       mark: [],
@@ -37,7 +37,7 @@ export class Sanitizer {
       th: ["rowspan", "colspan", "style", "data-cell-id"],
       td: ["rowspan", "colspan", "style", "data-cell-id"],
       caption: [],
-      div: ["class", "style"],
+      div: ["class"],
       span: ["style"]
     };
 
@@ -62,7 +62,12 @@ export class Sanitizer {
   }
 
   _buildDynamicWhitelist() {
-    this.allowedClassesByTag = {};
+    this.allowedClassesByTag = {
+        div: new Set(['penman-suggested-posts', 'penman-suggested-posts-title']),
+        ul: new Set(['penman-suggested-posts-list']),
+        li: new Set(['penman-suggested-posts-item']),
+        a: new Set(['penman-suggested-posts-link'])
+    };
     this.allowedStylesByTagClass = {};
 
     if (!this.editor || !this.editor.options) return;

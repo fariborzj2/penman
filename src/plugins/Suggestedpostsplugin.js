@@ -299,9 +299,9 @@ export function setupSuggestedPostsPlugin(editor) {
     if (items.length === 0) return;
 
     const listItems = items.map(item => `
-      <li style="margin:0 0 6px 0; padding:0;">
+      <li class="penman-suggested-posts-item">
         <a href="${escapeHtml(item.url)}"
-           style="color:#0052cc; text-decoration:none; font-size:14px; line-height:1.5;"
+           class="penman-suggested-posts-link"
            target="_blank"
            rel="noopener noreferrer">
           ${escapeHtml(item.title)}
@@ -310,12 +310,11 @@ export function setupSuggestedPostsPlugin(editor) {
     `).join('');
 
     const html = `
-      <div class="penman-suggested-posts"
-           style="border:1px solid #E2E8F0; border-radius:6px; padding:12px 16px; margin:12px 0; background:#F8FAFC; direction:rtl;">
-        <div style="font-size:13px; font-weight:700; color:#374151; margin-bottom:8px; padding-bottom:6px; border-bottom:1px solid #E2E8F0;">
+      <div class="penman-suggested-posts">
+        <div class="penman-suggested-posts-title">
           مطالب پیشنهادی
         </div>
-        <ul style="list-style:none; margin:0; padding:0;">
+        <ul class="penman-suggested-posts-list">
           ${listItems}
         </ul>
       </div>
