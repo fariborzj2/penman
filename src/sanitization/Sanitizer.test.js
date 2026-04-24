@@ -43,7 +43,8 @@ describe('Sanitizer', () => {
   it('should preserve table and heading structure when rendering sanitized HTML', () => {
     const html = '<h2>Title</h2><table border="1"><tbody><tr><td data-cell-id="1">A</td></tr></tbody></table>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<h2>Title</h2><table><thead><tr><th data-cell-id="1">A</th></tr></thead><tbody></tbody></table>');
+    // Use regex to account for the auto-generated data-table-id
+    expect(clean).toMatch(/<h2>Title<\/h2><table data-table-id="t-[a-z0-9]+"><thead><tr><th data-cell-id="1">A<\/th><\/tr><\/thead><tbody><\/tbody><\/table>/);
   });
 
   it('should handle complex nested malicious structures safely', () => {
@@ -204,5 +205,31 @@ describe('Sanitizer Ultimate Strictness', () => {
     // Exact match: div + warning-block
     const html3 = '<div class="warning-block" style="color: red"><p>Text</p></div>';
     expect(sanitizer.sanitize(html3)).toBe('<div class="warning-block" style="color: red"><p>Text</p></div>');
+  });
+});
+
+describe('Sanitizer table ID generation', () => {
+  let sanitizer;
+
+  beforeEach(() => {
+    sanitizer = new Sanitizer();
+  });
+
+  it('should generate missing data-table-id and data-cell-id', () => {
+    const html = '<table><tbody><tr><td>Cell 1</td><td>Cell 2</td></tr></tbody></table>';
+    const clean = sanitizer.sanitize(html);
+
+    // Check for table ID
+    expect(clean).toMatch(/<table data-table-id="t-[a-z0-9]+"/);
+    // Check for cell IDs (now th because of normalization promoting first row)
+    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+">Cell 1<\/th>/);
+    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+">Cell 2<\/th>/);
+  });
+
+  it('should preserve existing data-table-id and data-cell-id', () => {
+    const html = '<table data-table-id="t-existing"><tbody><tr><td data-cell-id="c-existing">Cell</td></tr></tbody></table>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).toContain('data-table-id="t-existing"');
+    expect(clean).toContain('data-cell-id="c-existing"');
   });
 });

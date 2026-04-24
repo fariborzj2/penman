@@ -21,6 +21,10 @@ export class TableGrid {
 
     const rows = Array.from(this.table.querySelectorAll('tr'));
 
+    if (!this.table.getAttribute('data-table-id')) {
+      this.table.setAttribute('data-table-id', 't-' + Math.random().toString(36).substr(2, 9));
+    }
+
     rows.forEach((tr, rIndex) => {
       if (!this.grid[rIndex]) this.grid[rIndex] = [];
 
