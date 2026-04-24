@@ -160,7 +160,7 @@ figure.penman-selected-image {
 }
 
 /* Suggested Posts Plugin */
-.penman-suggested-posts {
+.penman-suggested-posts-wrapper {
   border: 1px solid #E2E8F0;
   border-radius: 6px;
   padding: 12px 16px;
@@ -169,7 +169,7 @@ figure.penman-selected-image {
   direction: rtl;
 }
 
-.penman-suggested-posts-title {
+.penman-suggested-posts-wrapper-title {
   font-size: 13px;
   font-weight: 700;
   color: #374151;
@@ -178,18 +178,18 @@ figure.penman-selected-image {
   border-bottom: 1px solid #E2E8F0;
 }
 
-.penman-suggested-posts-list {
+.penman-suggested-posts-wrapper-list {
   list-style: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-.penman-suggested-posts-item {
+.penman-suggested-posts-wrapper-item {
   margin: 0 0 6px 0 !important;
   padding: 0 !important;
 }
 
-.penman-suggested-posts-link {
+.penman-suggested-posts-wrapper-link {
   color: #0052cc !important;
   text-decoration: none !important;
   font-size: 14px !important;

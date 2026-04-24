@@ -30,7 +30,7 @@ export function setupSuggestedPostsPlugin(editor) {
   function hideToolbar() {
     if (floatingUI) floatingUI.hide();
     currentSelectedBlock = null;
-    editor.editableArea.querySelectorAll('.penman-suggested-posts').forEach(el => {
+    editor.editableArea.querySelectorAll('.penman-suggested-posts-wrapper').forEach(el => {
       el.style.outline = 'none';
     });
   }
@@ -39,7 +39,7 @@ export function setupSuggestedPostsPlugin(editor) {
   function createFloatingUI() {
     floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
     const html = `
-      <div class="penman-suggested-posts-toolbar" style="background: white; border: 1px solid #e0e0e0; padding: 4px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; direction: rtl;">
+      <div class="penman-suggested-posts-wrapper-toolbar" style="background: white; border: 1px solid #e0e0e0; padding: 4px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative; direction: rtl;">
         <div class="penman-floating-tail-inner" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
         <div class="penman-floating-tail-outer" style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
 
@@ -95,7 +95,7 @@ export function setupSuggestedPostsPlugin(editor) {
   });
 
   editor.on('nodeSelected', (node) => {
-    if (node && node.classList.contains('penman-suggested-posts')) {
+    if (node && node.classList.contains("penman-suggested-posts-wrapper")) {
       currentSelectedBlock = node;
       if (!floatingUI) createFloatingUI();
       floatingUI.setAnchor(node);
@@ -253,14 +253,14 @@ export function setupSuggestedPostsPlugin(editor) {
   function insertBlock() {
     if (items.length === 0) return;
     const listItems = items.map(item => `
-      <li class="penman-suggested-posts-item">
-        <a href="${escapeHtml(item.url)}" class="penman-suggested-posts-link" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
+      <li class="penman-suggested-posts-wrapper-item">
+        <a href="${escapeHtml(item.url)}" class="penman-suggested-posts-wrapper-link" target="_blank" rel="noopener noreferrer">${escapeHtml(item.title)}</a>
       </li>`).join('');
 
     const html = `
-      <div class="penman-suggested-posts" contenteditable="false">
-        <div class="penman-suggested-posts-title">Suggested posts</div>
-        <ul class="penman-suggested-posts-list">${listItems}</ul>
+      <div class="penman-suggested-posts-wrapper" contenteditable="false">
+        <div class="penman-suggested-posts-wrapper-title">Suggested posts</div>
+        <ul class="penman-suggested-posts-wrapper-list">${listItems}</ul>
       </div>
     `;
 
