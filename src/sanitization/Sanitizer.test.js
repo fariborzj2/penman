@@ -44,7 +44,7 @@ describe('Sanitizer', () => {
     const html = '<h2>Title</h2><table border="1"><tbody><tr><td data-cell-id="1">A</td></tr></tbody></table>';
     const clean = sanitizer.sanitize(html);
     // Use regex to account for the auto-generated data-table-id
-    expect(clean).toMatch(/<h2>Title<\/h2><table data-table-id="t-[a-z0-9]+"><thead><tr><th data-cell-id="1">A<\/th><\/tr><\/thead><tbody><\/tbody><\/table>/);
+    expect(clean).toMatch(/<h2>Title<\/h2><table data-table-id="t-[a-z0-9]+"><thead><tr><th data-cell-id="1"><p>A<\/p><\/th><\/tr><\/thead><tbody><\/tbody><\/table>/);
   });
 
   it('should handle complex nested malicious structures safely', () => {
@@ -222,8 +222,8 @@ describe('Sanitizer table ID generation', () => {
     // Check for table ID
     expect(clean).toMatch(/<table data-table-id="t-[a-z0-9]+"/);
     // Check for cell IDs (now th because of normalization promoting first row)
-    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+">Cell 1<\/th>/);
-    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+">Cell 2<\/th>/);
+    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+"><p>Cell 1<\/p><\/th>/);
+    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+"><p>Cell 2<\/p><\/th>/);
   });
 
   it('should preserve existing data-table-id and data-cell-id', () => {

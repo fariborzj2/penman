@@ -79,6 +79,7 @@
 - `SPLIT_CELL(tableId: string, cellId: string)`
 - `SET_TABLE_PROPERTIES(tableId: string, properties: Object)`
 - `SET_CELL_PROPERTY(tableId: string, cellIds: string[], property: string, value: string)` — history snapshot می‌گیرد
+- `SELECT_TABLE()` — انتخاب کل گره جدول برای عملیات سیستمی (Copy/Cut/Delete)
 
 ---
 
@@ -97,4 +98,5 @@
 با ورود فوکوس به جدول ظاهر می‌شود. دسترسی سریع به:
 - درج ردیف در پایین، درج ستون در راست
 - Background Color (با ColorPicker — اکنون Undoable است)
+- انتخاب کل جدول (Select Table)
 - حذف جدول

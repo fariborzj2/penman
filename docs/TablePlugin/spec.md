@@ -10,6 +10,7 @@ UNKNOWN
 4. Dynamically evaluates `currentAlign`, `currentDir`, `currentWidth`, `currentBorder`, `currentBorderColor`, `currentCellPadding`, and `currentCellSpacing`.
 5. Re-applies parameters natively using `SET_TABLE_PROPERTIES` inside `TableTransaction`.
 6. Executes internal validations mapping strict attributes natively to table configurations.
+7. Registers `SELECT_TABLE` command to programmatically select the entire table node for system operations.
 
 ## State Changes
 - Invokes `SET_TABLE_PROPERTIES` modifying nested `table` styles and attributes natively.
