@@ -63,10 +63,12 @@ export class Sanitizer {
 
   _buildDynamicWhitelist() {
     this.allowedClassesByTag = {
-        div: new Set(['penman-suggested-posts', 'penman-suggested-posts-title']),
+        div: new Set(['penman-suggested-posts-wrapper', 'penman-suggested-posts-title', 'penman-image-wrapper']),
         ul: new Set(['penman-suggested-posts-list']),
         li: new Set(['penman-suggested-posts-item']),
-        a: new Set(['penman-suggested-posts-link'])
+        a: new Set(['penman-suggested-posts-link']),
+        figure: new Set(['penman-image', 'penman-align-center', 'penman-align-left', 'penman-align-right']),
+        figcaption: new Set(['penman-image-caption'])
     };
     this.allowedStylesByTagClass = {};
 

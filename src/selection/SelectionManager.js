@@ -97,10 +97,14 @@ export class SelectionManager {
   selectNode(node) {
     this.clearNodeSelection();
 
-    // Clear browser selection
+    // Perform native browser selection of the node
+    // This allows browser Copy/Cut commands to work natively.
     const sel = this.getSelection();
     if (sel) {
+      const range = document.createRange();
+      range.selectNode(node);
       sel.removeAllRanges();
+      sel.addRange(range);
     }
 
     this.selectedNode = node;

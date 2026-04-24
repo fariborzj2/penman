@@ -166,12 +166,13 @@ export class Editor extends EventEmitter {
     });
 
     this.editableArea.addEventListener('mousedown', (e) => {
-      const widget = e.target.closest('table, figure.penman-image, .penman-suggested-posts');
+      const widget = e.target.closest('table, figure.penman-image, .penman-suggested-posts-wrapper');
       if (widget) {
         // If clicking inside an editable/interactive part, don't select the whole node
         const isInteractive = e.target.closest('figcaption, td, th, a');
         if (!isInteractive) {
           e.preventDefault();
+          this.editableArea.focus(); // Ensure focus for keyboard events
           this.selection.selectNode(widget);
           return;
         }
@@ -536,6 +537,44 @@ export class Editor extends EventEmitter {
    */
   insertContent(html) {
     this.focus();
+
+    // Check if we are inserting a block-level widget into an empty paragraph
+    const sel = window.getSelection();
+    if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
+        const range = sel.getRangeAt(0);
+        let node = range.startContainer;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+        const isBlockWidget = html.trim().startsWith('<table') ||
+                            html.trim().startsWith('<figure') ||
+                            html.trim().includes('penman-suggested-posts-wrapper');
+
+        if (isBlockWidget && node.tagName === 'P' && node.parentNode === this.editableArea && node.textContent.trim() === '') {
+            const temp = document.createElement('div');
+            temp.innerHTML = html.trim();
+            const fragment = document.createDocumentFragment();
+            while(temp.firstChild) fragment.appendChild(temp.firstChild);
+
+            const firstChild = fragment.firstChild;
+            node.parentNode.replaceChild(fragment, node);
+
+            // Set selection after inserted content
+            const newRange = document.createRange();
+            newRange.setStartAfter(firstChild);
+            newRange.collapse(true);
+            sel.removeAllRanges();
+            sel.addRange(newRange);
+
+            if (this.history) {
+                this.history.pushImmediate();
+            }
+            this._syncToTextarea();
+            this.emit('change', this.getContent());
+            this.emit('selectionChange');
+            return;
+        }
+    }
+
     // Using execCommand 'insertHTML' is the standard way to insert content at cursor
     // while maintaining undo history and selection in a contentEditable element.
     document.execCommand('insertHTML', false, html);
@@ -573,7 +612,10 @@ export class Editor extends EventEmitter {
     }
 
     event.preventDefault();
-    clipboardData.setData('text/html', this.sanitizer.sanitize(html));
+    // We do NOT sanitize on copy. Sanitization happens on paste.
+    // This ensures internal structures like class names or wrapper divs are preserved
+    // when copying and pasting within the same editor.
+    clipboardData.setData('text/html', html);
     clipboardData.setData('text/plain', text);
 
     if (event.type === 'cut') {
