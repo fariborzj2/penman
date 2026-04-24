@@ -161,7 +161,29 @@ export class Editor extends EventEmitter {
       this.emit('selectionChange');
     });
 
-    this.on('selectionChange', () => this._updateFooter());
+    this.on('selectionChange', () => {
+      this._updateFooter();
+    });
+
+    this.editableArea.addEventListener('mousedown', (e) => {
+      const widget = e.target.closest('table, figure.penman-image, .penman-suggested-posts');
+      if (widget) {
+        // If clicking inside an editable/interactive part, don't select the whole node
+        const isInteractive = e.target.closest('figcaption, td, th, a');
+        if (!isInteractive) {
+          e.preventDefault();
+          this.selection.selectNode(widget);
+          return;
+        }
+      }
+
+      // If clicking elsewhere, we might want to clear node selection,
+      // but only if we are not clicking inside the current selected node.
+      if (this.selection.getSelectedNode() && !this.selection.getSelectedNode().contains(e.target)) {
+        this.selection.clearNodeSelection();
+      }
+    });
+
     this.editableArea.addEventListener('keyup', (e) => {
       // Ignore modifier keys to reduce noise
       if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
@@ -186,6 +208,22 @@ export class Editor extends EventEmitter {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
       const isRedo = (isMac ? e.metaKey && e.shiftKey && e.key.toLowerCase() === 'z' : (e.ctrlKey && e.key.toLowerCase() === 'y'));
+
+      const selectedNode = this.selection.getSelectedNode();
+
+      if (selectedNode) {
+        if (e.key === 'Backspace' || e.key === 'Delete') {
+          e.preventDefault();
+          this._deleteSelectedContent();
+          return;
+        }
+
+        if (e.key.startsWith('Arrow')) {
+          this.selection.clearNodeSelection();
+          // Allow native arrow navigation to take over from here
+          return;
+        }
+      }
 
       if (isUndo) {
         e.preventDefault();
@@ -432,8 +470,9 @@ export class Editor extends EventEmitter {
       }
     });
 
-    // 3. Intercept copy to normalize HTML/plain text payloads for same-editor copy/paste
+    // 3. Intercept copy/cut to normalize HTML/plain text payloads for same-editor copy/paste
     this.editableArea.addEventListener('copy', (e) => this._handleCopy(e));
+    this.editableArea.addEventListener('cut', (e) => this._handleCopy(e));
 
     // 4. Intercept paste to prevent un-sanitized and history-polluting native pastes
     this.editableArea.addEventListener('paste', (e) => {
@@ -514,19 +553,89 @@ export class Editor extends EventEmitter {
     const clipboardData = (event.clipboardData || window.clipboardData);
     if (!clipboardData) return;
 
-    const selection = window.getSelection();
-    if (!selection || selection.rangeCount === 0) return;
+    let html = '';
+    let text = '';
 
-    const range = selection.getRangeAt(0).cloneRange();
-    const container = document.createElement('div');
-    container.appendChild(range.cloneContents());
+    const selectedNode = this.selection.getSelectedNode();
+    if (selectedNode) {
+        html = selectedNode.outerHTML;
+        text = selectedNode.textContent || '';
+    } else {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
 
-    const html = container.innerHTML;
-    const text = container.textContent || '';
+        const range = selection.getRangeAt(0).cloneRange();
+        const container = document.createElement('div');
+        container.appendChild(range.cloneContents());
+
+        html = container.innerHTML;
+        text = container.textContent || '';
+    }
 
     event.preventDefault();
     clipboardData.setData('text/html', this.sanitizer.sanitize(html));
     clipboardData.setData('text/plain', text);
+
+    if (event.type === 'cut') {
+        this._deleteSelectedContent();
+    }
+  }
+
+  /**
+   * Deletes the currently selected content (either a node or a range)
+   * @private
+   */
+  _deleteSelectedContent() {
+    const selectedNode = this.selection.getSelectedNode();
+
+    if (selectedNode) {
+        const parent = selectedNode.parentNode;
+        const next = selectedNode.nextSibling || selectedNode.previousSibling;
+
+        selectedNode.remove();
+        this.selection.clearNodeSelection();
+
+        if (next) {
+            const range = document.createRange();
+            range.setStart(next, 0);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        } else if (parent) {
+            const p = document.createElement('p');
+            p.innerHTML = '<br>';
+            parent.appendChild(p);
+            const range = document.createRange();
+            range.setStart(p, 0);
+            range.collapse(true);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+        }
+    } else {
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        range.deleteContents();
+
+        // Ensure some content exists to prevent collapse
+        if (this.editableArea.innerHTML.trim() === '') {
+            this.editableArea.innerHTML = '<p><br></p>';
+            const range = document.createRange();
+            range.setStart(this.editableArea.firstChild, 0);
+            range.collapse(true);
+            selection.removeAllRanges();
+            selection.addRange(range);
+        }
+    }
+
+    if (this.history) {
+        this.history.pushImmediate();
+    }
+    this.emit('change', this.getContent());
+    this._syncToTextarea();
   }
 
   _escapeText(text) {

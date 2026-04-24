@@ -94,23 +94,16 @@ export function setupSuggestedPostsPlugin(editor) {
     },
   });
 
-  editor.editableArea.addEventListener('click', (e) => {
-    const block = e.target.closest('.penman-suggested-posts');
-    if (block) {
-      e.preventDefault(); e.stopPropagation();
-      currentSelectedBlock = block;
+  editor.on('nodeSelected', (node) => {
+    if (node && node.classList.contains('penman-suggested-posts')) {
+      currentSelectedBlock = node;
       if (!floatingUI) createFloatingUI();
-      floatingUI.setAnchor(block);
+      floatingUI.setAnchor(node);
       floatingUI.show();
-      
-      editor.editableArea.querySelectorAll('.penman-suggested-posts').forEach(el => el.style.outline = 'none');
-      block.style.outline = '3px solid #007bff';
     } else {
       hideToolbar();
     }
   });
-
-  editor.editableArea.addEventListener('keydown', hideToolbar);
 
   // ── مودال (Modal) ─────────────────────────────────────────────────────────
   function openModal() {

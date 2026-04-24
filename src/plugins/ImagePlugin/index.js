@@ -74,41 +74,16 @@ export function setupImagePlugin(editor) {
        }
     });
     
-    // Override hide to clear outline
-    const originalHide = floatingUI.hide.bind(floatingUI);
-    floatingUI.hide = () => {
-        if (floatingUI.anchorNode) {
-            floatingUI.anchorNode.classList.remove('penman-selected-image');
-            const img = floatingUI.anchorNode.querySelector('img');
-            if (img) img.style.outline = 'none';
-        }
-        originalHide();
-    };
   }
 
-  root.addEventListener('click', (e) => {
-      const isCaption = e.target.closest('figcaption');
-      const figure = e.target.closest('figure.penman-image');
-      
-      // Clear previous outline if any
-      const previousFigures = root.querySelectorAll('figure.penman-image.penman-selected-image');
-      previousFigures.forEach(fig => {
-          fig.classList.remove('penman-selected-image');
-          const img = fig.querySelector('img');
-          if (img) img.style.outline = 'none';
-      });
-
-      if (figure && !isCaption) {
-          if (!floatingUI) createFloatingUI();
-          floatingUI.setAnchor(figure);
-          floatingUI.show();
-          
-          figure.classList.add('penman-selected-image');
-          const img = figure.querySelector('img');
-          if (img) img.style.outline = '3px solid #007bff';
-      } else {
-          if (floatingUI) floatingUI.hide();
-      }
+  editor.on('nodeSelected', (node) => {
+    if (node && node.tagName === 'FIGURE' && node.classList.contains('penman-image')) {
+      if (!floatingUI) createFloatingUI();
+      floatingUI.setAnchor(node);
+      floatingUI.show();
+    } else {
+      if (floatingUI) floatingUI.hide();
+    }
   });
 
   // End of Floating UI logic
@@ -138,59 +113,12 @@ export function setupImagePlugin(editor) {
                 if (currentBlock && currentBlock.previousElementSibling && currentBlock.previousElementSibling.tagName === 'FIGURE' && currentBlock.previousElementSibling.classList.contains('penman-image')) {
                     e.preventDefault();
                     
-                    // Simulate selecting the figure
+                    // Select the figure using the core selection manager
                     const figure = currentBlock.previousElementSibling;
-                    const img = figure.querySelector('img');
-                    if (img) {
-                        img.click();
-                        return; // Stop further execution
-                    }
+                    editor.selection.selectNode(figure);
+                    return;
                 }
             }
-        }
-    }
-
-    // Image Deletion Handler
-    if ((e.key === 'Delete' || e.key === 'Backspace') && floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
-        // Double check we are not typing inside the caption
-        let isInsideCaption = !!e.target.closest('figcaption');
-        if (!isInsideCaption) {
-            const sel = window.getSelection();
-            if (sel && sel.rangeCount > 0) {
-                let node = sel.getRangeAt(0).startContainer;
-                if (node.nodeType === 3) node = node.parentNode;
-                if (node && node.closest) {
-                    isInsideCaption = !!node.closest('figcaption');
-                }
-            }
-        }
-
-        if (!isInsideCaption) {
-            e.preventDefault();
-            const figure = floatingUI.anchorNode;
-            
-            // Move cursor out of figure before deleting
-            const nextNode = figure.nextElementSibling;
-            let targetNode = nextNode;
-            if (!targetNode) {
-                targetNode = document.createElement('p');
-                figure.parentNode.insertBefore(targetNode, figure.nextSibling);
-            }
-            
-            // Fix setRange TypeError
-            const sel = window.getSelection();
-            if (sel) {
-                const range = document.createRange();
-                range.setStart(targetNode, 0);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
-            }
-            
-            figure.remove();
-            floatingUI.hide();
-            editor.history.pushImmediate();
-            editor.emit('change', editor.getContent());
         }
     }
   });
