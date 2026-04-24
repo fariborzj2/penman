@@ -43,7 +43,7 @@ describe('Sanitizer', () => {
   it('should preserve table and heading structure when rendering sanitized HTML', () => {
     const html = '<h2>Title</h2><table border="1"><tbody><tr><td data-cell-id="1">A</td></tr></tbody></table>';
     const clean = sanitizer.sanitize(html);
-    expect(clean).toBe('<h2>Title</h2><table border="1"><tbody><tr><td data-cell-id="1">A</td></tr></tbody></table>');
+    expect(clean).toBe('<h2>Title</h2><table><thead><tr><th data-cell-id="1">A</th></tr></thead><tbody></tbody></table>');
   });
 
   it('should handle complex nested malicious structures safely', () => {
@@ -141,7 +141,7 @@ describe('Sanitizer Leak and Restructure tests', () => {
     const clean = sanitizer.sanitize(html);
     expect(clean).toContain('<ul><li>Item</li></ul>');
     expect(clean).toContain('<p>Intro');
-    expect(clean).toContain('<p> Outro</p>');
+    expect(clean).toContain('<p>Outro</p>');
   });
 
   it('should not leak custom option styles to other tags', () => {

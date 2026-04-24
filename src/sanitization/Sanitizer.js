@@ -29,7 +29,7 @@ export class Sanitizer {
       figure: ["data-alignment", "contenteditable", "data-penman-core"],
       figcaption: ["data-placeholder", "contenteditable"],
       img: ["src", "alt", "width", "height", "data-id"],
-      table: ["border", "bordercolor", "data-table-id", "contenteditable", "data-penman-core"],
+      table: ["data-table-id", "contenteditable", "data-penman-core"],
       thead: [],
       tbody: [],
       tfoot: [],
@@ -413,7 +413,56 @@ export class Sanitizer {
     this._fixBreaks(root);
     this._deduplicateFigures(root);
     this._mergeNestedSpans(root);
+    this._normalizeTableStructure(root);
     this._normalizeText(root);
+  }
+
+  _normalizeTableStructure(root) {
+    const tables = Array.from(root.querySelectorAll('table'));
+    tables.forEach(table => {
+      // Ensure thead exists using non-recursive checks to avoid nested table issues
+      let thead = Array.from(table.children).find(el => el.tagName.toLowerCase() === 'thead');
+      let tbody = Array.from(table.children).find(el => el.tagName.toLowerCase() === 'tbody');
+
+      if (!tbody) {
+        tbody = document.createElement('tbody');
+        const rows = Array.from(table.children).filter(el => el.tagName.toLowerCase() === 'tr');
+        rows.forEach(row => tbody.appendChild(row));
+        table.appendChild(tbody);
+      }
+
+      if (!thead) {
+        // Try to promote the first row of tbody to thead if it's not already there
+        const firstRow = Array.from(tbody.children).find(el => el.tagName.toLowerCase() === 'tr');
+        if (firstRow) {
+          thead = document.createElement('thead');
+          table.insertBefore(thead, tbody);
+          thead.appendChild(firstRow);
+
+          // Convert td to th in thead (only immediate children)
+          const cells = Array.from(firstRow.children).filter(el => el.tagName.toLowerCase() === 'td');
+          cells.forEach(td => {
+            const th = document.createElement('th');
+            // Copy attributes
+            Array.from(td.attributes).forEach(attr => th.setAttribute(attr.name, attr.value));
+            while (td.firstChild) th.appendChild(td.firstChild);
+            td.parentNode.replaceChild(th, td);
+          });
+        }
+      } else {
+        // If thead exists, ensure its cells are th
+        const rows = Array.from(thead.children).filter(el => el.tagName.toLowerCase() === 'tr');
+        rows.forEach(row => {
+          const cells = Array.from(row.children).filter(el => el.tagName.toLowerCase() === 'td');
+          cells.forEach(td => {
+            const th = document.createElement('th');
+            Array.from(td.attributes).forEach(attr => th.setAttribute(attr.name, attr.value));
+            while (td.firstChild) th.appendChild(td.firstChild);
+            td.parentNode.replaceChild(th, td);
+          });
+        });
+      }
+    });
   }
 
   /* Merge nested spans and remove redundant spans via style state pushdown */
@@ -480,18 +529,37 @@ export class Sanitizer {
 
     // Re-wrap text nodes with accumulated unified styles
     wrappers.forEach(({textNode, styles, classes}) => {
-        const span = document.createElement('span');
-            // Explicitly set the style string to avoid jsdom auto-converting hex to rgb
+        let currentNode = textNode;
+
+        if (styles['font-weight'] === 'bold') {
+            const strong = document.createElement('strong');
+            textNode.parentNode.insertBefore(strong, textNode);
+            strong.appendChild(textNode);
+            currentNode = strong;
+            delete styles['font-weight'];
+        }
+
+        if (styles['font-style'] === 'italic') {
+            const em = document.createElement('em');
+            currentNode.parentNode.insertBefore(em, currentNode);
+            em.appendChild(currentNode);
+            currentNode = em;
+            delete styles['font-style'];
+        }
+
+        if (Object.keys(styles).length > 0 || classes.size > 0) {
+            const span = document.createElement('span');
             const styleString = Object.keys(styles).map(k => `${k}: ${styles[k]}`).join('; ');
             if (styleString) {
                 span.setAttribute('style', styleString);
             }
 
-        if (classes.size > 0) {
-            span.className = Array.from(classes).join(' ');
+            if (classes.size > 0) {
+                span.className = Array.from(classes).join(' ');
+            }
+            currentNode.parentNode.insertBefore(span, currentNode);
+            span.appendChild(currentNode);
         }
-        textNode.parentNode.insertBefore(span, textNode);
-        span.appendChild(textNode);
     });
 
     // Merge adjacent identical spans
@@ -673,8 +741,37 @@ export class Sanitizer {
 
     let node;
     while ((node = walker.nextNode())) {
-      // Allow whitespace
-      node.nodeValue = node.nodeValue.replace(/\s{2,}/g, " ");
+      let text = node.nodeValue;
+
+      // 1. Basic whitespace normalization: collapse multiple spaces
+      text = text.replace(/\s{2,}/g, " ");
+
+      // 2. Persian Punctuation Normalization
+      // Remove spaces before punctuation
+      text = text.replace(/\s+([؟،.؛:!])/g, '$1');
+
+      // Ensure space after punctuation (if followed by text, and not followed by another punctuation like ...)
+      text = text.replace(/([؟،؛:!])([^\s؟،؛:!])/g, '$1 $2');
+      text = text.replace(/(\.)([^\s.\d؟،؛:!])/g, '$1 $2');
+
+      // 3. Handle Persian ZWNJ (نیم‌فاصله)
+      // Common cases: suffix "ها", "می" prefix
+      text = text.replace(/\s+(ها|تر|ترین|بندی|رسانی)(\s|$|[؟،.؛:!])/g, '\u200c$1$2');
+      text = text.replace(/(^|\s)(می|بی)\s+/g, '$1$2\u200c');
+      text = text.replace(/وب\s+گردی/g, 'وب\u200cگردی');
+
+      // 4. Block boundary trimming
+      const parent = node.parentNode;
+      if (parent && this.blockTags.has(parent.tagName.toLowerCase())) {
+          if (node === parent.firstChild) {
+              text = text.replace(/^\s+/, '');
+          }
+          if (node === parent.lastChild) {
+              text = text.replace(/\s+$/, '');
+          }
+      }
+
+      node.nodeValue = text;
     }
   }
 
