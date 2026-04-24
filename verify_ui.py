@@ -34,7 +34,7 @@ def wait_for_editor(page: Page):
 
 def clear_editor(page: Page):
     """محتوای ادیتور را پاک می‌کند."""
-    page.locator(".penman-editor-area").first.evaluate(
+    page.locator(".penman-editor-area").nth(1).evaluate(
         "node => node.innerHTML = '<p><br></p>'"
     )
 
@@ -45,16 +45,18 @@ def clear_editor(page: Page):
 
 def test_editor_svg_icons(page: Page):
     wait_for_editor(page)
-    toolbar = page.locator(".penman-toolbar").first
+    time.sleep(1)
+    toolbar = page.locator(".penman-wrapper").nth(1)
     expect(toolbar).to_be_visible()
-    bold_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-bold svg")
+    bold_btn = page.locator(".penman-wrapper").nth(1).locator(".penman-btn-bold svg")
     expect(bold_btn).to_be_visible()
     print("  ✓ SVG icons loaded")
 
 
 def test_editor_find_replace_e2e(page: Page):
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.fill("This is test. سَلام دنیا. سلام. س‌لام. Hello world!")
 
@@ -81,11 +83,12 @@ def test_editor_find_replace_e2e(page: Page):
 def test_editor_image_plugin_url_insert(page: Page):
     """درج تصویر از URL — بدون Mock."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     clear_editor(page)
 
-    page.locator(".penman-toolbar").first.locator(".penman-btn-image").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-image").click()
     modal = page.locator(".penman-modal")
     expect(modal).to_be_visible()
 
@@ -114,7 +117,8 @@ def test_editor_image_upload_real_server(page: Page):
         return
 
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     clear_editor(page)
 
@@ -136,7 +140,7 @@ def test_editor_image_upload_real_server(page: Page):
         img_path = Path(tmp_dir) / "test_upload.png"
         img_path.write_bytes(png_1x1)
 
-        page.locator(".penman-toolbar").first.locator(".penman-btn-image").click()
+        page.locator(".penman-wrapper").nth(1).locator(".penman-btn-image").click()
         modal = page.locator(".penman-modal")
         expect(modal).to_be_visible()
 
@@ -181,11 +185,12 @@ def test_editor_image_gallery_load(page: Page):
         return
 
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     clear_editor(page)
 
-    page.locator(".penman-toolbar").first.locator(".penman-btn-image").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-image").click()
     modal = page.locator(".penman-modal")
     expect(modal).to_be_visible()
 
@@ -214,13 +219,15 @@ def test_editor_image_gallery_load(page: Page):
 
 def test_editor_table_plugin_e2e(page: Page):
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    wrapper = page.locator(".penman-wrapper").nth(1)
+    editable = wrapper.locator(".penman-editor-area")
     editable.click()
     clear_editor(page)
 
-    page.locator(".penman-toolbar").first.locator(".penman-btn-table").click()
+    wrapper.locator(".penman-btn-table").click()
 
-    cell = page.locator(".penman-grid-cell[data-row='2'][data-col='2']")
+    cell = wrapper.locator(".penman-grid-cell[data-row='2'][data-col='2']")
     expect(cell).to_be_visible()
     cell.click()
 
@@ -240,15 +247,17 @@ def test_editor_table_color_picker_e2e(page: Page):
     انتخاب رنگ پس‌زمینه سلول و تایید اعمال آن روی DOM.
     """
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    wrapper = page.locator(".penman-wrapper").nth(1)
+    editable = wrapper.locator(".penman-editor-area")
     editable.click()
     clear_editor(page)
 
     # درج یک جدول 2x2
-    page.locator(".penman-toolbar").first.locator(".penman-btn-table").click()
-    page.locator(".penman-grid-cell[data-row='2'][data-col='2']").click()
+    wrapper.locator(".penman-btn-table").click()
+    wrapper.locator(".penman-grid-cell[data-row='2'][data-col='2']").click()
 
-    table = page.locator(".penman-editor-area table")
+    table = editable.locator("table")
     expect(table).to_be_visible()
 
     # کلیک روی اولین سلول تا FloatingUI ظاهر شود
@@ -260,16 +269,16 @@ def test_editor_table_color_picker_e2e(page: Page):
     expect(floating).to_be_visible(timeout=3000)
 
     # کلیک روی دکمه Background Color
-    color_trigger = page.locator(".penman-toolbar").first.locator(".penman-btn-bg-color-trigger")
+    color_trigger = page.locator(".penman-btn-bg-color-trigger")
     expect(color_trigger).to_be_visible()
     color_trigger.click()
 
     # ColorPicker باید ظاهر شود
-    color_picker = page.locator(".penman-color-picker")
+    color_picker = page.locator(".penman-btn-bg-color-wrapper .penman-color-picker")
     expect(color_picker).to_be_visible(timeout=2000)
 
     # انتخاب رنگ قرمز از پالت (#ff0000)
-    red_swatch = page.locator(".penman-color-picker-swatch[data-color='#ff0000']")
+    red_swatch = color_picker.locator(".penman-color-picker-swatch[data-color='#ff0000']")
     expect(red_swatch).to_be_visible()
     red_swatch.click()
 
@@ -282,12 +291,13 @@ def test_editor_table_color_picker_e2e(page: Page):
 
 def test_editor_format_plugin_e2e(page: Page):
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Test text</p>'")
 
     page.keyboard.press("Control+A")
-    page.locator(".penman-toolbar").first.locator(".penman-btn-bold").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-bold").click()
 
     expect(editable.locator("strong")).to_be_visible()
     print("  ✓ Format (Bold) works")
@@ -295,7 +305,8 @@ def test_editor_format_plugin_e2e(page: Page):
 
 def test_editor_list_plugin_e2e(page: Page):
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>List item 1</p>'")
 
@@ -307,7 +318,7 @@ def test_editor_list_plugin_e2e(page: Page):
         sel.addRange(range);
     }""")
 
-    page.locator(".penman-toolbar").first.locator(".penman-btn-bullist").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-bullist").click()
 
     expect(editable.locator("ul")).to_be_visible()
     expect(editable.locator("ul > li")).to_have_text("List item 1")
@@ -316,12 +327,13 @@ def test_editor_list_plugin_e2e(page: Page):
 
 def test_editor_link_plugin_e2e(page: Page):
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Link me</p>'")
 
     page.keyboard.press("Control+A")
-    page.locator(".penman-toolbar").first.locator(".penman-btn-link").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-link").click()
 
     modal = page.locator(".penman-modal")
     expect(modal).to_be_visible()
@@ -342,7 +354,9 @@ def test_editor_link_plugin_e2e(page: Page):
 def test_editor_fontsize_plugin_e2e(page: Page):
     """FontSizePlugin: انتخاب متن و اعمال اندازه فونت."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    wrapper = page.locator(".penman-wrapper").nth(1)
+    editable = wrapper.locator(".penman-editor-area")
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Resize me</p>'")
 
@@ -350,12 +364,12 @@ def test_editor_fontsize_plugin_e2e(page: Page):
     page.keyboard.press("Control+A")
 
     # باز کردن dropdown فونت‌سایز
-    fontsize_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-fontsize")
+    fontsize_btn = wrapper.locator(".penman-btn-fontsize")
     expect(fontsize_btn).to_be_visible()
     fontsize_btn.click()
 
     # انتخاب 24px از لیست
-    size_item = page.locator(".penman-fontsize-item", has_text="24px")
+    size_item = wrapper.locator(".penman-fontsize-item", has_text="24px")
     expect(size_item).to_be_visible(timeout=2000)
     size_item.click()
 
@@ -370,7 +384,8 @@ def test_editor_fontsize_plugin_e2e(page: Page):
 def test_editor_unlink_plugin_e2e(page: Page):
     """UnlinkPlugin: درج لینک، سپس حذف آن با Unlink."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate(
         "node => node.innerHTML = '<p><a href=\"https://test.com\">Click here</a></p>'"
@@ -387,7 +402,7 @@ def test_editor_unlink_plugin_e2e(page: Page):
     }""")
 
     # کلیک روی دکمه Unlink
-    unlink_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-unlink")
+    unlink_btn = page.locator(".penman-wrapper").nth(1).locator(".penman-btn-unlink")
     expect(unlink_btn).to_be_visible()
     unlink_btn.click()
 
@@ -404,7 +419,8 @@ def test_editor_unlink_plugin_e2e(page: Page):
 def test_editor_removeformat_plugin_e2e(page: Page):
     """RemoveFormatPlugin: حذف فرمت‌بندی‌های inline."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate(
         "node => node.innerHTML = '<p><strong><em><u>Formatted text</u></em></strong></p>'"
@@ -414,7 +430,7 @@ def test_editor_removeformat_plugin_e2e(page: Page):
     page.keyboard.press("Control+A")
 
     # کلیک روی Clear Formatting
-    removeformat_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-removeformat")
+    removeformat_btn = page.locator(".penman-wrapper").nth(1).locator(".penman-btn-removeformat")
     expect(removeformat_btn).to_be_visible()
     removeformat_btn.click()
 
@@ -431,7 +447,8 @@ def test_editor_removeformat_plugin_e2e(page: Page):
 def test_editor_horizontal_rule_plugin_e2e(page: Page):
     """HorizontalRulePlugin: درج خط افقی."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Before HR</p>'")
 
@@ -447,7 +464,7 @@ def test_editor_horizontal_rule_plugin_e2e(page: Page):
     }""")
 
     # کلیک روی دکمه HR
-    hr_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-hr")
+    hr_btn = page.locator(".penman-wrapper").nth(1).locator(".penman-btn-hr")
     expect(hr_btn).to_be_visible()
     hr_btn.click()
 
@@ -465,7 +482,9 @@ def test_editor_horizontal_rule_plugin_e2e(page: Page):
 def test_editor_blocktype_plugin_e2e(page: Page):
     """BlockTypePlugin: تغییر نوع بلاک از p به h1."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    wrapper = page.locator(".penman-wrapper").nth(1)
+    editable = wrapper.locator(".penman-editor-area")
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Make me heading</p>'")
 
@@ -481,26 +500,28 @@ def test_editor_blocktype_plugin_e2e(page: Page):
     }""")
 
     # باز کردن dropdown blocktype
-    blocktype_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-blocktype")
+    blocktype_btn = wrapper.locator(".penman-btn-blocktype")
     expect(blocktype_btn).to_be_visible()
     blocktype_btn.click()
 
-    # انتخاب Heading 1
-    h1_item = page.locator(".penman-blocktype-item", has_text="Heading 1")
-    expect(h1_item).to_be_visible(timeout=2000)
-    h1_item.click()
+    # انتخاب Heading 2
+    h2_item = wrapper.locator(".penman-blocktype-item", has_text="Heading 2")
+    expect(h2_item).to_be_visible(timeout=2000)
+    h2_item.click()
 
-    # h1 باید در DOM ظاهر شده باشد
-    h1 = editable.locator("h1")
-    expect(h1).to_be_visible()
-    assert "Make me heading" in h1.inner_text()
+    # h2 باید در DOM ظاهر شده باشد
+    h2 = editable.locator("h2")
+    expect(h2).to_be_visible()
+    assert "Make me heading" in h2.inner_text()
     print("  ✓ BlockType plugin converts p → h1")
 
 
 def test_editor_blocktype_custom_class_e2e(page: Page):
     """BlockTypePlugin: اعمال custom class روی بلاک (Warning block)."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    wrapper = page.locator(".penman-wrapper").nth(1)
+    editable = wrapper.locator(".penman-editor-area")
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Warning content</p>'")
 
@@ -515,35 +536,36 @@ def test_editor_blocktype_custom_class_e2e(page: Page):
         sel.addRange(range);
     }""")
 
-    blocktype_btn = page.locator(".penman-toolbar").first.locator(".penman-btn-blocktype")
+    blocktype_btn = wrapper.locator(".penman-btn-blocktype")
     blocktype_btn.click()
 
     # جستجوی Warning در dropdown
-    search_input = page.locator(".penman-blocktype-search")
+    search_input = wrapper.locator(".penman-blocktype-search")
     expect(search_input).to_be_visible(timeout=2000)
     search_input.fill("Warning")
 
-    warning_item = page.locator(".penman-blocktype-item", has_text="Warning")
+    warning_item = wrapper.locator(".penman-blocktype-item", has_text="Warning")
     expect(warning_item).to_be_visible(timeout=2000)
     warning_item.click()
 
     # بررسی اعمال class روی بلاک
-    warning_block = editable.locator(".warning-block")
+    warning_block = editable.locator(".orange-block")
     expect(warning_block).to_be_visible()
     assert "Warning content" in warning_block.inner_text()
-    print("  ✓ BlockType custom class (warning-block) applied correctly")
+    print("  ✓ BlockType custom class (orange-block) applied correctly")
 
 
 def test_editor_undo_redo_e2e(page: Page):
     """Undo/Redo: تایید عملکرد با Ctrl+Z و Ctrl+Y."""
     wait_for_editor(page)
-    editable = page.locator(".penman-editor-area").first
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
     editable.click()
     editable.evaluate("node => node.innerHTML = '<p>Initial</p>'")
 
     # اعمال bold
     page.keyboard.press("Control+A")
-    page.locator(".penman-toolbar").first.locator(".penman-btn-bold").click()
+    page.locator(".penman-wrapper").nth(1).locator(".penman-btn-bold").click()
 
     html_after_bold = editable.evaluate("n => n.innerHTML")
     assert "strong" in html_after_bold, "Bold should be applied"

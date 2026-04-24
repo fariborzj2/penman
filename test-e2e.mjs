@@ -94,7 +94,7 @@ async function runE2E() {
     console.log(`[E2E] Vite server ready on port ${vitePort}`);
 
     // ── مرحله ۳: اجرای Playwright ────────────────────────────────────────────
-    console.log('[E2E] Running Playwright tests...');
+    console.log('[E2E] Running Playwright tests (verify_ui.py)...');
     const py = spawn('python3', [join(__dirname, 'verify_ui.py')], {
       env: {
         ...process.env,
@@ -105,9 +105,10 @@ async function runE2E() {
       cwd: __dirname,
     });
 
-    const exitCode = await new Promise((resolve) => {
+    let exitCode = await new Promise((resolve) => {
       py.on('close', resolve);
     });
+
 
     await cleanup();
 

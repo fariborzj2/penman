@@ -2,6 +2,7 @@ export class SelectionManager {
   constructor(editor) {
     this.editor = editor;
     this.MARKER_ID = 'penman-selection-marker';
+    this.selectedNode = null;
   }
 
   /**
@@ -17,6 +18,7 @@ export class SelectionManager {
    * This ensures normalization or DOM manipulation doesn't lose the cursor.
    */
   save() {
+    this.clearNodeSelection();
     const sel = this.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
@@ -64,6 +66,7 @@ export class SelectionManager {
    * Restores the selection from the DOM markers
    */
   restore() {
+    this.clearNodeSelection();
     this.editor.focus();
 
     const startMarker = this.editor.editableArea.querySelector(`#${this.MARKER_ID}-start`);
@@ -85,6 +88,46 @@ export class SelectionManager {
       // Fallback if markers are lost
       this._removeMarkers();
     }
+  }
+
+  /**
+   * Selects a whole block node
+   * @param {HTMLElement} node
+   */
+  selectNode(node) {
+    this.clearNodeSelection();
+
+    // Clear browser selection
+    const sel = this.getSelection();
+    if (sel) {
+      sel.removeAllRanges();
+    }
+
+    this.selectedNode = node;
+    this.selectedNode.classList.add('penman-selected-node');
+
+    this.editor.emit('nodeSelected', node);
+    this.editor.emit('selectionChange');
+  }
+
+  /**
+   * Clears the current node selection
+   */
+  clearNodeSelection() {
+    if (this.selectedNode) {
+      this.selectedNode.classList.remove('penman-selected-node');
+      this.selectedNode = null;
+      this.editor.emit('nodeSelected', null);
+      this.editor.emit('selectionChange');
+    }
+  }
+
+  /**
+   * Gets the currently selected node
+   * @returns {HTMLElement|null}
+   */
+  getSelectedNode() {
+    return this.selectedNode;
   }
 
   /**

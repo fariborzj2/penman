@@ -345,6 +345,9 @@ export function setupTablePlugin(editor) {
           if (selectionManager.activeTableNode !== table) {
               selectionManager.clearSelection();
           }
+
+          // Clear node selection if we are selecting cells
+          editor.selection.clearNodeSelection();
       } else {
           // Clicked outside table
           selectionManager.clearSelection();
@@ -371,6 +374,18 @@ export function setupTablePlugin(editor) {
 
   // Intercept SelectionChange to hide/show UI or sync Caret selection to single-cell
   editor.on('selectionChange', () => {
+     const selectedNode = editor.selection.getSelectedNode();
+     if (selectedNode && selectedNode.tagName === 'TABLE') {
+         if (!floatingUI) createFloatingUI();
+         selectionManager.activeTableNode = selectedNode;
+         selectionManager.selectedCellIds = [];
+
+         floatingUI.setAnchor(selectedNode);
+         floatingUI.show();
+         updateFloatingUIButtons();
+         return;
+     }
+
      if (selectionManager.isCellSelectionActive) return; // Ignore if we are doing multi-cell
 
      const sel = window.getSelection();
@@ -570,6 +585,7 @@ export function setupTablePlugin(editor) {
                  tx.deleteTable();
                  tx.commit();
                  selectionManager.clearSelection();
+                 editor.selection.clearNodeSelection();
              }
          }
      });

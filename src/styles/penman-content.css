@@ -104,6 +104,11 @@
 .penman-cell-handle-bl { bottom: -3px; left: -3px; }
 .penman-cell-handle-br { bottom: -3px; right: -3px; }
 
+.penman-selected-node {
+  outline: 3px solid #007bff !important;
+  outline-offset: 4px !important;
+}
+
 /* Image Caption */
 figcaption.penman-image-caption {
   text-align: center;

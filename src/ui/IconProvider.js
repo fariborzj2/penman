@@ -49,6 +49,6 @@ export class IconProvider {
     }
 
     const label = iconName.charAt(0).toUpperCase() + iconName.slice(1);
-    return `<span>${label}</span>`;
+    return `<span class="penman-icon-fallback">${label}</span>`;
   }
 }
