@@ -200,7 +200,7 @@ export class TableTransaction {
         if (data.cs > 1) td.setAttribute('colspan', data.cs);
         td.style.border = anchorNode.style.border || '1px solid #ccc';
         td.style.padding = anchorNode.style.padding || '5px';
-        td.innerHTML = '<br>';
+        td.innerHTML = '<p><br></p>';
 
         let inserted = false;
         const currentCells = Array.from(tr.querySelectorAll('td, th'));
@@ -353,7 +353,7 @@ export class TableTransaction {
         td.style.borderStyle = 'solid';
         td.style.borderColor = tableBorderColor;
         td.style.padding = tableCellPadding + 'px';
-        td.innerHTML = '<br>';
+        td.innerHTML = '<p><br></p>';
 
         newTr.appendChild(td);
       }
@@ -473,7 +473,7 @@ export class TableTransaction {
         td.style.borderStyle = 'solid';
         td.style.borderColor = tableBorderColor;
         td.style.padding = tableCellPadding + 'px';
-        td.innerHTML = '<br>';
+        td.innerHTML = '<p><br></p>';
 
         const tr = this.table.querySelectorAll('tr')[r];
         if (tr) {

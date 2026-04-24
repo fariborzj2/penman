@@ -469,12 +469,53 @@ export class Sanitizer {
       }
     });
 
-    // Ensure all cells have IDs
+    // Ensure all cells have IDs and proper paragraph-based content structure
     const cells = Array.from(root.querySelectorAll('th, td'));
     cells.forEach(cell => {
       if (!cell.getAttribute('data-cell-id')) {
         cell.setAttribute('data-cell-id', 'c-' + Math.random().toString(36).substr(2, 9));
       }
+
+      // Enforce <p> structure within cells
+      const children = Array.from(cell.childNodes);
+      const hasBlock = children.some(node => node.nodeType === Node.ELEMENT_NODE && this.blockTags.has(node.tagName.toLowerCase()));
+
+      if (!hasBlock) {
+        // If no block elements, wrap everything in a <p>
+        const p = document.createElement('p');
+        while (cell.firstChild) {
+          p.appendChild(cell.firstChild);
+        }
+        if (p.innerHTML.trim() === '') p.innerHTML = '<br>';
+        cell.appendChild(p);
+      } else {
+        // If there are block elements, ensure all orphan text/inline elements are wrapped in <p>
+        let currentP = null;
+        Array.from(cell.childNodes).forEach(child => {
+          const isInline = child.nodeType === Node.TEXT_NODE ||
+                         (child.nodeType === Node.ELEMENT_NODE && !this.blockTags.has(child.tagName.toLowerCase()));
+
+          if (isInline) {
+            if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim() === '' && !currentP) return;
+            if (!currentP) {
+              currentP = document.createElement('p');
+              cell.insertBefore(currentP, child);
+            }
+            currentP.appendChild(child);
+          } else {
+            currentP = null;
+          }
+        });
+      }
+
+      // Final pass: ensure no empty text nodes or loose <br> remain as direct children of the cell
+      Array.from(cell.childNodes).forEach(child => {
+        if (child.nodeType === Node.TEXT_NODE && child.nodeValue.trim() === '') {
+          child.remove();
+        } else if (child.nodeType === Node.ELEMENT_NODE && child.tagName.toLowerCase() === 'br') {
+          child.remove();
+        }
+      });
     });
   }
 

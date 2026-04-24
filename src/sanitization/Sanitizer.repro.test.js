@@ -41,9 +41,9 @@ describe('Sanitizer Production Grade Output', () => {
     // Note: This is a bit complex as we need to decide if the first row is a header.
     // Usually, in many editors, the first row of a pasted table is treated as a header.
     expect(clean).toContain('<thead>');
-    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+">Header<\/th>/);
+    expect(clean).toMatch(/<th data-cell-id="c-[a-z0-9]+"><p>Header<\/p><\/th>/);
     expect(clean).toContain('<tbody>');
-    expect(clean).toMatch(/<td data-cell-id="c-[a-z0-9]+">Data<\/td>/);
+    expect(clean).toMatch(/<td data-cell-id="c-[a-z0-9]+"><p>Data<\/p><\/td>/);
   });
 
   it('should normalize Persian punctuation and spacing', () => {
@@ -80,10 +80,10 @@ describe('Sanitizer Production Grade Output', () => {
     const clean = sanitizer.sanitize(html);
 
     // Check outer table
-    expect(clean).toMatch(/<thead><tr><th data-cell-id="c-[a-z0-9]+">Outer Header/);
+    expect(clean).toMatch(/<thead><tr><th data-cell-id="c-[a-z0-9]+"><p>Outer Header<\/p>/);
 
     // Check inner table
-    expect(clean).toMatch(/<thead><tr><th data-cell-id="c-[a-z0-9]+">Inner Header<\/th><\/tr><\/thead>/);
-    expect(clean).toMatch(/<tbody><tr><td data-cell-id="c-[a-z0-9]+">Inner Data<\/td><\/tr><\/tbody>/);
+    expect(clean).toMatch(/<thead><tr><th data-cell-id="c-[a-z0-9]+"><p>Inner Header<\/p><\/th><\/tr><\/thead>/);
+    expect(clean).toMatch(/<tbody><tr><td data-cell-id="c-[a-z0-9]+"><p>Inner Data<\/p><\/td><\/tr><\/tbody>/);
   });
 });

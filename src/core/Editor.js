@@ -277,8 +277,10 @@ export class Editor extends EventEmitter {
                     // If we are about to enter a table/img but our startContainer is inside it, it's fine, we will hit it.
                     // But if it's purely before us:
                     if (!n.contains(r.startContainer)) {
-                        hasContent = true;
-                        break;
+                        if (!this._isProppingBR(n)) {
+                            hasContent = true;
+                            break;
+                        }
                     }
                 }
 
@@ -318,7 +320,9 @@ export class Editor extends EventEmitter {
                     hasContent = true;
                 }
                 if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'img' || n.tagName.toLowerCase() === 'table' || n.tagName.toLowerCase() === 'br')) {
-                    hasContent = true;
+                    if (!this._isProppingBR(n)) {
+                        hasContent = true;
+                    }
                 }
                 if (n.nodeType === Node.ELEMENT_NODE && (n.tagName.toLowerCase() === 'td' || n.tagName.toLowerCase() === 'th')) {
                     hasContent = true;
@@ -507,6 +511,20 @@ export class Editor extends EventEmitter {
         this.insertContent(contentToInsert);
       }
     });
+  }
+
+  /**
+   * Helper to check if a node is a "propping" BR (the only child of a paragraph)
+   * @private
+   */
+  _isProppingBR(node) {
+    return node &&
+           node.nodeType === Node.ELEMENT_NODE &&
+           node.tagName.toLowerCase() === 'br' &&
+           node.parentNode &&
+           node.parentNode.nodeType === Node.ELEMENT_NODE &&
+           node.parentNode.tagName.toLowerCase() === 'p' &&
+           node.parentNode.childNodes.length === 1;
   }
 
   _syncToTextarea() {

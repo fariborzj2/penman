@@ -98,13 +98,23 @@ export function setupTablePlugin(editor) {
       for(let r=0; r<rows; r++) {
          html += `<tr>`;
          for(let c=0; c<cols; c++) {
-             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><br></td>`;
+             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><p><br></p></td>`;
          }
          html += `</tr>`;
       }
       html += `</tbody></table>`;
 
       editor.insertContent(html);
+    }
+  });
+
+  editor.commands.register('SELECT_TABLE', {
+    execute: (editor) => {
+        const tableNode = selectionManager.activeTableNode;
+        if (tableNode) {
+            editor.selection.selectNode(tableNode);
+            if (floatingUI) floatingUI.hide();
+        }
     }
   });
 
@@ -168,6 +178,7 @@ export function setupTablePlugin(editor) {
 
           const itemsToToggle = [
               '[data-cmd="table_delete"]',
+              '[data-cmd="SELECT_TABLE"]',
               '.penman-menu-item-cell',
               '.penman-menu-item-row',
               '.penman-menu-item-column',
@@ -447,6 +458,9 @@ export function setupTablePlugin(editor) {
            <button type="button" class="penman-btn penman-btn-del-table" title="Delete Table" style="padding: 4px; display:flex; align-items:center; color: #111827;">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
            </button>
+           <button type="button" class="penman-btn penman-btn-select-table" title="Select Entire Table" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+           </button>
 
 
            <button type="button" class="penman-btn penman-btn-merge-cells" title="Merge Cells" style="padding: 4px; display:none; align-items:center; color: #111827;">
@@ -574,6 +588,11 @@ export function setupTablePlugin(editor) {
      floatingUI.element.querySelector('.penman-btn-remove-col').addEventListener('mousedown', (e) => {
          e.preventDefault();
          editor.execCommand('REMOVE_COLUMN');
+     });
+
+     floatingUI.element.querySelector('.penman-btn-select-table').addEventListener('mousedown', (e) => {
+         e.preventDefault();
+         editor.commands.execute('SELECT_TABLE');
      });
 
      floatingUI.element.querySelector('.penman-btn-del-table').addEventListener('mousedown', (e) => {
