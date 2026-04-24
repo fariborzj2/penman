@@ -420,6 +420,11 @@ export class Sanitizer {
   _normalizeTableStructure(root) {
     const tables = Array.from(root.querySelectorAll('table'));
     tables.forEach(table => {
+      // Ensure data-table-id exists
+      if (!table.getAttribute('data-table-id')) {
+        table.setAttribute('data-table-id', 't-' + Math.random().toString(36).substr(2, 9));
+      }
+
       // Ensure thead exists using non-recursive checks to avoid nested table issues
       let thead = Array.from(table.children).find(el => el.tagName.toLowerCase() === 'thead');
       let tbody = Array.from(table.children).find(el => el.tagName.toLowerCase() === 'tbody');
@@ -461,6 +466,14 @@ export class Sanitizer {
             td.parentNode.replaceChild(th, td);
           });
         });
+      }
+    });
+
+    // Ensure all cells have IDs
+    const cells = Array.from(root.querySelectorAll('th, td'));
+    cells.forEach(cell => {
+      if (!cell.getAttribute('data-cell-id')) {
+        cell.setAttribute('data-cell-id', 'c-' + Math.random().toString(36).substr(2, 9));
       }
     });
   }
