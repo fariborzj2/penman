@@ -597,7 +597,10 @@ export class Editor extends EventEmitter {
 
     const selectedNode = this.selection.getSelectedNode();
     if (selectedNode) {
-        html = selectedNode.outerHTML;
+        // Tag internal content to avoid over-sanitization on paste
+        const clone = selectedNode.cloneNode(true);
+        clone.setAttribute('data-penman-core', 'true');
+        html = clone.outerHTML;
         text = selectedNode.textContent || '';
     } else {
         const selection = window.getSelection();

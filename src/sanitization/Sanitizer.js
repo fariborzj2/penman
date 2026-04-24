@@ -4,40 +4,40 @@ export class Sanitizer {
 
     // Core explicitly allowed strict schema
     this.allowedTags = {
-      p: [],
+      p: ["dir"],
       b: [],
       i: [],
       u: [],
       strong: [],
       em: [],
-      a: ["href", "target", "rel", "class"],
-      ul: ["class"],
-      ol: ["class"],
-      li: ["class"],
+      a: ["href", "target", "rel"],
+      ul: [],
+      ol: [],
+      li: [],
       br: [],
       hr: [],
       mark: [],
       s: [],
       strike: [],
       blockquote: [],
-      h1: [],
-      h2: [],
-      h3: [],
-      h4: [],
-      h5: [],
-      h6: [],
-      figure: ["class", "data-alignment"],
-      figcaption: ["class", "data-placeholder"],
-      img: ["src", "alt", "width", "height", "data-id", "style"],
-      table: ["border", "bordercolor", "style", "data-table-id"],
+      h1: ["dir"],
+      h2: ["dir"],
+      h3: ["dir"],
+      h4: ["dir"],
+      h5: ["dir"],
+      h6: ["dir"],
+      figure: ["data-alignment", "contenteditable", "data-penman-core"],
+      figcaption: ["data-placeholder", "contenteditable"],
+      img: ["src", "alt", "width", "height", "data-id"],
+      table: ["border", "bordercolor", "data-table-id", "contenteditable", "data-penman-core"],
       thead: [],
       tbody: [],
       tfoot: [],
-      tr: ["style"],
-      th: ["rowspan", "colspan", "style", "data-cell-id"],
-      td: ["rowspan", "colspan", "style", "data-cell-id"],
+      tr: [],
+      th: ["rowspan", "colspan", "data-cell-id", "contenteditable"],
+      td: ["rowspan", "colspan", "data-cell-id", "contenteditable"],
       caption: [],
-      div: ["class"],
+      div: ["contenteditable", "data-penman-core"],
       span: ["style"]
     };
 
@@ -63,14 +63,24 @@ export class Sanitizer {
 
   _buildDynamicWhitelist() {
     this.allowedClassesByTag = {
-        div: new Set(['penman-suggested-posts-wrapper', 'penman-suggested-posts-title', 'penman-image-wrapper']),
-        ul: new Set(['penman-suggested-posts-list']),
-        li: new Set(['penman-suggested-posts-item']),
-        a: new Set(['penman-suggested-posts-link']),
-        figure: new Set(['penman-image', 'penman-align-center', 'penman-align-left', 'penman-align-right']),
-        figcaption: new Set(['penman-image-caption'])
+        div: new Set(['penman-suggested-posts-wrapper', 'penman-suggested-posts-wrapper-title', 'penman-image-wrapper', 'penman-selected-node']),
+        ul: new Set(['penman-suggested-posts-wrapper-list']),
+        li: new Set(['penman-suggested-posts-wrapper-item']),
+        a: new Set(['penman-suggested-posts-wrapper-link']),
+        figure: new Set(['penman-image', 'penman-align-center', 'penman-align-left', 'penman-align-right', 'penman-selected-node']),
+        figcaption: new Set(['penman-image-caption']),
+        table: new Set(['penman-selected-node']),
+        td: new Set(['penman-cell-selected']),
+        th: new Set(['penman-cell-selected'])
     };
     this.allowedStylesByTagClass = {};
+
+    // Automatically add 'class' to allowedTags for any tag that has configured classes
+    Object.keys(this.allowedClassesByTag).forEach(tag => {
+        if (this.allowedTags[tag] && !this.allowedTags[tag].includes('class')) {
+            this.allowedTags[tag].push('class');
+        }
+    });
 
     if (!this.editor || !this.editor.options) return;
 
@@ -156,7 +166,7 @@ export class Sanitizer {
 
   /* ================= SANITIZE ================= */
 
-  _sanitize(node) {
+  _sanitize(node, isProtected = false) {
     const children = Array.from(node.childNodes);
 
     for (const child of children) {
@@ -169,9 +179,13 @@ export class Sanitizer {
 
       const tag = child.tagName.toLowerCase();
 
+      // Check if this node marks the start of a protected zone
+      const nodeIsProtected = isProtected ||
+          (child.getAttribute && child.getAttribute('data-penman-core') === 'true');
+
       // If tag is not allowed at all, unwrap it immediately
       if (!this.allowedTags[tag]) {
-        this._sanitize(child);
+        this._sanitize(child, nodeIsProtected);
 
         const parent = child.parentNode;
         while (child.firstChild) {
@@ -183,14 +197,20 @@ export class Sanitizer {
       }
 
       // First sanitize children
-      this._sanitize(child);
+      this._sanitize(child, nodeIsProtected);
 
       // Clean attributes strictly
       this._cleanAttributesAndStyles(child, tag);
     }
   }
 
-  _cleanAttributesAndStyles(el, tag) {
+  _cleanAttributesAndStyles(el, tag, isProtected = false) {
+    // If node is protected, we allow ALL its current attributes.
+    // This ensures full identical structure for internal copy-paste.
+    if (isProtected) {
+        return;
+    }
+
     const allowedAttrs = this.allowedTags[tag] || [];
 
     // Clean attributes
@@ -282,6 +302,17 @@ export class Sanitizer {
       this._flattenInvalidNesting(root);
   }
 
+  _isProtected(el) {
+      let curr = el;
+      while (curr && curr !== document.body) {
+          if (curr.getAttribute && curr.getAttribute('data-penman-core') === 'true') {
+              return true;
+          }
+          curr = curr.parentNode;
+      }
+      return false;
+  }
+
   _unwrapUnconfiguredElements(root) {
       const elementsToUnwrap = [];
       const walker = document.createTreeWalker(root, NodeFilter.SHOW_ELEMENT);
@@ -289,7 +320,16 @@ export class Sanitizer {
       while (node = walker.nextNode()) {
           const tag = node.tagName.toLowerCase();
 
+          if (this._isProtected(node)) {
+              continue;
+          }
+
           if (tag === 'div') {
+             // If it's a protected widget wrapper, don't unwrap it
+             if (this._isConfiguredBlock(node)) {
+                 continue;
+             }
+
              // If div has no attributes (meaning no matching configured class/style), it's a redundant wrapper
              if (node.attributes.length === 0) {
                  elementsToUnwrap.push(node);
@@ -319,6 +359,7 @@ export class Sanitizer {
       const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
       let elementsToUnwrap = [];
       headings.forEach(heading => {
+          if (this._isProtected(heading)) return;
           const walker = document.createTreeWalker(heading, NodeFilter.SHOW_ELEMENT);
           let node;
           while (node = walker.nextNode()) {
@@ -344,6 +385,7 @@ export class Sanitizer {
       const listItems = root.querySelectorAll('li');
       let paragraphsToUnwrap = [];
       listItems.forEach(li => {
+          if (this._isProtected(li)) return;
           const ps = li.querySelectorAll('p');
           ps.forEach(p => paragraphsToUnwrap.push(p));
       });
@@ -646,6 +688,15 @@ export class Sanitizer {
     const children = Array.from(node.childNodes);
     for (const child of children) {
         if (child.nodeType === Node.ELEMENT_NODE) {
+            // Protected blocks should not be removed even if they appear empty
+            if (this._isConfiguredBlock(child) || child.getAttribute('data-penman-core') === 'true') {
+                continue;
+            }
+
+            if (this._isProtected(child)) {
+                continue;
+            }
+
             this._removeEmptyNodesRecursively(child);
             const tag = child.tagName.toLowerCase();
 
