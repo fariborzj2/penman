@@ -16,3 +16,8 @@
 10:16:28 AM [vite] (client) page reload src/plugins/MediaPlugin/ui/MediaModal.js
 10:56:27 AM [vite] (client) page reload src/sanitization/Sanitizer.js
 10:57:20 AM [vite] (client) page reload src/sanitization/Sanitizer.js
+11:36:37 AM [vite] (client) page reload src/plugins/MediaPlugin/rendering/MediaRenderer.js
+11:37:28 AM [vite] (client) page reload src/sanitization/Sanitizer.js
+11:38:40 AM [vite] (client) page reload src/sanitization/Sanitizer.js
+11:39:25 AM [vite] (client) page reload src/sanitization/Sanitizer.js
+11:42:40 AM [vite] (client) hmr update /src/styles/penman-content.css

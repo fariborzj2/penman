@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Penman Media Test</title>
+    <link rel="stylesheet" href="./dist/penman-editor.css">
+    <script src="./dist/penman.umd.js"></script>
+    <style>
+        #editor { border: 1px solid #ccc; width: 800px; min-height: 400px; margin: 20px auto; }
+    </style>
+</head>
+<body>
+    <div id="editor"></div>
+    <script>
+        console.log("window.penman: ", window.penman);
+        console.log("window.penman.default: ", window.penman.default);
+        const editor = window.penman.default('#editor', {
+            plugins: ['media']
+        });
+        window.myEditor = editor;
+    </script>
+</body>
+</html>
