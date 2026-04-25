@@ -98,12 +98,12 @@ export class MediaModal {
               </div>
             </div>
 
-            <div style="display: flex; gap: 15px; margin-bottom: 10px;">
-              <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-controls" checked style="margin-right: 5px;"> Show Controls
+            <div class="penman-modal-checkbox-group" style="margin-bottom: 10px;">
+              <label class="penman-checkbox-label">
+                <input type="checkbox" id="penman-media-controls" checked> Show Controls
               </label>
-              <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-autoplay" style="margin-right: 5px;"> Autoplay
+              <label class="penman-checkbox-label">
+                <input type="checkbox" id="penman-media-autoplay"> Autoplay
               </label>
             </div>
           </div>
@@ -113,8 +113,8 @@ export class MediaModal {
             <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
               <label style="display:block; font-weight: 500;">Media URL</label>
               <div>
-                <label style="font-size: 12px; display: inline-flex; align-items: center;">
-                  <input type="checkbox" id="penman-media-autodetect" checked style="margin-right: 5px;"> Auto-detect Provider
+                <label class="penman-checkbox-label" style="font-size: 12px;">
+                  <input type="checkbox" id="penman-media-autodetect" checked> Auto-detect Provider
                 </label>
                 <span id="penman-media-provider-badge" class="penman-media-badge" style="display: none;"></span>
               </div>

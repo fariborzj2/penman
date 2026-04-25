@@ -221,13 +221,13 @@ export function setupImagePlugin(editor) {
 
             <div class="penman-image-tab-content active" id="penman-tab-url">
               <div style="padding: 0 15px 15px">
-                <div style="margin-bottom: 10px;">
-                  <label style="display:block;margin-bottom:5px;">Image URL</label>
-                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." value="${defaultUrl}" style="width: 100%; box-sizing: border-box;" />
+                <div class="penman-modal-form-row ${defaultUrl ? 'has-value' : ''}">
+                  <input type="url" id="penman-image-url-input" name="url" placeholder=" " value="${defaultUrl}">
+                  <label for="penman-image-url-input">Image URL</label>
                 </div>
-                <div style="margin-bottom: 15px;">
-                  <label style="display:block;margin-bottom:5px;">Alternative Text (Optional)</label>
-                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
+                <div class="penman-modal-form-row ${defaultAlt ? 'has-value' : ''}">
+                  <input type="text" id="penman-image-alt-input" name="alt" placeholder=" " value="${defaultAlt}">
+                  <label for="penman-image-alt-input">Alternative Text (Optional)</label>
                 </div>
               </div>
               <div class="penman-modal-footer">
@@ -617,16 +617,16 @@ export function setupImagePlugin(editor) {
                 
                 // Checkbox
                 const checkContainer = document.createElement('div');
+                checkContainer.className = 'penman-modal-checkbox-group';
                 checkContainer.style.marginLeft = '16px';
                 checkContainer.style.display = 'flex';
                 checkContainer.style.alignItems = 'center';
+                checkContainer.style.marginBottom = '0';
                 
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
+                checkbox.className = 'penman-toggle';
                 checkbox.checked = item.selected;
-                checkbox.style.width = '20px';
-                checkbox.style.height = '20px';
-                checkbox.style.cursor = 'pointer';
                 checkbox.onchange = (e) => {
                     item.selected = e.target.checked;
                 };

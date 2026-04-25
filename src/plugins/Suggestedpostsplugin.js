@@ -122,17 +122,17 @@ export function setupSuggestedPostsPlugin(editor) {
     return `
       <div class="psp-modal-inner" style="padding: 0 15px 15px; direction: ltr; overflow: auto; max-height: 350px">
         <div id="psp-items-list" style="margin-bottom: 12px;"></div>
-        <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-title-input" style="font-size:13px; color:#555;">Post Title</label>
-            <input id="psp-title-input" type="text" placeholder="Enter Suggested Post Title" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;" />
+        <div class="psp-form">
+          <div class="penman-modal-form-row" style="margin-bottom: 10px;">
+            <input id="psp-title-input" type="text" placeholder=" " />
+            <label for="psp-title-input">Post Title</label>
           </div>
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-url-input" style="font-size:13px; color:#555;">Link address (URL)</label>
-            <input id="psp-url-input" type="url" placeholder="https://example.com/post" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; direction:ltr;" />
+          <div class="penman-modal-form-row" style="margin-bottom: 10px;">
+            <input id="psp-url-input" type="url" placeholder=" " style="direction:ltr;" />
+            <label for="psp-url-input">Link address (URL)</label>
           </div>
-          <div id="psp-error" style="color:#dc3545; font-size:12px; display:none;"></div>
-          <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff;">Add link</button>
+          <div id="psp-error" style="color:#dc3545; font-size:12px; display:none; margin-bottom: 10px;"></div>
+          <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff; width: 100%;">Add link</button>
         </div>
       </div>
       <div class="penman-modal-footer">

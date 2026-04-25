@@ -217,17 +217,17 @@ export function setupFindReplacePlugin(editor) {
     const modalHtml = `
       <div style="padding: 15px;">
         <div class="penman-modal-form-row">
-          <label for="fr-find">Find</label>
-          <input type="text" id="fr-find" placeholder="Find text..." value="${initialFindText.replace(/"/g, '&quot;')}">
+          <input type="text" id="fr-find" placeholder=" " value="${initialFindText.replace(/"/g, '&quot;')}">
+          <label for="fr-find">Find text</label>
         </div>
         <div class="penman-modal-form-row">
+          <input type="text" id="fr-replace" placeholder=" ">
           <label for="fr-replace">Replace with</label>
-          <input type="text" id="fr-replace" placeholder="Replace with...">
         </div>
         <div class="penman-modal-checkbox-group" style="margin-bottom: 0px;">
-          <label><input type="checkbox" id="fr-match-case"> Match case</label>
-          <label><input type="checkbox" id="fr-normalize-rtl" checked> Ignore Diacritics (RTL)</label>
-          <label><input type="checkbox" id="fr-all-words"> All words</label>
+          <label class="penman-checkbox-label"><input type="checkbox" id="fr-match-case"> Match case</label>
+          <label class="penman-checkbox-label"><input type="checkbox" id="fr-normalize-rtl" checked> Ignore Diacritics (RTL)</label>
+          <label class="penman-checkbox-label"><input type="checkbox" id="fr-all-words"> All words</label>
         </div>
       </div>
     `;

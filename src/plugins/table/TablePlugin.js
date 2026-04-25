@@ -31,41 +31,41 @@ export function setupTablePlugin(editor) {
               title: 'Table Properties',
               body: `
                 <div style="padding: 15px">
-                    <div class="penman-modal-form-row">
-                        <label>Width:</label>
-                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
+                    <div class="penman-modal-form-row ${currentWidth ? 'has-value' : ''}">
+                        <input type="text" id="tp-width" name="width" value="${currentWidth}" placeholder=" ">
+                        <label for="tp-width">Width (e.g. 100% or 500px)</label>
+                    </div>
+                    <div class="penman-modal-form-row ${currentBorder ? 'has-value' : ''}">
+                        <input type="text" id="tp-border" name="border" value="${currentBorder}" placeholder=" ">
+                        <label for="tp-border">Border (e.g. 1 or 0)</label>
+                    </div>
+                    <div class="penman-modal-form-row ${currentBorderColor ? 'has-value' : ''}">
+                        <input type="text" id="tp-bordercolor" name="borderColor" value="${currentBorderColor}" placeholder=" ">
+                        <label for="tp-bordercolor">Border Color (e.g. #000 or red)</label>
+                    </div>
+                    <div class="penman-modal-form-row ${currentCellPadding ? 'has-value' : ''}">
+                        <input type="text" id="tp-cellpadding" name="cellPadding" value="${currentCellPadding}" placeholder=" ">
+                        <label for="tp-cellpadding">Cell Padding (e.g. 5)</label>
+                    </div>
+                    <div class="penman-modal-form-row ${currentCellSpacing ? 'has-value' : ''}">
+                        <input type="text" id="tp-cellspacing" name="cellSpacing" value="${currentCellSpacing}" placeholder=" ">
+                        <label for="tp-cellspacing">Cell Spacing (e.g. 0)</label>
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Border:</label>
-                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Border Color:</label>
-                        <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="e.g. #000 or red">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Cell Padding:</label>
-                        <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="e.g. 5">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Cell Spacing:</label>
-                        <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="e.g. 0">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>Direction:</label>
-                        <select name="dir">
+                        <select id="tp-dir" name="dir">
                             <option value="" ${!currentDir ? 'selected' : ''}>Default</option>
                             <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>LTR</option>
                             <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>RTL</option>
                         </select>
+                        <label for="tp-dir">Direction</label>
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Alignment:</label>
-                        <select name="textAlign">
+                        <select id="tp-align" name="textAlign">
                             <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>Left</option>
                             <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>Center</option>
                             <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>Right</option>
                         </select>
+                        <label for="tp-align">Alignment</label>
                     </div>
                 </div>
               `,

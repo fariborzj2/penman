@@ -200,8 +200,8 @@ export class Modal {
         width: auto;
         box-sizing: border-box;
         padding: 8px;
-        border: 1px solid #ccc;
-        border-radius: 3px;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
         margin-top: 5px;
       }
       .penman-modal-footer {
@@ -231,36 +231,183 @@ export class Modal {
 
       /* Generalized structural layout classes for forms inside Modals */
       .penman-modal-form-row {
+        position: relative;
+        margin-bottom: 16px;
         display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        margin-bottom: 10px;
+        flex-direction: column;
       }
       .penman-modal-form-row label {
-        width: 120px;
-        margin-right: 10px;
-        white-space: nowrap;
+        position: absolute;
+        top: 14px;
+        left: 12px;
+        font-size: 14px;
+        color: #64748B;
+        pointer-events: none;
+        transition: all 0.2s ease-out;
+        transform-origin: left top;
+      }
+      .penman-wrapper[dir="rtl"] .penman-modal-form-row label {
+        left: auto;
+        right: 12px;
+        transform-origin: right top;
       }
       .penman-modal-form-row input[type="text"],
       .penman-modal-form-row input[type="url"],
       .penman-modal-form-row select {
-        flex: 1;
-        padding: 6px;
+        width: 100%;
+        padding: 20px 12px 6px 12px;
         box-sizing: border-box;
+        border: 1px solid #E2E8F0;
+        border-radius: 6px;
+        font-family: inherit;
+        font-size: 14px;
+        background-color: #fff;
+        transition: border-color 0.2s, box-shadow 0.2s;
+        outline: none;
       }
+
+      .penman-modal-form-row input[type="text"]:focus,
+      .penman-modal-form-row input[type="url"]:focus,
+      .penman-modal-form-row select:focus {
+        border-color: #3B82F6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+      }
+
+      /* Floating label states */
+      .penman-modal-form-row input:focus ~ label,
+      .penman-modal-form-row input:not(:placeholder-shown) ~ label,
+      .penman-modal-form-row select ~ label,
+      .penman-modal-form-row.has-value label {
+        top: 4px;
+        font-size: 11px;
+        color: #3B82F6;
+      }
+      .penman-modal-form-row input:not(:focus):not(:placeholder-shown) ~ label,
+      .penman-modal-form-row select:not(:focus) ~ label {
+        color: #64748B;
+      }
+
       .penman-modal-checkbox-group {
         display: flex;
         flex-wrap: wrap;
         gap: 15px;
         margin-bottom: 20px;
       }
-      .penman-modal-checkbox-group label {
+      .penman-modal-checkbox-group label,
+      .penman-checkbox-label {
         display: flex;
         align-items: center;
-        gap: 5px;
+        gap: 8px;
         cursor: pointer;
-        white-space: nowrap;
         font-size: 14px;
+        color: #334155;
+        white-space: nowrap;
+      }
+
+      /* Toggle Switch */
+      .penman-modal-checkbox-group input[type="checkbox"],
+      .penman-checkbox-label input[type="checkbox"],
+      input[type="checkbox"].penman-toggle {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 36px;
+        height: 20px;
+        background-color: #CBD5E1;
+        border-radius: 10px;
+        position: relative;
+        cursor: pointer;
+        outline: none;
+        transition: background-color 0.2s ease;
+        flex-shrink: 0;
+        margin: 0;
+      }
+      .penman-modal-checkbox-group input[type="checkbox"]::after,
+      .penman-checkbox-label input[type="checkbox"]::after,
+      input[type="checkbox"].penman-toggle::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 16px;
+        height: 16px;
+        background-color: #fff;
+        border-radius: 50%;
+        transition: transform 0.2s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      }
+      .penman-modal-checkbox-group input[type="checkbox"]:checked,
+      .penman-checkbox-label input[type="checkbox"]:checked,
+      input[type="checkbox"].penman-toggle:checked {
+        background-color: #3B82F6;
+      }
+      .penman-modal-checkbox-group input[type="checkbox"]:checked::after,
+      .penman-checkbox-label input[type="checkbox"]:checked::after,
+      input[type="checkbox"].penman-toggle:checked::after {
+        transform: translateX(16px);
+      }
+      .penman-wrapper[dir="rtl"] .penman-modal-checkbox-group input[type="checkbox"]::after,
+      .penman-wrapper[dir="rtl"] .penman-checkbox-label input[type="checkbox"]::after,
+      .penman-wrapper[dir="rtl"] input[type="checkbox"].penman-toggle::after {
+        left: auto;
+        right: 2px;
+      }
+      .penman-wrapper[dir="rtl"] .penman-modal-checkbox-group input[type="checkbox"]:checked::after,
+      .penman-wrapper[dir="rtl"] .penman-checkbox-label input[type="checkbox"]:checked::after,
+      .penman-wrapper[dir="rtl"] input[type="checkbox"].penman-toggle:checked::after {
+        transform: translateX(-16px);
+      }
+
+      .penman-modal-checkbox-group input[type="checkbox"]:focus-visible,
+      .penman-checkbox-label input[type="checkbox"]:focus-visible,
+      input[type="checkbox"].penman-toggle:focus-visible {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+      }
+
+      /* Radio Buttons */
+      .penman-modal-radio-group {
+        display: flex;
+        gap: 15px;
+      }
+      .penman-radio-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        font-size: 14px;
+        color: #334155;
+      }
+      .penman-radio-label input[type="radio"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 18px;
+        height: 18px;
+        border: 2px solid #CBD5E1;
+        border-radius: 50%;
+        margin: 0;
+        outline: none;
+        position: relative;
+        transition: border-color 0.2s ease;
+      }
+      .penman-radio-label input[type="radio"]::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) scale(0);
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background-color: #3B82F6;
+        transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      }
+      .penman-radio-label input[type="radio"]:checked {
+        border-color: #3B82F6;
+      }
+      .penman-radio-label input[type="radio"]:checked::after {
+        transform: translate(-50%, -50%) scale(1);
+      }
+      .penman-radio-label input[type="radio"]:focus-visible {
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
       }
     `;
     document.head.appendChild(style);
