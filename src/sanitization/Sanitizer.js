@@ -26,9 +26,10 @@ export class Sanitizer {
       h4: ["dir"],
       h5: ["dir"],
       h6: ["dir"],
-      figure: ["data-alignment", "contenteditable", "data-penman-core"],
+      figure: ["data-alignment", "contenteditable", "data-penman-core", "data-media-id", "data-provider", "data-kind", "data-src"],
       figcaption: ["data-placeholder", "contenteditable"],
       img: ["src", "alt", "width", "height", "data-id"],
+      iframe: ["src", "frameborder", "allow", "loading", "width", "height", "style"],
       table: ["data-table-id", "contenteditable", "data-penman-core"],
       thead: [],
       tbody: [],
@@ -48,7 +49,9 @@ export class Sanitizer {
         tr: ['background-color', 'background'],
         th: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
         td: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
-        span: ['color', 'background-color', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration']
+        span: ['color', 'background-color', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration'],
+        iframe: ['position', 'top', 'left', 'width', 'height'],
+        div: ['position', 'padding-bottom', 'height', 'width', 'overflow']
     };
 
     this.blockTags = new Set([
