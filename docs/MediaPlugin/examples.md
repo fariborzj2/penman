@@ -27,5 +27,8 @@ If needed, developers can insert media via the exposed API:
 const editor = penman.get('#myEditor');
 
 editor.media.insertURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
-// Internally triggers detection, extraction, and rendering
+// Internally triggers detection, extraction, and rendering for embeds
+
+// Direct media works similarly:
+editor.media.insertURL('https://example.com/video.mp4');
 ```

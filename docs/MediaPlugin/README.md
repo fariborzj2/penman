@@ -18,12 +18,15 @@ Each provider MUST implement the following interface:
 ```
 
 ### Supported Providers
-1. **YouTube**:
+1. **Direct Media (Audio/Video)**:
+   - Detects direct file extensions (`.mp4`, `.webm`, `.mp3`, etc.).
+   - Renders as native `<video>` or `<audio>` HTML5 elements instead of iframes.
+2. **YouTube**:
    - Supports both `youtube.com/watch?v={id}` and `youtu.be/{id}`.
-2. **Aparat**:
+3. **Aparat**:
    - Extracts `{id}` from `aparat.com/v/{id}`.
    - Maps to embed structure: `https://www.aparat.com/video/video/embed/videohash/{id}/vt/frame`.
-3. **Custom Embed**:
+4. **Custom Embed**:
    - A generic iframe embed handler strictly restricted to whitelisted domains.
 
 ## Media Node Schema
@@ -33,12 +36,14 @@ Nodes are serialized and injected into the editor with the following properties:
   id: string,                 // Unique UUID-like identifier
   type: "media",              // Fixed to 'media'
   kind: "video" | "audio" | "embed", // Dependent on the provider
-  provider: "youtube" | "aparat" | "custom",
+  provider: "direct" | "youtube" | "aparat" | "custom",
   src: string,                // Original URL input
   embedUrl: string,           // Final source used in the iframe/renderer
   aspectRatio: "16/9" | "4/3", // Configuration option (default 16/9)
-  controls: boolean,          // HTML5 controls (if native)
-  autoplay: boolean
+  controls?: boolean,         // HTML5 controls (if native)
+  autoplay?: boolean,         // HTML5 autoplay flag
+  title?: string,             // HTML5 title
+  poster?: string             // HTML5 video poster
 }
 ```
 
@@ -57,9 +62,9 @@ Nodes are serialized and injected into the editor with the following properties:
 - Drag & Drop repositioning is only allowed at the block boundaries.
 
 ## UI Elements
-- The modal allows input of the URL.
-- Auto-detect provider toggle.
-- A live preview rendering area.
-- Configuration selectors (Aspect Ratio, Media Type dropdown).
+The modal employs a dual-tab architecture:
+1. **Direct Link**: Allows insertion of direct file URLs (.mp4, .mp3), with configurations for Title, Poster Image, Controls, and Autoplay.
+2. **Embed / Services**: Supports auto-detecting YouTube, Aparat, or Custom whitelisted domains, with Aspect Ratio selection.
+- Both tabs share a real-time live preview rendering area.
 - Submit and Cancel action buttons.
 - Real-time validation error states.
