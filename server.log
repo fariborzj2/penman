@@ -1,0 +1,16 @@
+
+> penman-editor@0.1.0 dev
+> vite
+
+
+  VITE v8.0.8  ready in 322 ms
+
+  ➜  Local:   http://localhost:5173/
+  ➜  Network: use --host to expose
+9:57:16 AM [vite] (client) page reload index.html
+10:00:23 AM [vite] (client) page reload src/ui/IconProvider.js
+10:04:07 AM [vite] (client) page reload src/core/Editor.js
+10:07:03 AM [vite] (client) page reload src/plugins/MediaPlugin/index.js
+10:14:03 AM [vite] (client) page reload src/plugins/MediaPlugin/index.js
+10:15:45 AM [vite] (client) page reload src/plugins/MediaPlugin/index.js
+10:16:28 AM [vite] (client) page reload src/plugins/MediaPlugin/ui/MediaModal.js

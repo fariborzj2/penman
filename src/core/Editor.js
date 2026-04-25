@@ -166,7 +166,7 @@ export class Editor extends EventEmitter {
     });
 
     this.editableArea.addEventListener('mousedown', (e) => {
-      const widget = e.target.closest('table, figure.penman-image, .penman-suggested-posts-wrapper');
+      const widget = e.target.closest('table, figure.penman-image, figure.penman-media-block, .penman-suggested-posts-wrapper');
       if (widget) {
         // If clicking inside an editable/interactive part, don't select the whole node
         const isInteractive = e.target.closest('figcaption, td, th, a');
