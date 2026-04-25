@@ -158,8 +158,8 @@ export function setupImagePlugin(editor) {
   editor.image = {
     _uploadQueue: [],
     gallery: gallerySystem,
-    insertFromURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.TRUSTED }), // From API, it might be trusted? Spec says "trustLevel is explicitly defined at PluginManager registration time". Let's assume UNTRUSTED by default for manual API calls unless specified.
-    insertUntrustedURL: (url, alt) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.UNTRUSTED }),
+    insertFromURL: (url, alt, width, height) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.TRUSTED, width, height }), // From API, it might be trusted? Spec says "trustLevel is explicitly defined at PluginManager registration time". Let's assume UNTRUSTED by default for manual API calls unless specified.
+    insertUntrustedURL: (url, alt, width, height) => insertImageFromURL(editor, { url, alt, trustLevel: TrustLevel.UNTRUSTED, width, height }),
     upload: (files) => uploadImageCommand(editor, files, editor.options.imageUploadFn),
     setAlignment: (figure, alignment) => setFigureAlignment(figure, alignment, editor)
   };
@@ -302,15 +302,50 @@ export function setupImagePlugin(editor) {
                 // Native Lazy Loading
                 imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;" title="${item.title || ''}" onload="this.style.opacity=1" onerror="this.style.opacity=0">`;
 
+                // Add "Copy Link" overlay
+                const copyBtn = document.createElement('button');
+                copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
+                copyBtn.title = 'Copy Link';
+                copyBtn.style.position = 'absolute';
+                copyBtn.style.top = '4px';
+                copyBtn.style.right = '4px';
+                copyBtn.style.background = 'rgba(255, 255, 255, 0.9)';
+                copyBtn.style.border = '1px solid #ccc';
+                copyBtn.style.borderRadius = '4px';
+                copyBtn.style.padding = '4px';
+                copyBtn.style.cursor = 'pointer';
+                copyBtn.style.opacity = '0';
+                copyBtn.style.transition = 'opacity 0.2s';
+                copyBtn.style.display = 'flex';
+                copyBtn.style.alignItems = 'center';
+                copyBtn.style.justifyContent = 'center';
+
+                copyBtn.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Prevent inserting image
+                    navigator.clipboard.writeText(item.url).then(() => {
+                        const originalHTML = copyBtn.innerHTML;
+                        copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="green" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                        setTimeout(() => copyBtn.innerHTML = originalHTML, 2000);
+                    });
+                });
+
+                imgDiv.appendChild(copyBtn);
+
                 const img = imgDiv.querySelector('img');
                 img.style.opacity = '0';
                 img.onload = () => img.style.opacity = '1';
                 
-                imgDiv.addEventListener('mouseover', () => imgDiv.style.borderColor = '#007bff');
-                imgDiv.addEventListener('mouseout', () => imgDiv.style.borderColor = 'transparent');
+                imgDiv.addEventListener('mouseover', () => {
+                    imgDiv.style.borderColor = '#007bff';
+                    copyBtn.style.opacity = '1';
+                });
+                imgDiv.addEventListener('mouseout', () => {
+                    imgDiv.style.borderColor = 'transparent';
+                    copyBtn.style.opacity = '0';
+                });
                 
                 imgDiv.addEventListener('click', () => {
-                    editor.image.insertFromURL(item.url, item.title || '');
+                    editor.image.insertFromURL(item.url, item.title || '', item.width, item.height);
                     modal.close();
                 });
                 
@@ -648,6 +683,18 @@ export function setupImagePlugin(editor) {
                         item.progress = 0;
                         renderQueue();
 
+                        // Extract dimensions from local file before upload
+                        const dimensions = await new Promise((resolve) => {
+                            if (item.thumbnailUrl) {
+                                const img = new Image();
+                                img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+                                img.onerror = () => resolve({ width: null, height: null });
+                                img.src = item.thumbnailUrl;
+                            } else {
+                                resolve({ width: null, height: null });
+                            }
+                        });
+
                         const result = await uploadFn(item.file, (loaded, total) => {
                              if (total) {
                                  item.progress = Math.max(0, Math.min(100, (loaded / total) * 100));
@@ -659,6 +706,8 @@ export function setupImagePlugin(editor) {
                         item.status = 'SUCCESS';
                         item.url = result.url || result;
                         item.alt = result.alt || '';
+                        item.width = dimensions.width;
+                        item.height = dimensions.height;
                         
                         // Push into gallery cache immediately
                         const sources = editor.image.gallery.getRegisteredSources();
@@ -670,7 +719,9 @@ export function setupImagePlugin(editor) {
                                          url: item.url,
                                          thumbnailUrl: item.url,
                                          filename: item.file.name,
-                                         sourceId: sources[0].id
+                                         sourceId: sources[0].id,
+                                         width: item.width,
+                                         height: item.height
                                      });
                                      // Invalidate the 'loaded' dataset flag so the gallery forces a re-render from the updated cache
                                      const galleryContainer = elModal.querySelector('.penman-gallery-container');
@@ -758,7 +809,7 @@ export function setupImagePlugin(editor) {
              if (itemsToInsert.length > 0) {
                  itemsToInsert.forEach(item => {
                      // Insert Phase - Uploads from our own API should be trusted
-                     editor.image.insertFromURL(item.url, item.alt || '');
+                     editor.image.insertFromURL(item.url, item.alt || '', item.width, item.height);
                  });
                  // Remove inserted items from the queue
                  const remainingItems = uploadQueue.filter(item => !(item.selected && item.status === 'SUCCESS'));

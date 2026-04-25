@@ -10,7 +10,7 @@
  * </figure>
  */
 
-export function createFigureNode(src, alt = '', dataId = null, alignment = 'center') {
+export function createFigureNode(src, alt = '', dataId = null, alignment = 'center', width = null, height = null) {
   const figure = document.createElement('figure');
   figure.className = 'penman-image';
   figure.setAttribute('data-alignment', alignment);
@@ -22,11 +22,27 @@ export function createFigureNode(src, alt = '', dataId = null, alignment = 'cent
   const img = document.createElement('img');
   img.setAttribute('src', src);
   img.setAttribute('draggable', 'false');
+
+  if (width) img.setAttribute('width', width);
+  if (height) img.setAttribute('height', height);
+
   if (alt) {
     img.setAttribute('alt', alt);
   }
   if (dataId) {
     img.setAttribute('data-id', dataId);
+  }
+
+  // Fallback to auto-detect dimensions if not provided
+  if (!width || !height) {
+    img.onload = () => {
+      if (!img.getAttribute('width')) {
+        img.setAttribute('width', img.naturalWidth);
+      }
+      if (!img.getAttribute('height')) {
+        img.setAttribute('height', img.naturalHeight);
+      }
+    };
   }
 
   const figcaption = document.createElement('figcaption');

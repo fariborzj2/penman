@@ -95,12 +95,24 @@ async function handleSingleUploadJob(editor, job, uploadFn) {
   const { file, dataId, tempUrl } = job;
 
   try {
+    // Extract dimensions from the temporary URL asynchronously
+    const dimensions = await new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ width: img.naturalWidth, height: img.naturalHeight });
+      img.onerror = () => resolve({ width: null, height: null });
+      img.src = tempUrl;
+    });
+
     const result = await uploadFn(file);
 
     // ATOMIC MUTATION LAW (SUCCESS)
     applyAtomicMutation(editor, dataId, (imgNode, figureNode) => {
       // 1. Mutate DOM state
       imgNode.setAttribute('src', result.url);
+
+      if (dimensions.width) imgNode.setAttribute('width', dimensions.width);
+      if (dimensions.height) imgNode.setAttribute('height', dimensions.height);
+
       if (result.alt) {
         imgNode.setAttribute('alt', result.alt);
       } else {
