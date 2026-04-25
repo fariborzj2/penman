@@ -26,10 +26,12 @@ export class Sanitizer {
       h4: ["dir"],
       h5: ["dir"],
       h6: ["dir"],
-      figure: ["data-alignment", "contenteditable", "data-penman-core", "data-media-id", "data-provider", "data-kind", "data-src"],
+      figure: ["data-alignment", "contenteditable", "data-penman-core", "data-media-id", "data-provider", "data-kind", "data-src", "data-poster", "data-title", "data-controls", "data-autoplay"],
       figcaption: ["data-placeholder", "contenteditable"],
       img: ["src", "alt", "width", "height", "data-id"],
       iframe: ["src", "frameborder", "allow", "loading", "width", "height", "style"],
+      video: ["src", "poster", "title", "controls", "autoplay", "muted", "width", "height", "style"],
+      audio: ["src", "title", "controls", "autoplay", "muted", "width", "height", "style"],
       table: ["data-table-id", "contenteditable", "data-penman-core"],
       thead: [],
       tbody: [],
@@ -51,6 +53,8 @@ export class Sanitizer {
         td: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
         span: ['color', 'background-color', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration'],
         iframe: ['position', 'top', 'left', 'width', 'height'],
+        video: ['position', 'top', 'left', 'width', 'height'],
+        audio: ['position', 'top', 'left', 'width', 'height'],
         div: ['position', 'padding-bottom', 'height', 'width', 'overflow', 'top', 'left', 'z-index', 'cursor']
     };
 

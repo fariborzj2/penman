@@ -3,6 +3,7 @@ import { ProviderRegistry } from './core/ProviderRegistry.js';
 import { YoutubeProvider } from './providers/YoutubeProvider.js';
 import { AparatProvider } from './providers/AparatProvider.js';
 import { createCustomProvider } from './providers/CustomProvider.js';
+import { DirectVideoProvider, DirectAudioProvider } from './providers/DirectMediaProvider.js';
 import { MediaRenderer } from './rendering/MediaRenderer.js';
 import { MediaModal } from './ui/MediaModal.js';
 
@@ -14,6 +15,8 @@ export function setupMediaPlugin(editor) {
   const securityValidator = new SecurityValidation({ whitelist: whitelistExt });
 
   const registry = new ProviderRegistry();
+  registry.register(DirectVideoProvider);
+  registry.register(DirectAudioProvider);
   registry.register(YoutubeProvider);
   registry.register(AparatProvider);
   registry.register(createCustomProvider(securityValidator));

@@ -14,8 +14,8 @@ const editor = penman.init({
 ```
 
 ## Supported Operations
-- **Insert via UI**: Click the "Insert Media" button, paste a URL from YouTube, Aparat, or a whitelisted custom iframe.
-- **Auto-detection**: The modal will automatically select the provider and format the embed URL.
+- **Insert via UI**: Click the "Insert Media" button. You can use the "Direct Link" tab for `.mp4`/`.mp3` files, or the "Embed / Services" tab to paste a URL from YouTube, Aparat, or a whitelisted custom iframe.
+- **Auto-detection**: The modal will automatically select the provider and format the embed URL for supported services.
 
 ## Configuration (Optional)
 By default, the plugin enables YouTube and Aparat. You can whitelist additional domains:

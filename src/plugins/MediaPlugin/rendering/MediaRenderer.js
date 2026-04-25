@@ -22,32 +22,69 @@ export class MediaRenderer {
     figure.dataset.kind = mediaData.kind || 'embed';
     figure.dataset.src = mediaData.src || '';
 
+    // Support for direct media specific attributes
+    if (mediaData.poster) figure.dataset.poster = mediaData.poster;
+    if (mediaData.title) figure.dataset.title = mediaData.title;
+    if (mediaData.controls !== undefined) figure.dataset.controls = String(mediaData.controls);
+    if (mediaData.autoplay !== undefined) figure.dataset.autoplay = String(mediaData.autoplay);
+
     // Outer wrapper for responsive iframe (16:9 ratio default)
     const wrapper = document.createElement('div');
     wrapper.className = 'penman-media-wrapper';
 
+    // Default to 16:9
     const is4by3 = mediaData.aspectRatio === '4/3';
-    const paddingBottom = is4by3 ? '75%' : '56.25%';
+    let paddingBottom = is4by3 ? '75%' : '56.25%';
+
+    // If it's direct audio, height can be fixed or auto, but let's give it a fixed small height
+    if (mediaData.kind === 'audio' && mediaData.provider === 'direct') {
+       paddingBottom = '0';
+       wrapper.style.height = '50px';
+    } else {
+       wrapper.style.height = '0';
+       wrapper.style.paddingBottom = paddingBottom;
+    }
 
     wrapper.style.position = 'relative';
-    wrapper.style.paddingBottom = paddingBottom;
-    wrapper.style.height = '0';
     wrapper.style.width = '100%';
     wrapper.style.overflow = 'hidden';
 
-    // Core Frame element
-    const frame = document.createElement('iframe');
-    frame.src = mediaData.embedUrl;
-    frame.style.position = 'absolute';
-    frame.style.top = '0';
-    frame.style.left = '0';
-    frame.style.width = '100%';
-    frame.style.height = '100%';
-    frame.setAttribute('frameborder', '0');
-    frame.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+    let mediaElement;
 
-    // STRICT RULE: Native lazy loading
-    frame.setAttribute('loading', 'lazy');
+    if (mediaData.provider === 'direct') {
+      if (mediaData.kind === 'video') {
+        mediaElement = document.createElement('video');
+        if (mediaData.poster) mediaElement.poster = mediaData.poster;
+      } else {
+        mediaElement = document.createElement('audio');
+      }
+
+      if (mediaData.title) mediaElement.title = mediaData.title;
+      if (mediaData.controls !== false) mediaElement.controls = true; // default true
+      if (mediaData.autoplay) mediaElement.autoplay = true;
+
+      mediaElement.src = mediaData.embedUrl;
+      mediaElement.style.position = 'absolute';
+      mediaElement.style.top = '0';
+      mediaElement.style.left = '0';
+      mediaElement.style.width = '100%';
+      mediaElement.style.height = '100%';
+
+    } else {
+      // Core Frame element for embeds
+      mediaElement = document.createElement('iframe');
+      mediaElement.src = mediaData.embedUrl;
+      mediaElement.style.position = 'absolute';
+      mediaElement.style.top = '0';
+      mediaElement.style.left = '0';
+      mediaElement.style.width = '100%';
+      mediaElement.style.height = '100%';
+      mediaElement.setAttribute('frameborder', '0');
+      mediaElement.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+
+      // STRICT RULE: Native lazy loading
+      mediaElement.setAttribute('loading', 'lazy');
+    }
 
     // Overlay to capture pointer events (clicks) so the node can be selected
     const overlay = document.createElement('div');
@@ -60,7 +97,7 @@ export class MediaRenderer {
     overlay.style.zIndex = '10';
     overlay.style.cursor = 'pointer';
 
-    wrapper.appendChild(frame);
+    wrapper.appendChild(mediaElement);
     wrapper.appendChild(overlay);
     figure.appendChild(wrapper);
 
