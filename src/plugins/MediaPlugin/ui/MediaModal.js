@@ -3,9 +3,10 @@
  */
 
 export class MediaModal {
-  constructor(editor, registry) {
+  constructor(editor, registry, existingData = null) {
     this.editor = editor;
     this.registry = registry;
+    this.existingData = existingData;
   }
 
   open() {
@@ -13,9 +14,11 @@ export class MediaModal {
     if (this.editor.selection && typeof this.editor.selection.save === 'function') {
       this.editor.selection.save();
     }
+    
+    const isEditMode = !!this.existingData;
 
     const modal = this.editor.ui.createModal({
-      title: 'Insert Media',
+      title: isEditMode ? 'Edit Media' : 'Insert Media',
       width: '650px',
       hideFooter: true,
       body: `
@@ -31,6 +34,11 @@ export class MediaModal {
             margin-top: 15px;
             position: relative;
             overflow: hidden;
+          }
+          .penman-media-preview-area:after {
+            content: "";
+            display: block;
+            padding-top: 56.25%;
           }
           .penman-media-preview-area iframe,
           .penman-media-preview-area video {
@@ -72,21 +80,21 @@ export class MediaModal {
             display: block;
           }
         </style>
-
+        
         <div class="penman-media-tabs" id="penman-media-tabs">
           <div class="penman-media-tab" data-tab="direct">Direct Link</div>
           <div class="penman-media-tab active" data-tab="embed">Embed / Services</div>
         </div>
 
         <div style="padding: 0 15px 15px 15px;">
-
+          
           <!-- Direct Link Tab -->
           <div id="tab-direct" class="penman-media-tab-content">
             <div style="margin-bottom: 10px;">
               <label style="display:block; font-weight: 500;">Direct File URL (.mp4, .mp3, etc)</label>
               <input type="text" id="penman-media-direct-url" class="penman-input" placeholder="https://example.com/video.mp4" style="width: 100%; box-sizing: border-box;" />
             </div>
-
+            
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
               <div style="flex: 1;">
                 <label style="display:block; font-size: 12px; margin-bottom: 4px;">Title (Optional)</label>
@@ -120,6 +128,11 @@ export class MediaModal {
               </div>
             </div>
             <input type="text" id="penman-media-url" class="penman-input" placeholder="https://youtube.com/watch?v=... or https://aparat.com/v/..." style="width: 100%; box-sizing: border-box; margin-bottom: 10px;" />
+            
+            <div style="margin-bottom: 10px;">
+              <label style="display:block; font-size: 12px; margin-bottom: 4px;">Title (Optional)</label>
+              <input type="text" id="penman-media-embed-title" class="penman-input" placeholder="Media title for iframe" style="width: 100%; box-sizing: border-box;" />
+            </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
               <div style="flex: 1;">
@@ -151,18 +164,19 @@ export class MediaModal {
         </div>
         <div class="penman-modal-footer">
           <button type="button" class="penman-btn" id="penman-media-cancel">Cancel</button>
-          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>Insert</button>
+          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>${isEditMode ? 'Update' : 'Insert'}</button>
         </div>
       `
     });
 
     const el = modal.element || modal.modalElement;
-
+    
     const tabs = el.querySelectorAll('.penman-media-tab');
     const tabContents = el.querySelectorAll('.penman-media-tab-content');
 
     // Embed elements
     const urlInput = el.querySelector('#penman-media-url');
+    const embedTitleInput = el.querySelector('#penman-media-embed-title');
     const autodetectCb = el.querySelector('#penman-media-autodetect');
     const badge = el.querySelector('#penman-media-provider-badge');
     const aspectSelect = el.querySelector('#penman-media-aspect');
@@ -183,16 +197,30 @@ export class MediaModal {
     let currentMediaData = null;
     let activeTab = 'embed';
 
+    if (isEditMode) {
+      activeTab = this.existingData.provider === 'direct' ? 'direct' : 'embed';
+    }
+
+    // Initialize tabs states visually based on activeTab
+    tabs.forEach(t => {
+       if (t.getAttribute('data-tab') === activeTab) t.classList.add('active');
+       else t.classList.remove('active');
+    });
+    tabContents.forEach(c => {
+       if (c.id === `tab-${activeTab}`) c.classList.add('active');
+       else c.classList.remove('active');
+    });
+
     // Tab Switching Logic
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
-
+        
         tab.classList.add('active');
         activeTab = tab.getAttribute('data-tab');
         el.querySelector(`#tab-${activeTab}`).classList.add('active');
-
+        
         updatePreview();
       });
     });
@@ -210,30 +238,45 @@ export class MediaModal {
           return;
         }
 
+        let finalData = null;
+
         if (autodetectCb.checked) {
           const data = this.registry.process(url);
           if (data && data.provider !== 'direct') {
-            currentMediaData = { ...data, aspectRatio: aspectSelect.value };
+            finalData = data;
             badge.textContent = data.provider;
             badge.style.display = 'inline-block';
-            preview.innerHTML = `<iframe src="${data.embedUrl}" frameborder="0" allow="autoplay; fullscreen" loading="lazy"></iframe>`;
-            submitBtn.disabled = false;
           } else {
             preview.innerHTML = '<span style="color: #dc3545;">Invalid or unsupported URL</span>';
             errorDiv.textContent = 'This URL is not supported by any active embed provider.';
             errorDiv.style.display = 'block';
           }
         } else {
-          const customData = this.registry.process(url);
+          const customData = this.registry.process(url); 
           if (customData && customData.provider === 'custom') {
-            currentMediaData = { ...customData, aspectRatio: aspectSelect.value };
-            preview.innerHTML = `<iframe src="${customData.embedUrl}" frameborder="0" allow="autoplay; fullscreen" loading="lazy"></iframe>`;
-            submitBtn.disabled = false;
+            finalData = customData;
           } else {
             preview.innerHTML = '<span style="color: #dc3545;">Domain not whitelisted</span>';
             errorDiv.textContent = 'This URL domain is not whitelisted for custom embeds.';
             errorDiv.style.display = 'block';
           }
+        }
+
+        if (finalData) {
+          currentMediaData = { 
+              ...finalData, 
+              aspectRatio: aspectSelect.value,
+              title: embedTitleInput.value.trim() 
+          };
+          
+          let iframeHtml = `<iframe src="${finalData.embedUrl}" frameborder="0" allow="autoplay; fullscreen" loading="lazy"`;
+          if (currentMediaData.title) {
+             iframeHtml += ` title="${currentMediaData.title}"`;
+          }
+          iframeHtml += `></iframe>`;
+          
+          preview.innerHTML = iframeHtml;
+          submitBtn.disabled = false;
         }
       } else if (activeTab === 'direct') {
         const url = directUrlInput.value.trim();
@@ -252,7 +295,7 @@ export class MediaModal {
             autoplay: directAutoplayCb.checked,
             aspectRatio: '16/9'
           };
-
+          
           if (data.kind === 'video') {
              let html = `<video src="${data.embedUrl}" style="width: 100%; height: 100%;"`;
              if (currentMediaData.controls) html += ' controls';
@@ -273,6 +316,7 @@ export class MediaModal {
     };
 
     urlInput.addEventListener('input', updatePreview);
+    embedTitleInput.addEventListener('input', updatePreview);
     aspectSelect.addEventListener('change', updatePreview);
     autodetectCb.addEventListener('change', updatePreview);
 
@@ -289,10 +333,34 @@ export class MediaModal {
         if (this.editor.selection && typeof this.editor.selection.restore === 'function') {
            this.editor.selection.restore();
         }
-        this.editor.media.insertNode(currentMediaData);
+        
+        if (isEditMode && this.existingData.node) {
+           // Ensure the ID is preserved when updating
+           currentMediaData.id = this.existingData.id;
+           this.editor.media.updateNode(this.existingData.node, currentMediaData);
+        } else {
+           this.editor.media.insertNode(currentMediaData);
+        }
         modal.close();
       }
     });
+
+    // Pre-fill data if in edit mode
+    if (isEditMode) {
+       if (this.existingData.provider === 'direct') {
+           directUrlInput.value = this.existingData.src || '';
+           directTitleInput.value = this.existingData.title || '';
+           directPosterInput.value = this.existingData.poster || '';
+           directControlsCb.checked = this.existingData.controls;
+           directAutoplayCb.checked = this.existingData.autoplay;
+       } else {
+           urlInput.value = this.existingData.src || '';
+           embedTitleInput.value = this.existingData.title || '';
+           aspectSelect.value = this.existingData.aspectRatio || '16/9';
+           autodetectCb.checked = this.existingData.provider !== 'custom';
+       }
+       updatePreview();
+    }
 
     setTimeout(() => urlInput.focus(), 10);
   }

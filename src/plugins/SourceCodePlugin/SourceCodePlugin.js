@@ -46,10 +46,14 @@ function openSourceCodeModal(editor) {
     title: 'Source Code',
     width: '800px',
     body: `
-      <div class="penman-source-code-header" style="border-bottom: 1px solid #E2E8F0; display: flex; gap: 8px; padding: 5px 15px 10px; margin-bottom: 10px;" dir="ltr">
-         <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace;">
-         <button type="button" id="penman-cm-search-prev" class="penman-btn">&uarr;</button>
-         <button type="button" id="penman-cm-search-next" class="penman-btn">&darr;</button>
+      <div class="penman-source-code-header" style="border-bottom: 1px solid #E2E8F0; display: flex; gap: 8px; padding: 10px 15px 10px; margin-bottom: 10px;" dir="ltr">
+         <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace; margin-top: 0;">
+         <button type="button" id="penman-cm-search-prev" class="penman-btn" style="border: 1px solid #ccc; border-radius: 3px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
+         </button>
+         <button type="button" id="penman-cm-search-next" class="penman-btn" style="border: 1px solid #ccc; border-radius: 3px;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+         </button>
       </div>
       <div id="penman-source-code-container" style="overflow: auto; text-align: left;" dir="ltr"></div>
     `,
@@ -138,6 +142,26 @@ function openSourceCodeModal(editor) {
     },
     ".cm-panel": {
       padding: "15px !important"
+    },
+    ".cm-textfield": {
+      height: "28px",
+    },
+    ".cm-search": {
+      display: "flex",
+      flexWrap: "wrap",
+    },
+    ".cm-button": {
+      height: "28px",
+      border: "1px solid #ccc",
+      borderRadius: "3px",
+      background: "transparent",
+      padding: "0 10px",
+      fontSize: "13px",
+      cursor: "pointer"
+    },
+    ".cm-panels": {
+      background: "#F8FAFC",
+      color: "#64748B",
     }
   });
 

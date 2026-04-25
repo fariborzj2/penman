@@ -40,8 +40,8 @@ function injectStyles() {
   const el = document.createElement('style');
   el.id = STYLE_ID;
   el.textContent = `
-    .penman-draft-banner{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--color-background-info);border:1px solid var(--color-border-info);border-radius:8px;font-size:13px;color:var(--color-text-info);margin-bottom:8px;box-sizing:border-box;width:100%}
-    .penman-draft-banner-msg{flex:1;line-height:1.5}
+    .penman-draft-banner{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--color-background-info);border:1px solid var(--color-border-info);border-radius:8px;font-size:13px;color:var(--color-text-info);margin-bottom:8px;box-sizing:border-box;width:100%}
+    .penman-draft-banner-msg{flex:1;line-height:1.5; flex-basis: 350px;}
     .penman-draft-banner-date{display:block;font-size:11px;opacity:.7;margin-top:3px}
     .penman-draft-banner-actions{display:flex;gap:8px;flex-shrink:0;padding-top:1px}
     .penman-draft-banner-actions button{font-family:inherit;font-size:12px;padding:8px 12px 6px;border-radius:4px;cursor:pointer;white-space:nowrap}

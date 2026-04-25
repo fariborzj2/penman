@@ -31,4 +31,7 @@ editor.media.insertURL('https://www.youtube.com/watch?v=dQw4w9WgXcQ');
 
 // Direct media works similarly:
 editor.media.insertURL('https://example.com/video.mp4');
+
+// Updating an existing node programmatically:
+// editor.media.updateNode(existingDOMNode, { ...newData });
 ```

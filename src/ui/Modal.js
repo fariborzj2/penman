@@ -165,9 +165,11 @@ export class Modal {
         top: 0; left: 0; right: 0; bottom: 0;
         background: rgba(0, 0, 0, 0.5);
         display: flex;
-        align-items: center;
+        align-items: safe center;
         justify-content: center;
         z-index: 9999;
+        padding: 10px;
+        overflow: auto
       }
       .penman-modal {
         background: #fff;
@@ -203,6 +205,55 @@ export class Modal {
         border: 1px solid #ccc;
         border-radius: 3px;
         margin-top: 5px;
+        height: 38px;
+      }
+      .penman-modal-body input[type="checkbox"] {
+        appearance: none;
+        -webkit-appearance: none;
+        width: 38px;
+        height: 22px !important;
+        background: #eee;
+        border-radius: 20px;
+        position: relative;
+        outline: none;
+        cursor: pointer;
+        transition: 0.2s;
+        margin: 0;
+        margin-right: 4px;
+        border-color: #e5e5e5;
+        border-width: 2px;
+      }
+      .penman-modal-body input[type="checkbox"]::before {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        top: 2px;
+        left: 2px;
+        background: #fff;
+        border-radius: 50%;
+        transition: 0.2s;
+        box-shadow: 5px 0 4px 1px rgba(0,0,0,0.07)
+      }
+      .penman-modal-body input[type="checkbox"]:checked {
+        background: #007bff;
+        border-color: #62abf9;
+        
+      }
+
+      .penman-modal-body input[type="checkbox"]:checked::before {
+        transform: translateX(16px);
+        box-shadow: -5px 0 4px 1px rgba(0,0,0,0.07)
+      }
+
+      .penman-modal-body select {
+        background: transparent;
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 3px;
+        margin-top: 5px;
+        height: 38px;
       }
       .penman-modal-footer {
         padding: 10px 15px;
@@ -254,10 +305,10 @@ export class Modal {
         gap: 15px;
         margin-bottom: 20px;
       }
-      .penman-modal-checkbox-group label {
-        display: flex;
+      .penman-modal-body label {
+        display: inline-flex;
         align-items: center;
-        gap: 5px;
+        gap: 2px;
         cursor: pointer;
         white-space: nowrap;
         font-size: 14px;
