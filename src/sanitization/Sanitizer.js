@@ -29,7 +29,7 @@ export class Sanitizer {
       figure: ["data-alignment", "contenteditable", "data-penman-core", "data-media-id", "data-provider", "data-kind", "data-src", "data-poster", "data-title", "data-controls", "data-autoplay"],
       figcaption: ["data-placeholder", "contenteditable"],
       img: ["src", "alt", "width", "height", "data-id"],
-      iframe: ["src", "frameborder", "allow", "loading", "width", "height", "style"],
+      iframe: ["src", "title", "frameborder", "allow", "loading", "width", "height", "style"],
       video: ["src", "poster", "title", "controls", "autoplay", "muted", "width", "height", "style"],
       audio: ["src", "title", "controls", "autoplay", "muted", "width", "height", "style"],
       table: ["data-table-id", "contenteditable", "data-penman-core"],

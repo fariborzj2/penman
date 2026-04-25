@@ -74,6 +74,7 @@ export class MediaRenderer {
       // Core Frame element for embeds
       mediaElement = document.createElement('iframe');
       mediaElement.src = mediaData.embedUrl;
+      if (mediaData.title) mediaElement.title = mediaData.title;
       mediaElement.style.position = 'absolute';
       mediaElement.style.top = '0';
       mediaElement.style.left = '0';
