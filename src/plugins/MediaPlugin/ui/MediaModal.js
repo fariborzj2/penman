@@ -120,7 +120,7 @@ export class MediaModal {
           <div id="tab-embed" class="penman-media-tab-content active">
             <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
               <label style="display:block; font-weight: 500;">Media URL</label>
-              <div>
+              <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="font-size: 12px; display: inline-flex; align-items: center;">
                   <input type="checkbox" id="penman-media-autodetect" checked style="margin-right: 5px;"> Auto-detect Provider
                 </label>

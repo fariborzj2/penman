@@ -624,9 +624,6 @@ export function setupImagePlugin(editor) {
                 const checkbox = document.createElement('input');
                 checkbox.type = 'checkbox';
                 checkbox.checked = item.selected;
-                checkbox.style.width = '20px';
-                checkbox.style.height = '20px';
-                checkbox.style.cursor = 'pointer';
                 checkbox.onchange = (e) => {
                     item.selected = e.target.checked;
                 };
