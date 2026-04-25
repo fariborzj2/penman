@@ -84,7 +84,9 @@
   min-width: 20px;
   position: relative;
 }
-
+.penman-editor-area table p {
+  margin: 0;
+}
 .penman-cell-selected {
   outline: 2px solid #3b82f6;
   outline-offset: -2px;
