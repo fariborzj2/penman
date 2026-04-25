@@ -51,7 +51,7 @@ export class Sanitizer {
         td: ['background-color', 'background', 'border', 'border-color', 'border-width', 'border-style', 'padding', 'text-align'],
         span: ['color', 'background-color', 'font-size', 'font-family', 'font-weight', 'font-style', 'text-decoration'],
         iframe: ['position', 'top', 'left', 'width', 'height'],
-        div: ['position', 'padding-bottom', 'height', 'width', 'overflow']
+        div: ['position', 'padding-bottom', 'height', 'width', 'overflow', 'top', 'left', 'z-index', 'cursor']
     };
 
     this.blockTags = new Set([
@@ -66,11 +66,11 @@ export class Sanitizer {
 
   _buildDynamicWhitelist() {
     this.allowedClassesByTag = {
-        div: new Set(['penman-suggested-posts-wrapper', 'penman-suggested-posts-wrapper-title', 'penman-image-wrapper', 'penman-selected-node']),
+        div: new Set(['penman-suggested-posts-wrapper', 'penman-suggested-posts-wrapper-title', 'penman-image-wrapper', 'penman-media-wrapper', 'penman-media-overlay', 'penman-selected-node']),
         ul: new Set(['penman-suggested-posts-wrapper-list']),
         li: new Set(['penman-suggested-posts-wrapper-item']),
         a: new Set(['penman-suggested-posts-wrapper-link']),
-        figure: new Set(['penman-image', 'penman-align-center', 'penman-align-left', 'penman-align-right', 'penman-selected-node']),
+        figure: new Set(['penman-image', 'penman-align-center', 'penman-align-left', 'penman-align-right', 'penman-media', 'penman-media-block', 'penman-selected-node']),
         figcaption: new Set(['penman-image-caption']),
         table: new Set(['penman-selected-node']),
         td: new Set(['penman-cell-selected']),

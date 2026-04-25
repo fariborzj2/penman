@@ -49,7 +49,19 @@ export class MediaRenderer {
     // STRICT RULE: Native lazy loading
     frame.setAttribute('loading', 'lazy');
 
+    // Overlay to capture pointer events (clicks) so the node can be selected
+    const overlay = document.createElement('div');
+    overlay.className = 'penman-media-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.top = '0';
+    overlay.style.left = '0';
+    overlay.style.width = '100%';
+    overlay.style.height = '100%';
+    overlay.style.zIndex = '10';
+    overlay.style.cursor = 'pointer';
+
     wrapper.appendChild(frame);
+    wrapper.appendChild(overlay);
     figure.appendChild(wrapper);
 
     return figure;

@@ -224,3 +224,21 @@ figure.penman-selected-image {
   border-radius: 4px;
   margin-bottom: 15px;
 }
+/* Media Plugin */
+.penman-media-block {
+  margin: 1em 0;
+  cursor: pointer;
+}
+
+.penman-media-wrapper {
+  background: #000;
+}
+
+.penman-media-overlay {
+  background: transparent;
+}
+
+figure.penman-media-block.penman-selected-node {
+  outline: 3px solid #007bff;
+  outline-offset: 4px;
+}
