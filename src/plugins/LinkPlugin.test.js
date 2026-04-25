@@ -19,6 +19,14 @@ describe('LinkPlugin', () => {
     expect(editor.ui.registry.buttons['link']).toBeDefined();
   });
 
+  it('should register REMOVE_LINK command', () => {
+    expect(editor.commands.commands['REMOVE_LINK']).toBeDefined();
+  });
+
+  it('should add unlink button to the registry', () => {
+    expect(editor.ui.registry.buttons['unlink']).toBeDefined();
+  });
+
   it('should open modal with current selection text', () => {
     editor.editableArea.innerHTML = '<p id="target">Hello World</p>';
     const target = editor.editableArea.querySelector('#target');

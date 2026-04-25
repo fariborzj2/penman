@@ -10,7 +10,7 @@ import penman from 'penman-editor';
 const editor = penman.init({
   selector: '#my-textarea',
   toolbar: 'bold italic underline strikethrough | format_block_type fontsize | alignleft aligncenter alignright justify | insertUnorderedList insertOrderedList | link unlink image table hr | findreplace removeformat | undo redo',
-  plugins: ['format', 'list', 'link', 'unlink', 'image', 'table', 'horizontalrule', 'fontsize', 'blocktype', 'findreplace', 'removeformat'],
+  plugins: ['format', 'list', 'link', 'image', 'table', 'horizontalrule', 'fontsize', 'blocktype', 'findreplace', 'removeformat'],
   blockTypes: [
     { name: 'Paragraph', cmd: 'p' },
     { name: 'Heading 1', cmd: 'h1' },

@@ -3,7 +3,6 @@ import { setupFormatPlugin } from './FormatPlugin/FormatPlugin.js';
 import { setupListPlugin } from './ListPlugin.js';
 import { setupBlockTypePlugin } from './BlockTypePlugin/BlockTypePlugin.js';
 import { setupFontSizePlugin } from './FontSizePlugin/FontSizePlugin.js';
-import { setupUnlinkPlugin } from './UnlinkPlugin.js';
 import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
 import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
 import { setupFindReplacePlugin } from './FindReplacePlugin/FindReplacePlugin.js';
@@ -22,7 +21,6 @@ export const PluginManager = {
     list: setupListPlugin,
     blocktype: setupBlockTypePlugin,
     fontsize: setupFontSizePlugin,
-    unlink: setupUnlinkPlugin,
     removeformat: setupRemoveFormatPlugin,
     hr: setupHorizontalRulePlugin,
     findreplace: setupFindReplacePlugin,
