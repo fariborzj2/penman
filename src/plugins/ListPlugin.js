@@ -21,14 +21,14 @@ export function setupListPlugin(editor) {
   });
 
   editor.ui.registry.addButton('bullist', {
-    text: 'Bullet List',
+    text: editor.i18n.t('plugins.list.bullet'),
     onAction: function() {
       editor.commands.execute('insertUnorderedList');
     }
   });
 
   editor.ui.registry.addButton('numlist', {
-    text: 'Numbered List',
+    text: editor.i18n.t('plugins.list.numbered'),
     onAction: function() {
       editor.commands.execute('insertOrderedList');
     }

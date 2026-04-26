@@ -388,7 +388,7 @@ export function setupBlockTypePlugin(editor) {
 
   // Register the dropdown
   editor.ui.registry.addDropdown('blocktype', {
-    text: 'Paragraph', // Default label
+    text: editor.i18n.t('plugins.blockType.paragraph'), // Default label
     render: renderDropdownContent,
     onOpen: () => {
       editor.selection.save();

@@ -178,7 +178,7 @@ export function setupFormatPlugin(editor) {
     });
 
     editor.ui.registry.addButton(format, {
-      text: format.charAt(0).toUpperCase() + format.slice(1),
+      text: editor.i18n.t(`core.${format}`) !== `core.${format}` ? editor.i18n.t(`core.${format}`) : (format.charAt(0).toUpperCase() + format.slice(1)),
       onAction: function() {
         editor.commands.execute(format);
       }

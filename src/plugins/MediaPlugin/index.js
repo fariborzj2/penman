@@ -175,7 +175,7 @@ export function setupMediaPlugin(editor) {
   // Register UI Button
   if (editor.ui && editor.ui.registry) {
     editor.ui.registry.addButton('media', {
-      text: 'Insert Media',
+      text: editor.i18n.t('plugins.media.title'),
       onAction: () => {
         let existingData = null;
         const selectedNode = editor.selection.getSelectedNode();

@@ -116,7 +116,7 @@ export function setupFontSizePlugin(editor) {
   };
 
   editor.ui.registry.addDropdown('fontsize', {
-    text: 'Size',
+    text: editor.i18n.t('plugins.fontSize.title'),
     render: renderDropdownContent,
     onOpen: () => {
       editor.selection.save();

@@ -178,7 +178,7 @@ export function setupImagePlugin(editor) {
   // Register Image Button in Toolbar
   if (editor.ui && editor.ui.registry) {
     editor.ui.registry.addButton('image', {
-      text: 'Image',
+      text: editor.i18n.t('plugins.image.title'),
       onAction: () => {
         if (editor.selection && typeof editor.selection.save === 'function') {
           editor.selection.save();

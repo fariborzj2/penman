@@ -49,7 +49,7 @@ export function setupRemoveFormatPlugin(editor) {
   });
 
   editor.ui.registry.addButton('removeformat', {
-    text: 'Clear Formatting',
+    text: editor.i18n.t('plugins.removeFormat.title'),
 
     onAction: () => {
       editor.execCommand('CLEAR_FORMATTING');
