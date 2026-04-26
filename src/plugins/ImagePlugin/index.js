@@ -226,9 +226,9 @@ export function setupImagePlugin(editor) {
             </style>
 
             <div class="penman-image-tabs">
-              <div class="penman-image-tab active" data-tab="url">URL</div>
-              <div class="penman-image-tab" data-tab="upload">Upload</div>
-              <div class="penman-image-tab" data-tab="gallery">Gallery</div>
+              <div class="penman-image-tab active" data-tab="url">${editor.i18n.t('plugins.image.urlTab')}</div>
+              <div class="penman-image-tab" data-tab="upload">${editor.i18n.t('plugins.image.uploadTab')}</div>
+              <div class="penman-image-tab" data-tab="gallery">${editor.i18n.t('plugins.image.galleryTab')}</div>
             </div>
 
             <div class="penman-image-tab-content active" id="penman-tab-url">
@@ -253,15 +253,15 @@ export function setupImagePlugin(editor) {
                 <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 1.5px dashed #b0b0b0; padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer;" onclick="document.getElementById('penman-image-file-input').click()">
                   <p style="margin: 0 0 8px 0; color: #555; font-size: 16px;">Drag and drop an image here, or browse.</p>
                   <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple />
-                  <p style="margin: 0; color: #001529; font-weight: 600; font-size: 14px;">Browser Files</p>
+                  <p style="margin: 0; color: #001529; font-weight: 600; font-size: 14px;">${editor.i18n.t('plugins.image.uploadPlaceholder')}</p>
                 </div>
                 <div id="penman-image-upload-queue" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
                 </div>
               </div>
 
               <div class="penman-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="penman-btn" id="penman-image-upload-remove" style="background-color: #fff0f0; color: #ff4d4f; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">Remove</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit" style="background-color: #4285f4; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">Insert</button>
+                <button type="button" class="penman-btn" id="penman-image-upload-remove" style="background-color: #fff0f0; color: #ff4d4f; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">${editor.i18n.t('plugins.image.clearQueue')}</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit" style="background-color: #4285f4; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">${editor.i18n.t('plugins.image.insertSelected')}</button>
               </div>
             </div>
 
@@ -835,7 +835,7 @@ export function setupImagePlugin(editor) {
                  renderQueue();
                  modal.close();
              } else {
-                 alert('No selected successful uploads to insert.');
+                 alert('No items to insert.');
              }
           });
         }

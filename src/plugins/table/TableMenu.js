@@ -27,48 +27,48 @@ export class TableMenu {
 
           <!-- CELL -->
           <details class="penman-menu-item-cell">
-            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Cell</summary>
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">${this.editor.i18n.t('plugins.table.cell')}</summary>
             <div style="padding-left: 20px; font-size: 13px;">
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="MERGE_CELLS" style="padding: 6px; cursor: pointer;">Merge cells</div>
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="SPLIT_CELL" style="padding: 6px; cursor: pointer;">Split cell</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="MERGE_CELLS" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.mergeCells')}</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="SPLIT_CELL" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.splitCell')}</div>
             </div>
           </details>
 
           <!-- ROW -->
           <details class="penman-menu-item-row">
-            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Row</summary>
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">${this.editor.i18n.t('plugins.table.row')}</summary>
             <div style="padding-left: 20px; font-size: 13px;">
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_BEFORE" style="padding: 6px; cursor: pointer;">Insert row before</div>
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_AFTER" style="padding: 6px; cursor: pointer;">Insert row after</div>
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_ROW" style="padding: 6px; cursor: pointer;">Delete row</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_BEFORE" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.insertRowAbove')}</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_ROW_AFTER" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.insertRowBelow')}</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_ROW" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.deleteRow')}</div>
             </div>
           </details>
 
           <!-- COLUMN -->
           <details class="penman-menu-item-column">
-            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">Column</summary>
+            <summary style="padding: 8px 15px; cursor: pointer; font-size: 14px; outline: none;">${this.editor.i18n.t('plugins.table.column')}</summary>
             <div style="padding-left: 20px; font-size: 13px;">
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_BEFORE" style="padding: 6px; cursor: pointer;">Insert column before</div>
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_AFTER" style="padding: 6px; cursor: pointer;">Insert column after</div>
-                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_COLUMN" style="padding: 6px; cursor: pointer;">Delete column</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_BEFORE" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.insertColLeft')}</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="ADD_COLUMN_AFTER" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.insertColRight')}</div>
+                <div class="penman-menu-subitem penman-cmd-trigger" data-cmd="REMOVE_COLUMN" style="padding: 6px; cursor: pointer;">${this.editor.i18n.t('plugins.table.deleteCol')}</div>
             </div>
           </details>
 
           <hr style="border: none; border-top: 1px solid #E2E8F0; margin: 5px 0;">
           <div class="penman-menu-item penman-menu-item-props" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px; color: #777;">
-            Table properties
+            ${this.editor.i18n.t('plugins.table.properties')}
           </div>
           <div class="penman-menu-item penman-cmd-trigger" data-cmd="SELECT_TABLE" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
             <div>
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1" fill="#777"/></svg>
             </div>
-            <span style="color: #777;">Select table</span>
+            <span style="color: #777;">${this.editor.i18n.t('plugins.table.selectTable')}</span>
           </div>
           <div class="penman-menu-item penman-cmd-trigger" data-cmd="table_delete" style="padding: 8px 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; font-size: 14px;">
             <div >
                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#777" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg>
             </div>
-            <span style="color: #777;">Delete table</span>
+            <span style="color: #777;">${this.editor.i18n.t('plugins.table.deleteTable')}</span>
           </div>
         </div>
       </div>
@@ -124,7 +124,7 @@ export class TableMenu {
     });
 
 
-    const tablePropItem = Array.from(dropdownElement.querySelectorAll('.penman-menu-item')).find(el => el.textContent.includes('Table properties'));
+    const tablePropItem = Array.from(dropdownElement.querySelectorAll('.penman-menu-item')).find(el => el.textContent.includes(this.editor.i18n.t('plugins.table.properties')));
     if (tablePropItem) {
         tablePropItem.addEventListener('click', () => {
             this.editor.commands.execute('OPEN_TABLE_PROPERTIES_MODAL');
