@@ -57,7 +57,7 @@ export function setupHorizontalRulePlugin(editor) {
   });
 
   editor.ui.registry.addButton('hr', {
-    text: 'Insert Horizontal Rule',
+    text: editor.i18n.t('plugins.hr.title'),
 
     onAction: () => {
       editor.execCommand('INSERT_HORIZONTAL_RULE');

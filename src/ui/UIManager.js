@@ -132,8 +132,8 @@ export class UIManager {
       });
     } else {
       // Normal built-in or fall-back command
-      btn.title = cmd;
-      btn.innerHTML = this.iconProvider.getIcon(cmd) || (cmd.charAt(0).toUpperCase() + cmd.slice(1));
+      btn.title = this.editor.i18n.t(`core.${cmd}`) !== `core.${cmd}` ? this.editor.i18n.t(`core.${cmd}`) : cmd;
+      btn.innerHTML = this.iconProvider.getIcon(cmd) || (btn.title.charAt(0).toUpperCase() + btn.title.slice(1));
 
       btn.addEventListener('mousedown', (e) => {
         e.preventDefault();

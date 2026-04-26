@@ -139,7 +139,7 @@ export function setupColorPlugin(editor) {
   };
 
   editor.ui.registry.addDropdown('textcolor', {
-    text: 'Text Color',
+    text: editor.i18n.t('plugins.color.textColor'),
     icon: editor.ui.iconProvider.getIcon('textcolor') || '<span style="font-weight:bold;color:red;">A</span>',
     render: () => renderDropdownContent('SET_TEXT_COLOR'),
     onOpen: () => editor.selection.save(),
@@ -147,7 +147,7 @@ export function setupColorPlugin(editor) {
   });
 
   editor.ui.registry.addDropdown('highlight', {
-    text: 'Highlight',
+    text: editor.i18n.t('plugins.color.highlight'),
     icon: editor.ui.iconProvider.getIcon('highlight') || '<span style="background-color:yellow;">H</span>',
     render: () => renderDropdownContent('SET_HIGHLIGHT_COLOR'),
     onOpen: () => editor.selection.save(),

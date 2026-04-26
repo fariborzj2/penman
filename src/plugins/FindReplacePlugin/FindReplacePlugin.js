@@ -240,7 +240,7 @@ export function setupFindReplacePlugin(editor) {
       body: modalHtml,
       buttons: [
         {
-          text: 'Next', id: 'fr-btn-next', align: 'left', disabled: true,
+          text: editor.i18n.t('plugins.findReplace.next'), id: 'fr-btn-next', align: 'left', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
             currentIndex = (currentIndex + 1) % results.length;
@@ -251,7 +251,7 @@ export function setupFindReplacePlugin(editor) {
           }
         },
         {
-          text: 'Previous', id: 'fr-btn-prev', align: 'left', disabled: true,
+          text: editor.i18n.t('plugins.findReplace.prev'), id: 'fr-btn-prev', align: 'left', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
             currentIndex = (currentIndex - 1 + results.length) % results.length;
@@ -262,14 +262,14 @@ export function setupFindReplacePlugin(editor) {
           }
         },
         {
-          text: 'Find', id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right',
+          text: editor.i18n.t('plugins.findReplace.find'), id: 'fr-btn-find', classNames: 'penman-btn-primary', align: 'right',
           onClick: () => {
             editor.selection.restore();
             executeSearch();
           }
         },
         {
-          text: 'Replace', id: 'fr-btn-replace', align: 'right', disabled: true,
+          text: editor.i18n.t('plugins.findReplace.replace'), id: 'fr-btn-replace', align: 'right', disabled: true,
           onClick: () => {
             if (results.length === 0 || currentIndex < 0 || currentIndex >= results.length) return;
             const elModal = modal.modalElement;
@@ -319,7 +319,7 @@ export function setupFindReplacePlugin(editor) {
           }
         },
         {
-          text: 'Replace all', id: 'fr-btn-replace-all', align: 'right', disabled: true,
+          text: editor.i18n.t('plugins.findReplace.replaceAll'), id: 'fr-btn-replace-all', align: 'right', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
             const elModal = modal.modalElement;
@@ -426,7 +426,7 @@ export function setupFindReplacePlugin(editor) {
   };
 
   editor.ui.registry.addButton('findreplace', {
-    text: 'Find and Replace',
+    text: editor.i18n.t('plugins.findReplace.title'),
     onAction: openFindReplace
   });
 

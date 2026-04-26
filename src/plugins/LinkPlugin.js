@@ -57,14 +57,14 @@ export function setupLinkPlugin(editor) {
   });
 
   editor.ui.registry.addButton('unlink', {
-    text: 'Unlink',
+    text: editor.i18n.t('plugins.link.unlink'),
     onAction: () => {
       editor.execCommand('REMOVE_LINK');
     }
   });
 
   editor.ui.registry.addButton('link', {
-    text: 'Insert Link',
+    text: editor.i18n.t('plugins.link.insert'),
     onAction: function() {
       // Get the currently selected text before saving markers
       const sel = editor.selection.getSelection();
@@ -79,7 +79,7 @@ export function setupLinkPlugin(editor) {
       editor.selection.save();
 
       editor.ui.createModal({
-        title: 'Insert Link',
+        title: editor.i18n.t('plugins.link.insert'),
         body: `
           <div style="padding: 15px">
             <div class="penman-modal-form-row">
@@ -87,7 +87,7 @@ export function setupLinkPlugin(editor) {
               <input type="url" id="penman-link-url" name="url" placeholder="https://example.com" required>
             </div>
             <div class="penman-modal-form-row">
-              <label for="penman-link-text">Text to display</label>
+              <label for="penman-link-text">${editor.i18n.t('plugins.link.textPlaceholder')}</label>
               <input type="text" id="penman-link-text" name="text" placeholder="Link text" value="${currentText}">
             </div>
             <div style="margin-top: 10px; display: flex; gap: 10px;">

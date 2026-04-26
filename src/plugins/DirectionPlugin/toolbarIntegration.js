@@ -23,7 +23,7 @@ export function registerToolbarButtons(editor, config) {
 
   // ── RTL button ──────────────────────────────────────────────────────────
   editor.ui.registry.addButton('dirrtl', {
-    text: 'RTL',
+    text: editor.i18n.t('plugins.direction.rtl'),
     onAction: () => {
       const blocks = getSelectedBlocks();
       if (blocks.length > 0) onApplyManualToBlocks(blocks, 'rtl');
@@ -32,7 +32,7 @@ export function registerToolbarButtons(editor, config) {
 
   // ── LTR button ──────────────────────────────────────────────────────────
   editor.ui.registry.addButton('dirltr', {
-    text: 'LTR',
+    text: editor.i18n.t('plugins.direction.ltr'),
     onAction: () => {
       const blocks = getSelectedBlocks();
       if (blocks.length > 0) onApplyManualToBlocks(blocks, 'ltr');
@@ -41,7 +41,7 @@ export function registerToolbarButtons(editor, config) {
 
   // ── Reset button ────────────────────────────────────────────────────────
   editor.ui.registry.addButton('dirreset', {
-    text: 'Dir Auto',
+    text: editor.i18n.t('plugins.direction.auto'),
     onAction: () => {
       const blocks = getSelectedBlocks();
       if (blocks.length > 0) onResetBlocks(blocks);

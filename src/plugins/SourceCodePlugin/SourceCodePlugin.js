@@ -8,7 +8,7 @@ export function setupSourceCodePlugin(editor) {
   // 1. Register Button in Toolbar
   editor.ui.registry.addButton('sourcecode', {
     iconName: 'sourcecode',
-    text: 'Source Code',
+    text: editor.i18n.t('plugins.sourceCode.title'),
     onAction: () => openSourceCodeModal(editor)
   });
 

@@ -86,7 +86,7 @@ export function setupSuggestedPostsPlugin(editor) {
   }
 
   editor.ui.registry.addButton('suggestedposts', {
-    text: 'Suggested posts',
+    text: editor.i18n.t('plugins.suggestedPosts.title'),
     onAction: () => {
       editingBlock = null;
       items = [];
@@ -111,7 +111,7 @@ export function setupSuggestedPostsPlugin(editor) {
       editor.selection.save();
     }
     const modal = editor.ui.createModal({
-      title: 'Suggested content',
+      title: editor.i18n.t('plugins.suggestedPosts.title'),
       hideFooter: true,
       body: buildModalBody(),
     });
@@ -124,20 +124,20 @@ export function setupSuggestedPostsPlugin(editor) {
         <div id="psp-items-list" style="margin-bottom: 12px;"></div>
         <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-title-input" style="font-size:13px; color:#555;">Post Title</label>
+            <label for="psp-title-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.suggestedPosts.title')}</label>
             <input id="psp-title-input" type="text" placeholder="Enter Suggested Post Title" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;" />
           </div>
           <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-url-input" style="font-size:13px; color:#555;">Link address (URL)</label>
+            <label for="psp-url-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.link.urlPlaceholder')}</label>
             <input id="psp-url-input" type="url" placeholder="https://example.com/post" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; direction:ltr;" />
           </div>
           <div id="psp-error" style="color:#dc3545; font-size:12px; display:none;"></div>
-          <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff;">Add link</button>
+          <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff;">${editor.i18n.t('plugins.suggestedPosts.insert')}</button>
         </div>
       </div>
       <div class="penman-modal-footer">
-        <button class="penman-btn penman-modal-btn-cancel" type="button">Cancel</button>
-        <button id="psp-submit-btn" class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">Confirm</button>
+        <button class="penman-btn penman-modal-btn-cancel" type="button">${editor.i18n.t('ui.cancel')}</button>
+        <button id="psp-submit-btn" class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${editor.i18n.t('ui.ok')}</button>
       </div>
     `;
   }
@@ -259,7 +259,7 @@ export function setupSuggestedPostsPlugin(editor) {
 
     const html = `
       <div class="penman-suggested-posts-wrapper" contenteditable="false">
-        <div class="penman-suggested-posts-wrapper-title">Suggested posts</div>
+        <div class="penman-suggested-posts-wrapper-title">${editor.i18n.t('plugins.suggestedPosts.title')}</div>
         <ul class="penman-suggested-posts-wrapper-list">${listItems}</ul>
       </div>
     `;

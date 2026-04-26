@@ -5,6 +5,7 @@ import { HistoryManager } from '../history/HistoryManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { PluginManager } from '../plugins/PluginManager.js';
 import { Sanitizer } from '../sanitization/Sanitizer.js';
+import { I18nManager } from '../i18n/I18nManager.js';
 
 export class Editor extends EventEmitter {
   constructor(options) {
@@ -35,11 +36,15 @@ export class Editor extends EventEmitter {
     this.history = null;
     this.ui = null;
     this.sanitizer = null;
+    this.i18n = null;
 
     this.init();
   }
 
   init() {
+    // Initialize i18n manager first
+    this.i18n = new I18nManager(this.options.lang);
+
     this._createUI();
 
     // Initialize core subsystems
@@ -77,8 +82,14 @@ export class Editor extends EventEmitter {
     // Create wrapper container
     this.container = document.createElement('div');
     this.container.className = 'penman-wrapper';
-    this.container.setAttribute('dir', this.options.direction);
-    this.container.lang = this.options.lang;
+
+    const resolvedDir = this.options.direction === 'auto' ? this.i18n.dir : this.options.direction;
+    this.container.setAttribute('dir', resolvedDir);
+    this.container.lang = this.i18n.lang;
+
+    if (resolvedDir === 'rtl') {
+      this.container.classList.add('penman-rtl');
+    }
 
     // Create main container
     this.mainContainer = document.createElement('div');
