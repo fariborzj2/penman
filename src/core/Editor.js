@@ -165,11 +165,18 @@ export class Editor extends EventEmitter {
       this._updateFooter();
     });
 
+    // Prevent default navigation for all links in the editor
+    this.editableArea.addEventListener('click', (e) => {
+      if (e.target.closest('a')) {
+        e.preventDefault();
+      }
+    });
+
     this.editableArea.addEventListener('mousedown', (e) => {
       const widget = e.target.closest('table, figure.penman-image, figure.penman-media-block, .penman-suggested-posts-wrapper');
       if (widget) {
         // If clicking inside an editable/interactive part, don't select the whole node
-        const isInteractive = e.target.closest('figcaption, td, th, a');
+        const isInteractive = e.target.closest('figcaption, td, th');
         if (!isInteractive) {
           e.preventDefault();
           this.editableArea.focus(); // Ensure focus for keyboard events
