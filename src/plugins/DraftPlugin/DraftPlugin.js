@@ -170,11 +170,11 @@ export function setupDraftPlugin(editor) {
 
     const msg = document.createElement('div');
     msg.className = 'penman-draft-banner-msg';
-    msg.textContent = 'A newer unsaved version of this document was found.';
+    msg.textContent = editor.i18n.t('plugins.draft.recoveryBannerMsg');
 
     const dateNote = document.createElement('span');
     dateNote.className = 'penman-draft-banner-date';
-    dateNote.textContent = 'Last auto-saved: ' + formatDateTime(draft.lastSavedAt);
+    dateNote.textContent = editor.i18n.t('plugins.draft.lastAutoSaved') + + formatDateTime(draft.lastSavedAt);
     msg.appendChild(dateNote);
 
     const actions = document.createElement('div');
@@ -183,12 +183,12 @@ export function setupDraftPlugin(editor) {
     const restoreBtn = document.createElement('button');
     restoreBtn.type = 'button';
     restoreBtn.className = 'penman-draft-btn-restore';
-    restoreBtn.textContent = 'Restore draft';
+    restoreBtn.textContent = editor.i18n.t('plugins.draft.restoreDraft');
 
     const discardBtn = document.createElement('button');
     discardBtn.type = 'button';
     discardBtn.className = 'penman-draft-btn-discard';
-    discardBtn.textContent = 'Discard';
+    discardBtn.textContent = editor.i18n.t('plugins.draft.discard');
 
     actions.appendChild(restoreBtn);
     actions.appendChild(discardBtn);
@@ -203,7 +203,7 @@ export function setupDraftPlugin(editor) {
       if (editor.history) editor.history.pushImmediate();
       manager.seedBaseContent(draft.content);
       removeBanner();
-      setStatus('Draft restored.', 'pds-saved');
+      setStatus(editor.i18n.t('plugins.draft.draftRestored'), 'pds-saved');
       if (typeof cfg.onRestore === 'function') cfg.onRestore(draft);
     });
 
@@ -211,7 +211,7 @@ export function setupDraftPlugin(editor) {
       await manager.remove();
       manager.seedBaseContent(editor.getContent());
       removeBanner();
-      setStatus('Draft discarded.');
+      setStatus(editor.i18n.t('plugins.draft.draftDiscarded'));
       if (typeof cfg.onDiscard === 'function') cfg.onDiscard(draft);
     });
   }
@@ -250,7 +250,7 @@ export function setupDraftPlugin(editor) {
     if (!content || !content.trim()) return;
 
     const title = cfg.getTitle();
-    setStatus('Saving…', 'pds-saving', 0);
+    setStatus(editor.i18n.t('plugins.draft.saving'), 'pds-saving', 0);
 
     manager.scheduleSave(content, title);
 
@@ -258,7 +258,7 @@ export function setupDraftPlugin(editor) {
     if (statusTimer) clearTimeout(statusTimer);
     statusTimer = setTimeout(() => {
       statusTimer = null;
-      setStatus('Draft saved.', 'pds-saved');
+      setStatus(editor.i18n.t('plugins.draft.draftSaved'), 'pds-saved');
       if (typeof cfg.onSave === 'function') {
         cfg.onSave({ content: editor.getContent(), documentId });
       }

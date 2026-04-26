@@ -120,7 +120,7 @@ export function setupSuggestedPostsPlugin(editor) {
 
   function buildModalBody() {
     return `
-      <div class="psp-modal-inner" style="padding: 0 15px 15px; direction: ltr; overflow: auto; max-height: 350px">
+      <div class="psp-modal-inner" style="padding: 0 15px 15px;  overflow: auto; max-height: 350px">
         <div id="psp-items-list" style="margin-bottom: 12px;"></div>
         <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; flex-direction:column; gap:4px;">
@@ -150,7 +150,7 @@ export function setupSuggestedPostsPlugin(editor) {
     listContainer.innerHTML = `
       <div style="border:1px solid #E2E8F0; border-radius:6px; overflow:hidden; margin-bottom:4px;">
         <div style="padding:6px 10px; background:#F8FAFC; font-size:12px; color:#64748B; border-bottom:1px solid #E2E8F0;">
-          ${items.length} Post(s) added
+          ${items.length} ${editor.i18n.t('plugins.suggestedPosts.postsAdded')}
         </div>
         <ul style="list-style:none; margin:0; padding:0;">
           ${items.map(item => `
@@ -183,15 +183,15 @@ export function setupSuggestedPostsPlugin(editor) {
     addBtn.addEventListener('click', () => {
       const url = urlInput.value.trim();
       const title = titleInput.value.trim();
-      if (!url || !title) return showError(errorEl, 'Please fill in both fields.');
-      try { new URL(url); } catch (_) { return showError(errorEl, 'The entered URL is invalid.'); }
+      if (!url || !title) return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.fillBothFields'));
+      try { new URL(url); } catch (_) { return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.invalidUrl')); }
 
       hideError(errorEl);
       if (editingId) {
         const idx = items.findIndex(i => i.id === editingId);
         if (idx !== -1) items[idx] = { id: editingId, title, url };
         editingId = null;
-        addBtn.textContent = 'Add link';
+        addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
         addBtn.style.background = '#28a745';
       } else {
         items.push({ id: generateId(), title, url });
@@ -204,7 +204,7 @@ export function setupSuggestedPostsPlugin(editor) {
     });
 
     elModal.querySelector('#psp-submit-btn').addEventListener('click', () => {
-      if (items.length === 0) return showError(errorEl, 'Please add at least one post.');
+      if (items.length === 0) return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.minOnePost'));
       insertBlock();
       modal.close();
     });
@@ -219,7 +219,7 @@ export function setupSuggestedPostsPlugin(editor) {
     const addBtn = elModal.querySelector('#psp-add-btn');
     elModal.querySelector('#psp-url-input').value = item.url;
     elModal.querySelector('#psp-title-input').value = item.title;
-    addBtn.textContent = 'Save changes';
+    addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.saveChanges');
     addBtn.style.background = '#fd7e14';
     elModal.querySelector('#psp-url-input').focus();
   }
@@ -231,7 +231,7 @@ export function setupSuggestedPostsPlugin(editor) {
       const addBtn = elModal.querySelector('#psp-add-btn');
       elModal.querySelector('#psp-url-input').value = '';
       elModal.querySelector('#psp-title-input').value = '';
-      addBtn.textContent = 'Add link';
+      addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
       addBtn.style.background = '#28a745';
     }
     renderItemsList(elModal);
