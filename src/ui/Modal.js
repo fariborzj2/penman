@@ -17,6 +17,7 @@ export class Modal {
       hideFooter: false,
       buttons: null,
       width: null,
+      dir: 'ltr',
       ...options
     };
 
@@ -34,6 +35,7 @@ export class Modal {
 
     this.modalElement = document.createElement('div');
     this.modalElement.className = 'penman-modal';
+    this.modalElement.setAttribute('dir', this.options.dir);
 
     const header = document.createElement('div');
     header.className = 'penman-modal-header';

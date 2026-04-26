@@ -198,7 +198,7 @@ export function setupImagePlugin(editor) {
         }
 
         const modal = editor.ui.createModal({
-          title: 'Insert Image',
+          title: editor.i18n.t('plugins.image.title'),
           hideFooter: true,
           body: `
             <style>
@@ -234,11 +234,11 @@ export function setupImagePlugin(editor) {
             <div class="penman-image-tab-content active" id="penman-tab-url">
               <div style="padding: 0 15px 15px">
                 <div style="margin-bottom: 10px;">
-                  <label style="display:block;margin-bottom:5px;">Image URL</label>
+                  <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.urlLabel')}</label>
                   <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." value="${defaultUrl}" style="width: 100%; box-sizing: border-box;" />
                 </div>
                 <div style="margin-bottom: 15px;">
-                  <label style="display:block;margin-bottom:5px;">Alternative Text (Optional)</label>
+                  <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.altLabel')}</label>
                   <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
                 </div>
               </div>

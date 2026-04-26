@@ -39,7 +39,13 @@ export class UIManager {
    * @returns {Modal} The instantiated Modal object
    */
   createModal(options) {
-    const modal = new Modal(options);
+    const defaultOptions = {
+      submitText: this.editor.i18n.t('ui.ok'),
+      cancelText: this.editor.i18n.t('ui.cancel'),
+      dir: this.editor.i18n.dir,
+      ...options
+    };
+    const modal = new Modal(defaultOptions);
     modal.open();
     return modal;
   }
