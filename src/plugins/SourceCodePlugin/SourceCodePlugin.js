@@ -43,7 +43,7 @@ function openSourceCodeModal(editor) {
 
   // Create UI modal for source code
   const modal = editor.ui.createModal({
-    title: 'Source Code',
+    title: editor.i18n.t('plugins.sourceCode.title'),
     width: '800px',
     body: `
       <div class="penman-source-code-header" style="border-bottom: 1px solid #E2E8F0; display: flex; gap: 8px; padding: 10px 15px 10px; margin-bottom: 10px;" dir="ltr">
@@ -57,8 +57,8 @@ function openSourceCodeModal(editor) {
       </div>
       <div id="penman-source-code-container" style="overflow: auto; text-align: left;" dir="ltr"></div>
     `,
-    submitText: 'Save',
-    cancelText: 'Cancel',
+    submitText: editor.i18n.t('plugins.sourceCode.apply'),
+    cancelText: editor.i18n.t('ui.cancel'),
     hideFooter: false,
     onSubmit: (data) => {
       if (cmView) {

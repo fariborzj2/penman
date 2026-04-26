@@ -109,7 +109,14 @@ export default {
       insertColRight: 'Insert Column Right',
       deleteRow: 'Delete Row',
       deleteCol: 'Delete Column',
-      deleteTable: 'Delete Table'
+      deleteTable: 'Delete Table',
+      cell: 'Cell',
+      mergeCells: 'Merge cells',
+      splitCell: 'Split cell',
+      row: 'Row',
+      column: 'Column',
+      properties: 'Table properties',
+      selectTable: 'Select table'
     }
   },
 

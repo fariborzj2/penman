@@ -109,7 +109,14 @@ export default {
       insertColRight: 'درج ستون در راست',
       deleteRow: 'حذف سطر',
       deleteCol: 'حذف ستون',
-      deleteTable: 'حذف جدول'
+      deleteTable: 'حذف جدول',
+      cell: 'سلول',
+      mergeCells: 'ادغام سلول‌ها',
+      splitCell: 'تقسیم سلول',
+      row: 'سطر',
+      column: 'ستون',
+      properties: 'تنظیمات جدول',
+      selectTable: 'انتخاب جدول'
     }
   },
 
