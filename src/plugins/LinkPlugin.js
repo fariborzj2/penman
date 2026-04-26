@@ -73,6 +73,8 @@ export function setupLinkPlugin(editor) {
         currentText = sel.toString();
       }
 
+      const preSelectedNode = editor.selection.getSelectedNode();
+
       // Save current selection before opening the modal so we know where to insert
       editor.selection.save();
 
@@ -118,17 +120,15 @@ export function setupLinkPlugin(editor) {
             const targetAttr = data.target ? ` target="${escapeHtmlAttr(data.target)}"` : '';
             const relAttr = data.rel ? ` rel="${escapeHtmlAttr(data.rel)}"` : '';
 
-            const selectedNode = editor.selection.getSelectedNode();
-
-            if (selectedNode) {
+            if (preSelectedNode) {
                // Wrap the selected node (e.g., an image figure) in the anchor tag instead of text
                const a = document.createElement('a');
                a.setAttribute('href', data.url);
                if (data.target) a.setAttribute('target', data.target);
                if (data.rel) a.setAttribute('rel', data.rel);
 
-               a.appendChild(selectedNode.cloneNode(true));
-               selectedNode.parentNode.replaceChild(a, selectedNode);
+               a.appendChild(preSelectedNode.cloneNode(true));
+               preSelectedNode.parentNode.replaceChild(a, preSelectedNode);
 
                editor.selection.clearNodeSelection();
                editor.history.pushImmediate();
