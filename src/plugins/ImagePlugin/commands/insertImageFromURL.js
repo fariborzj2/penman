@@ -10,7 +10,7 @@ import { captureAtomicSnapshot } from '../history/snapshotController.js';
  * - Behavior: Synchronous execution, immediate fallback on error.
  */
 
-export function insertImageFromURL(editor, { url, alt = '', trustLevel = TrustLevel.UNTRUSTED }) {
+export function insertImageFromURL(editor, { url, alt = '', trustLevel = TrustLevel.UNTRUSTED, width = null, height = null }) {
   // 1. Validation (Synchronous)
   validateURL(url, trustLevel);
 
@@ -18,7 +18,7 @@ export function insertImageFromURL(editor, { url, alt = '', trustLevel = TrustLe
   // and using document.createElement in createFigureNode.
 
   // 2. DOM Creation
-  const figureNode = createFigureNode(url, alt);
+  const figureNode = createFigureNode(url, alt, null, 'center', width, height);
 
   // 3. Selection & Insertion
   if (editor.selection && typeof editor.selection.save === 'function') {
