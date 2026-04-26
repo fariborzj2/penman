@@ -187,8 +187,10 @@ export function setupImagePlugin(editor) {
         // Find selected image if floatingUI is active to pre-fill URL tab
         let defaultUrl = '';
         let defaultAlt = '';
-        if (floatingUI && floatingUI.element && floatingUI.element.style.display !== 'none' && floatingUI.anchorNode) {
-            const img = floatingUI.anchorNode.querySelector('img');
+        const selectedNode = editor.selection.getSelectedNode() || (floatingUI ? floatingUI.anchorNode : null);
+
+        if (selectedNode && selectedNode.tagName === 'FIGURE' && selectedNode.classList.contains('penman-image')) {
+            const img = selectedNode.querySelector('img');
             if (img) {
                 defaultUrl = img.getAttribute('src') || '';
                 defaultAlt = img.getAttribute('alt') || '';
@@ -487,8 +489,9 @@ export function setupImagePlugin(editor) {
             if (url) {
               try {
                 // If we have an active selected image, update it instead of inserting a new one
-                if (defaultUrl && floatingUI && floatingUI.anchorNode) {
-                    const img = floatingUI.anchorNode.querySelector('img');
+                const activeNode = editor.selection.getSelectedNode() || (floatingUI ? floatingUI.anchorNode : null);
+                if (defaultUrl && activeNode && activeNode.tagName === 'FIGURE' && activeNode.classList.contains('penman-image')) {
+                    const img = activeNode.querySelector('img');
                     if (img) {
                         img.src = url;
                         if (alt) img.alt = alt;

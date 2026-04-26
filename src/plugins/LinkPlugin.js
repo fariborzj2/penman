@@ -120,7 +120,7 @@ export function setupLinkPlugin(editor) {
 
             const selectedNode = editor.selection.getSelectedNode();
 
-            if (selectedNode) {
+            if (selectedNode && selectedNode.tagName === 'FIGURE') {
                // Wrap the selected node (e.g., an image figure) in the anchor tag instead of text
                const a = document.createElement('a');
                a.setAttribute('href', data.url);
