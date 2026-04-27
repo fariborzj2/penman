@@ -41,6 +41,7 @@ function injectStyles() {
   el.id = STYLE_ID;
   el.textContent = `
     .penman-draft-banner{display:flex;flex-wrap:wrap;align-items:flex-start;justify-content:space-between;gap:12px;padding:10px 14px;background:var(--color-background-info);border:1px solid var(--color-border-info);border-radius:8px;font-size:13px;color:var(--color-text-info);margin-bottom:8px;box-sizing:border-box;width:100%}
+    .penman-draft-banner[dir="rtl"]{direction:rtl}
     .penman-draft-banner-msg{flex:1;line-height:1.5; flex-basis: 350px;}
     .penman-draft-banner-date{display:block;font-size:11px;opacity:.7;margin-top:3px}
     .penman-draft-banner-actions{display:flex;gap:8px;flex-shrink:0;padding-top:1px}
@@ -165,6 +166,8 @@ export function setupDraftPlugin(editor) {
     bannerEl = document.createElement('div');
     bannerEl.id = `penman-draft-recovery-banner-${documentId}`;
     bannerEl.className = 'penman-draft-banner';
+    const resolvedDir = editor.options.direction === 'auto' ? editor.i18n.dir : editor.options.direction;
+    bannerEl.setAttribute('dir', resolvedDir);
     bannerEl.setAttribute('role', 'alert');
     bannerEl.setAttribute('aria-live', 'polite');
 
@@ -174,7 +177,7 @@ export function setupDraftPlugin(editor) {
 
     const dateNote = document.createElement('span');
     dateNote.className = 'penman-draft-banner-date';
-    dateNote.textContent = editor.i18n.t('plugins.draft.lastAutoSaved') + + formatDateTime(draft.lastSavedAt);
+    dateNote.textContent = editor.i18n.t('plugins.draft.lastAutoSaved') + formatDateTime(draft.lastSavedAt);
     msg.appendChild(dateNote);
 
     const actions = document.createElement('div');
