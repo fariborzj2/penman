@@ -82,8 +82,8 @@ export class MediaModal {
         </style>
         
         <div class="penman-media-tabs" id="penman-media-tabs">
-          <div class="penman-media-tab" data-tab="direct">Direct Link</div>
-          <div class="penman-media-tab active" data-tab="embed">Embed / Services</div>
+          <div class="penman-media-tab" data-tab="direct">${this.editor.i18n.t('plugins.media.directTab')}</div>
+          <div class="penman-media-tab active" data-tab="embed">${this.editor.i18n.t('plugins.media.embedTab')}</div>
         </div>
 
         <div style="padding: 0 15px 15px 15px;">
@@ -108,10 +108,10 @@ export class MediaModal {
 
             <div style="display: flex; gap: 15px; margin-bottom: 10px;">
               <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-controls" checked style="margin-right: 5px;"> Show Controls
+                <input type="checkbox" id="penman-media-controls" checked style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.showControls')}
               </label>
               <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-autoplay" style="margin-right: 5px;"> Autoplay
+                <input type="checkbox" id="penman-media-autoplay" style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.autoplay')}
               </label>
             </div>
           </div>
@@ -119,10 +119,10 @@ export class MediaModal {
           <!-- Embed Tab -->
           <div id="tab-embed" class="penman-media-tab-content active">
             <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-              <label style="display:block; font-weight: 500;">Media URL</label>
+              <label style="display:block; font-weight: 500;">${this.editor.i18n.t('plugins.media.mediaUrlLabel')}</label>
               <div style="display: flex; align-items: center; gap: 10px;">
                 <label style="font-size: 12px; display: inline-flex; align-items: center;">
-                  <input type="checkbox" id="penman-media-autodetect" checked style="margin-right: 5px;"> Auto-detect Provider
+                  <input type="checkbox" id="penman-media-autodetect" checked style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.autoDetectProvider')}
                 </label>
                 <span id="penman-media-provider-badge" class="penman-media-badge" style="display: none;"></span>
               </div>
@@ -136,19 +136,19 @@ export class MediaModal {
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
               <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">Aspect Ratio</label>
+                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.aspectRatio')}</label>
                 <select id="penman-media-aspect" class="penman-input" style="width: 100%;">
-                  <option value="16/9">16:9 (Widescreen)</option>
-                  <option value="4/3">4:3 (Standard)</option>
+                  <option value="16/9">${this.editor.i18n.t('plugins.media.aspect169')}</option>
+                  <option value="4/3">${this.editor.i18n.t('plugins.media.aspect43')}</option>
                 </select>
               </div>
               <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">Type</label>
+                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.typeLabel')}</label>
                 <select id="penman-media-type" class="penman-input" style="width: 100%;" disabled>
-                  <option value="auto">Auto-detect</option>
-                  <option value="video">Video</option>
-                  <option value="audio">Audio</option>
-                  <option value="embed">Embed</option>
+                  <option value="auto">${this.editor.i18n.t('plugins.media.typeAuto')}</option>
+                  <option value="video">${this.editor.i18n.t('plugins.media.typeVideo')}</option>
+                  <option value="audio">${this.editor.i18n.t('plugins.media.typeAudio')}</option>
+                  <option value="embed">${this.editor.i18n.t('plugins.media.typeEmbed')}</option>
                 </select>
               </div>
             </div>
@@ -156,15 +156,15 @@ export class MediaModal {
 
           <div id="penman-media-error" style="color: #dc3545; font-size: 13px; display: none; margin-bottom: 10px;"></div>
 
-          <label style="display:block; font-weight: 500; margin-top: 15px;">Live Preview</label>
+          <label style="display:block; font-weight: 500; margin-top: 15px;">${this.editor.i18n.t('plugins.media.livePreview')}</label>
           <div id="penman-media-preview" class="penman-media-preview-area">
-            <span style="color: #888;">Enter a valid URL to preview</span>
+            <span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>
           </div>
 
         </div>
         <div class="penman-modal-footer">
-          <button type="button" class="penman-btn" id="penman-media-cancel">Cancel</button>
-          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>${isEditMode ? 'Update' : 'Insert'}</button>
+          <button type="button" class="penman-btn" id="penman-media-cancel">${this.editor.i18n.t('plugins.media.cancel')}</button>
+          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>${isEditMode ? this.editor.i18n.t('plugins.media.update') : this.editor.i18n.t('plugins.media.insert')}</button>
         </div>
       `
     });
