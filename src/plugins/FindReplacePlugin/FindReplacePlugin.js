@@ -225,9 +225,9 @@ export function setupFindReplacePlugin(editor) {
           <input type="text" id="fr-replace" placeholder="${editor.i18n.t('plugins.findReplace.replacePlaceholder')}">
         </div>
         <div class="penman-modal-checkbox-group" style="margin-bottom: 0px;">
-          <label><input type="checkbox" id="fr-match-case"> Match case</label>
-          <label><input type="checkbox" id="fr-normalize-rtl" checked> Ignore Diacritics (RTL)</label>
-          <label><input type="checkbox" id="fr-all-words"> All words</label>
+          <label><input type="checkbox" id="fr-match-case"> ${editor.i18n.t('plugins.findReplace.matchCase')}</label>
+          <label><input type="checkbox" id="fr-normalize-rtl" checked> ${editor.i18n.t('plugins.findReplace.ignoreDiacritics')}</label>
+          <label><input type="checkbox" id="fr-all-words"> ${editor.i18n.t('plugins.findReplace.allWords')}</label>
         </div>
       </div>
     `;
@@ -236,7 +236,7 @@ export function setupFindReplacePlugin(editor) {
     let executeSearch;
 
     const modal = editor.ui.createModal({
-      title: 'Find and Replace',
+      title: editor.i18n.t('plugins.findReplace.title'),
       body: modalHtml,
       buttons: [
         {

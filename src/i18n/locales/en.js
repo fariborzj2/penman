@@ -133,6 +133,8 @@ export default {
       findPlaceholder: 'Find text...',
       replacePlaceholder: 'Replace with...',
       matchCase: 'Match case',
+      ignoreDiacritics: 'Ignore Diacritics (RTL)',
+      allWords: 'All words',
       noMatch: 'No matches found.'
     },
     link: {

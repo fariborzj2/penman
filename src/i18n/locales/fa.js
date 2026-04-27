@@ -133,6 +133,8 @@ export default {
       findPlaceholder: 'متن جستجو...',
       replacePlaceholder: 'جایگزینی با...',
       matchCase: 'حساس به حروف',
+      ignoreDiacritics: 'نادیده گرفتن اعراب (RTL)',
+      allWords: 'همه موارد',
       noMatch: 'نتیجه‌ای یافت نشد.'
     },
     link: {

@@ -40,6 +40,7 @@ export class UIManager {
    */
   createModal(options) {
     const defaultOptions = {
+      editor: this.editor,
       submitText: this.editor.i18n.t('ui.ok'),
       cancelText: this.editor.i18n.t('ui.cancel'),
       dir: this.editor.i18n.dir,

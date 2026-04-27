@@ -21,6 +21,7 @@ export class Modal {
       ...options
     };
 
+    this.editor = this.options.editor;
     this.overlay = null;
     this.modalElement = null;
 
