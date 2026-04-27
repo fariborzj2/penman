@@ -81,8 +81,9 @@ export default {
       saveChanges: 'ذخیره تغییرات',
       minOnePost: 'لطفاً حداقل یک پست اضافه کنید.',
       title: 'پست‌های پیشنهادی',
+      lable: 'عنوان پست پیشنهادی',
       searchPlaceholder: 'جستجوی پست‌ها...',
-      insert: 'درج انتخاب‌شده‌ها',
+      insert: 'افزودن مطلب',
       cancel: 'انصراف',
       noResults: 'پستی یافت نشد.',
       loading: 'در حال بارگذاری...'
@@ -127,7 +128,8 @@ export default {
     link: {
       insert: 'درج پیوند',
       unlink: 'حذف پیوند',
-      urlPlaceholder: 'لینک (مثلا https://example.com)',
+      lable: 'لینک مطلب',
+      urlPlaceholder: 'https://example.com',
       textPlaceholder: 'متن نمایشی',
       openInNewTab: 'باز شدن در پنجره جدید',
       save: 'ذخیره',

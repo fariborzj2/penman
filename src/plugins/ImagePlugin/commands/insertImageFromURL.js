@@ -18,7 +18,7 @@ export function insertImageFromURL(editor, { url, alt = '', trustLevel = TrustLe
   // and using document.createElement in createFigureNode.
 
   // 2. DOM Creation
-  const figureNode = createFigureNode(url, alt, null, 'center', width, height);
+  const figureNode = createFigureNode(editor, url, alt, null, 'center', width, height);
 
   // 3. Selection & Insertion
   if (editor.selection && typeof editor.selection.save === 'function') {

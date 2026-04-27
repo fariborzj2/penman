@@ -81,6 +81,7 @@ export default {
       saveChanges: 'Save changes',
       minOnePost: 'Please add at least one post.',
       title: 'Suggested posts',
+      lable: 'Post Title',
       searchPlaceholder: 'Search posts...',
       insert: 'Insert Selected',
       cancel: 'Cancel',
@@ -127,7 +128,8 @@ export default {
     link: {
       insert: 'Insert Link',
       unlink: 'Unlink',
-      urlPlaceholder: 'URL (e.g. https://example.com)',
+      lable: 'Link Post',
+      urlPlaceholder: 'https://example.com',
       textPlaceholder: 'Text to display',
       openInNewTab: 'Open in new tab',
       save: 'Save',

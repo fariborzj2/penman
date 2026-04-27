@@ -69,7 +69,7 @@ export function pasteImageHandler(editor, event, uploadFn) {
           const parentFigure = img.closest('figure.penman-image');
           if (!parentFigure) {
             // Wrap in a well-formed figure
-            const figureNode = createFigureNode(src, img.getAttribute('alt') || '');
+            const figureNode = createFigureNode(editor, src, img.getAttribute('alt') || '');
             img.parentNode.replaceChild(figureNode, img);
           }
         } catch (e) {

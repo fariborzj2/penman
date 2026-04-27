@@ -10,7 +10,7 @@
  * </figure>
  */
 
-export function createFigureNode(src, alt = '', dataId = null, alignment = 'center', width = null, height = null) {
+export function createFigureNode(editor, src, alt = '', dataId = null, alignment = 'center', width = null, height = null) {
   const figure = document.createElement('figure');
   figure.className = 'penman-image';
   figure.setAttribute('data-alignment', alignment);

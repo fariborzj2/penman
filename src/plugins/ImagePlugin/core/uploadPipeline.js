@@ -61,7 +61,7 @@ export async function executeUploadPipeline(editor, files, uploadFn, options = {
       // We can use createObjectURL temporarily.
       const tempUrl = URL.createObjectURL(file);
 
-      const figureNode = createFigureNode(tempUrl, 'Uploading...', dataId);
+      const figureNode = createFigureNode(editor, tempUrl, 'Uploading...', dataId);
       figureNode.classList.add('penman-image-uploading');
 
       // Synchronous insertion

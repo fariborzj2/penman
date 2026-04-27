@@ -107,7 +107,7 @@
           ...defaultConfig,
           height: parseInt(el.dataset.height, 10) || 300,
           direction: el.dataset.direction || 'auto',
-          lang: 'en'
+          lang: el.dataset.direction === 'rtl' ? 'fa' : 'en' // Override language based on direction for better defaults
         };
       }
     });
