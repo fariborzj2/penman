@@ -3,8 +3,8 @@
 ## Options
 
 ### `blockTypes`
-- **Type**: `Array<{name: string, cmd: string}>`
-- **Default value**: `[{ name: 'Paragraph', cmd: 'p' }, { name: 'Heading 1', cmd: 'h1' }, { name: 'Heading 2', cmd: 'h2' }, { name: 'Heading 3', cmd: 'h3' }, { name: 'Heading 4', cmd: 'h4' }, { name: 'Heading 5', cmd: 'h5' }, { name: 'Heading 6', cmd: 'h6' }, { name: 'Blockquote', cmd: 'blockquote' }]`
+- **Type**: `Array<{name: string, cmd: string, class?: string, optionStyle?: Object}>`
+- **Default value**: Includes standard elements (Paragraph, Headings 1-6, Blockquote) and styled blocks (Success, Info, Warning, Danger).
 - **Required/Optional**: Optional
 - **Validation rules**: Must be an array of objects. Each object must have a `name` string and a valid HTML block `cmd` string (e.g. `p`, `h1`, `blockquote`).
 - **Failure behavior**: If undefined, defaults to the default array list. If invalid format, dropdown rendering throws an exception.
