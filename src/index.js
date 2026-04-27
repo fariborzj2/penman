@@ -11,7 +11,20 @@ const instances = new Map();
 export const penmanDefaults = {
   plugins: [],
   toolbar: '',
-  blockTypes: []
+  blockTypes: [
+    { name: 'Paragraph', cmd: 'p' },
+    { name: 'Heading 1', cmd: 'h1' },
+    { name: 'Heading 2', cmd: 'h2' },
+    { name: 'Heading 3', cmd: 'h3' },
+    { name: 'Heading 4', cmd: 'h4' },
+    { name: 'Heading 5', cmd: 'h5' },
+    { name: 'Heading 6', cmd: 'h6' },
+    { name: 'Blockquote', cmd: 'blockquote' },
+    { name: 'Success', cmd: 'div', class: 'green-block', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e' } },
+    { name: 'Info', cmd: 'div', class: 'blue-block', optionStyle: { color: '#1e3a8a', background: '#dbeafe', fontWeight: 'bold', borderRight: '3px solid #3b82f6' } },
+    { name: 'Warning', cmd: 'div', class: 'orange-block', optionStyle: { color: '#9a3412', background: '#ffedd5', fontWeight: 'bold', borderRight: '3px solid #f97316' } },
+    { name: 'Danger', cmd: 'div', class: 'red-block', optionStyle: { color: '#7f1d1d', background: '#fee2e2', fontWeight: 'bold', borderRight: '3px solid #ef4444' } }
+  ]
 };
 
 const penman = {
