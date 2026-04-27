@@ -10,7 +10,13 @@ Registers a searchable `blocktype` UI dropdown menu. It listens to editor `selec
 - Does NOT apply inline formatting (e.g., bold, italic).
 - Does NOT handle list creation or mutation.
 - Does NOT allow custom block tags outside of the configured `blockTypes` array.
-- Does NOT apply CSS classes; it strictly changes the HTML element tag.
+
+## Default Block Types
+The plugin includes a set of pre-defined block types, including standard typography (Paragraph, Heading 1-6, Blockquote) and styled informational blocks:
+- **Success**: Green styled block for positive feedback.
+- **Info**: Blue styled block for general information.
+- **Warning**: Orange styled block for cautionary notes.
+- **Danger**: Red styled block for critical errors or warnings.
 
 ## Dependencies
 - `editor.ui.registry` (UIManager)

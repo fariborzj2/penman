@@ -14,3 +14,8 @@
 - **Input**: The cursor is collapsed exactly at index 0 of `<h2>Title</h2>` (before the letter 'T'). User selects `Heading 2`.
 - **Output OR behavioral result**: No DOM change occurs visually if it is already an `h2`. If changed to `h3`, it becomes `<h3>Title</h3>`.
 - **Explanation of internal behavior**: Even with a collapsed cursor (no text selected), the native `formatBlock` acts upon the closest parent block element boundaries identified by the cursor offset point.
+
+## Example 4: Apply Styled Block (e.g. Success)
+- **Input**: Cursor is inside `<p>Operation completed.</p>`. User selects `Success` from the dropdown.
+- **Output OR behavioral result**: Content becomes `<div class="green-block">Operation completed.</div>`.
+- **Explanation of internal behavior**: The plugin executes the `SET_BLOCK_TYPE` command which creates a new `div` wrapper, applies the `green-block` class, and moves the existing text content into the new block.

@@ -498,37 +498,7 @@ export class Editor extends EventEmitter {
     this.editableArea.addEventListener('cut', (e) => this._handleCopy(e));
 
     // 4. Intercept paste to prevent un-sanitized and history-polluting native pastes
-    this.editableArea.addEventListener('paste', (e) => {
-      if (e.defaultPrevented) return;
-      e.preventDefault();
-
-      const clipboardData = (e.originalEvent || e).clipboardData;
-      let html = clipboardData.getData('text/html');
-      let text = clipboardData.getData('text/plain');
-
-      let contentToInsert = '';
-
-      if (html) {
-        // Sanitize rich text and preserve valid structural markup
-        contentToInsert = this.sanitizer.sanitize(html);
-      } else if (text) {
-        // Escape plain text and preserve line breaks without wrapping everything in P
-        // Since we are moving to a strict block-based structure,
-        // inline pasting (no newlines) shouldn't be wrapped in <p>,
-        // but multi-line pastes should create distinct paragraphs instead of <br>.
-        const escaped = this._escapeText(text);
-        if (escaped.includes('\n')) {
-          contentToInsert = escaped.split('\n').map(line => `<p>${line}</p>`).join('');
-        } else {
-          contentToInsert = escaped;
-        }
-      }
-
-      if (contentToInsert) {
-        // We use our insertContent method which already uses execCommand insertHTML and handles history
-        this.insertContent(contentToInsert);
-      }
-    });
+    this.editableArea.addEventListener('paste', (e) => this._handlePaste(e));
   }
 
   /**
@@ -721,6 +691,92 @@ export class Editor extends EventEmitter {
 
   _escapeText(text) {
     return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /**
+   * Internal paste handler with Smart Merge logic
+   * @param {ClipboardEvent} e
+   * @private
+   */
+  _handlePaste(e) {
+    if (e.defaultPrevented) return;
+    e.preventDefault();
+
+    const clipboardData = (e.originalEvent || e).clipboardData;
+    let html = clipboardData.getData('text/html');
+    let text = clipboardData.getData('text/plain');
+
+    let contentToInsert = '';
+
+    if (html) {
+      // 1. Sanitize rich text
+      contentToInsert = this.sanitizer.sanitize(html);
+
+      // 2. SMART MERGE: If pasting into a block, unwrap leading/trailing block tags
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
+        let container = sel.anchorNode;
+        if (container.nodeType === Node.TEXT_NODE) container = container.parentNode;
+
+        // Find closest mergeable block
+        let blockNode = null;
+        let curr = container;
+        const mergeableTags = ['P', 'H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'BLOCKQUOTE', 'LI'];
+        while (curr && curr !== this.editableArea) {
+          if (curr.tagName && mergeableTags.includes(curr.tagName.toUpperCase())) {
+            blockNode = curr;
+            break;
+          }
+          curr = curr.parentNode;
+        }
+
+        if (blockNode) {
+          const doc = new DOMParser().parseFromString(contentToInsert, 'text/html');
+          const fragment = doc.body;
+          const children = Array.from(fragment.childNodes);
+
+          if (children.length > 0) {
+            // Helper to check if a node is a simple block element
+            const isSimpleBlock = (node) => {
+              return node && node.nodeType === Node.ELEMENT_NODE && mergeableTags.includes(node.tagName.toUpperCase());
+            };
+
+            // Process leading node
+            const first = children[0];
+            if (isSimpleBlock(first)) {
+              while (first.firstChild) {
+                fragment.insertBefore(first.firstChild, first);
+              }
+              fragment.removeChild(first);
+            }
+
+            // Process trailing node (might be the same as first if length 1)
+            const updatedChildren = Array.from(fragment.childNodes);
+            const last = updatedChildren[updatedChildren.length - 1];
+            if (isSimpleBlock(last)) {
+              while (last.firstChild) {
+                fragment.insertBefore(last.firstChild, last);
+              }
+              fragment.removeChild(last);
+            }
+
+            contentToInsert = fragment.innerHTML;
+          }
+        }
+      }
+    } else if (text) {
+      // Escape plain text and preserve line breaks
+      const escaped = this._escapeText(text);
+      if (escaped.includes('\n')) {
+        contentToInsert = escaped.split('\n').map(line => `<p>${line}</p>`).join('');
+      } else {
+        contentToInsert = escaped;
+      }
+    }
+
+    if (contentToInsert) {
+      this.insertContent(contentToInsert);
+    }
   }
 
   /**
