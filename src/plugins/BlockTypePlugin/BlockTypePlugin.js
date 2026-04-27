@@ -11,7 +11,9 @@ export function setupBlockTypePlugin(editor) {
     { name: 'Blockquote', cmd: 'blockquote' }
   ];
 
-  const blockTypes = editor.options.blockTypes || defaultBlockTypes;
+  const blockTypes = (editor.options.blockTypes && editor.options.blockTypes.length > 0)
+    ? editor.options.blockTypes
+    : defaultBlockTypes;
 
   // Track the current active block type based on the selection
   let currentBlockType = blockTypes[0].name;
