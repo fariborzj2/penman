@@ -39,7 +39,7 @@ export class Modal {
 
     const header = document.createElement('div');
     header.className = 'penman-modal-header';
-    header.innerHTML = `<h3>${this.options.title || 'Dialog'}</h3><button class="penman-modal-close" type="button">&times;</button>`;
+    header.innerHTML = `<h3>${this.options.title || this.editor.i18n.t('ui.dialog')}</h3><button class="penman-modal-close" type="button">&times;</button>`;
 
     const body = document.createElement('div');
     body.className = 'penman-modal-body';

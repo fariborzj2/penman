@@ -84,11 +84,11 @@ export function setupLinkPlugin(editor) {
           <div style="padding: 15px">
             <div class="penman-modal-form-row">
               <label for="penman-link-url">URL</label>
-              <input type="url" id="penman-link-url" name="url" placeholder="https://example.com" required>
+              <input type="url" id="penman-link-url" name="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" dir="ltr" style="text-align: left;" required>
             </div>
             <div class="penman-modal-form-row">
               <label for="penman-link-text">${editor.i18n.t('plugins.link.textPlaceholder')}</label>
-              <input type="text" id="penman-link-text" name="text" placeholder="Link text" value="${currentText}">
+              <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${currentText}">
             </div>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
               <div style="flex: 1;">
@@ -103,7 +103,7 @@ export function setupLinkPlugin(editor) {
               </div>
               <div style="flex: 1;">
                 <label for="penman-link-rel">Rel</label>
-                <input type="text" id="penman-link-rel" name="rel" placeholder="e.g. nofollow">
+                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}">
               </div>
             </div>
           </div>

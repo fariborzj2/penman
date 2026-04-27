@@ -6,7 +6,7 @@
  *   <div class="penman-image-wrapper">
  *     <img src="..." alt="..." data-id="..." />
  *   </div>
- *   <figcaption class="penman-image-caption" contenteditable="true" data-placeholder="Enter caption...">Optional Caption</figcaption>
+ *   <figcaption class="penman-image-caption" contenteditable="true" data-placeholder="${editor.i18n.t('plugins.image.captionPlaceholder')}">Optional Caption</figcaption>
  * </figure>
  */
 
@@ -48,7 +48,7 @@ export function createFigureNode(src, alt = '', dataId = null, alignment = 'cent
   const figcaption = document.createElement('figcaption');
   figcaption.className = 'penman-image-caption';
   figcaption.setAttribute('contenteditable', 'true');
-  figcaption.setAttribute('data-placeholder', 'Enter caption...');
+  figcaption.setAttribute('data-placeholder', editor.i18n.t('plugins.image.captionPlaceholder'));
   // Optional caption text starts empty as per spec? No, actually placeholder is enough
 
   wrapper.appendChild(img);

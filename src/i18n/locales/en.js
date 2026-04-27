@@ -44,7 +44,23 @@ export default {
       cancel: 'Cancel',
       autoplay: 'Autoplay',
       controls: 'Controls',
-      posterPlaceholder: 'Poster image URL (optional)'
+      posterPlaceholder: 'Poster image URL (optional)',
+      editTitle: 'Edit Media',
+      insertTitle: 'Insert Media',
+      invalidUrlPreview: 'Enter a valid URL to preview',
+      invalidEmbedUrl: 'Invalid or unsupported URL',
+      invalidEmbedUrlMsg: 'This URL is not supported by any active embed provider.',
+      domainNotWhitelisted: 'Domain not whitelisted',
+      domainNotWhitelistedMsg: 'This URL domain is not whitelisted for custom embeds.',
+      embedTitlePlaceholder: 'Media title for iframe',
+      mediaTitlePlaceholder: 'Media title',
+      invalidDirectUrl: 'Invalid direct file URL',
+      invalidDirectUrlMsg: 'The URL does not point to a supported audio/video format.'
+    ,
+      directUrlLabel: 'Direct File URL (.mp4, .mp3, etc)',
+      titleOptionalLabel: 'Title (Optional)',
+      posterOptionalLabel: 'Poster Image URL (Optional)',
+      embedUrlLabel: 'Video/Audio Embed URL'
     },
     draft: {
       recoveryBannerMsg: 'A newer unsaved version of this document was found.',
@@ -78,6 +94,8 @@ export default {
       title: 'Source Code',
       apply: 'Apply Changes',
       cancel: 'Cancel'
+    ,
+      searchPlaceholder: 'Search...'
     },
     direction: {
       rtl: 'RTL',
@@ -114,6 +132,11 @@ export default {
       openInNewTab: 'Open in new tab',
       save: 'Save',
       cancel: 'Cancel'
+    ,
+      relPlaceholder: 'e.g. nofollow'
+    ,
+      urlLabel: 'URL',
+      relLabel: 'Rel'
     },
     color: {
       textColor: 'Text Color',
@@ -135,7 +158,23 @@ export default {
       row: 'Row',
       column: 'Column',
       properties: 'Table properties',
-      selectTable: 'Select table'
+      selectTable: 'Select table',
+      widthPlaceholder: 'e.g. 100% or 500px',
+      borderPlaceholder: 'e.g. 1 or 0',
+      borderColorPlaceholder: 'e.g. #000 or red',
+      cellPaddingPlaceholder: 'e.g. 5',
+      cellSpacingPlaceholder: 'e.g. 0'
+    ,
+      widthLabel: 'Width:',
+      borderLabel: 'Border:',
+      borderColorLabel: 'Border Color:',
+      cellPaddingLabel: 'Cell Padding:',
+      cellSpacingLabel: 'Cell Spacing:',
+      directionLabel: 'Direction:'
+    ,
+      defaultDir: 'Default',
+      ltr: 'LTR',
+      rtl: 'RTL'
     }
   },
 
@@ -161,6 +200,7 @@ export default {
     insert: 'Insert',
     delete: 'Delete',
     edit: 'Edit',
-    ok: 'OK'
+    ok: 'OK',
+    dialog: 'Dialog'
   }
 };
