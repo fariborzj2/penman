@@ -125,11 +125,11 @@ export function setupSuggestedPostsPlugin(editor) {
         <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; flex-direction:column; gap:4px;">
             <label for="psp-title-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.suggestedPosts.title')}</label>
-            <input id="psp-title-input" type="text" placeholder="Enter Suggested Post Title" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;" />
+            <input id="psp-title-input" type="text" placeholder="${editor.i18n.t('plugins.suggestedPosts.titlePlaceholder')}" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;" />
           </div>
           <div style="display:flex; flex-direction:column; gap:4px;">
             <label for="psp-url-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.link.urlPlaceholder')}</label>
-            <input id="psp-url-input" type="url" placeholder="https://example.com/post" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; direction:ltr;" />
+            <input id="psp-url-input" type="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; direction:ltr;" />
           </div>
           <div id="psp-error" style="color:#dc3545; font-size:12px; display:none;"></div>
           <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff;">${editor.i18n.t('plugins.suggestedPosts.insert')}</button>

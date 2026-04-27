@@ -235,23 +235,23 @@ export function setupImagePlugin(editor) {
               <div style="padding: 0 15px 15px">
                 <div style="margin-bottom: 10px;">
                   <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.urlLabel')}</label>
-                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="https://..." value="${defaultUrl}" style="width: 100%; box-sizing: border-box;" />
+                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.urlPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" value="${defaultUrl}" />
                 </div>
                 <div style="margin-bottom: 15px;">
                   <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.altLabel')}</label>
-                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="Image description" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
+                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.altPlaceholder')}" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
                 </div>
               </div>
               <div class="penman-modal-footer">
-                <button type="button" class="penman-btn" id="penman-image-url-cancel">Cancel</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-url-submit">${defaultUrl ? 'Update' : 'Insert'}</button>
+                <button type="button" class="penman-btn penman-modal-close-btn" id="penman-image-url-cancel">${editor.i18n.t('ui.cancel')}</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-url-submit">${defaultUrl ? editor.i18n.t('ui.edit') : editor.i18n.t('ui.insert')}</button>
               </div>
             </div>
 
             <div class="penman-image-tab-content" id="penman-tab-upload">
               <div style="padding: 0 15px 15px">
                 <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 1.5px dashed #b0b0b0; padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer;" onclick="document.getElementById('penman-image-file-input').click()">
-                  <p style="margin: 0 0 8px 0; color: #555; font-size: 16px;">Drag and drop an image here, or browse.</p>
+
                   <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple />
                   <p style="margin: 0; color: #001529; font-weight: 600; font-size: 14px;">${editor.i18n.t('plugins.image.uploadPlaceholder')}</p>
                 </div>
@@ -269,12 +269,12 @@ export function setupImagePlugin(editor) {
               <div style="padding: 0 15px 15px">
                 <div class="penman-gallery-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto;">
                   <div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;" class="penman-gallery-empty">
-                    <p>Loading gallery...</p>
+                    <p>${editor.i18n.t('plugins.image.loading')}</p>
                   </div>
                 </div>
               </div>
               <div class="penman-modal-footer">
-                <button type="button" class="penman-btn" id="penman-image-gallery-cancel">Close</button>
+                <button type="button" class="penman-btn penman-modal-close-btn" id="penman-image-gallery-cancel">${editor.i18n.t('ui.close')}</button>
               </div>
             </div>
           `
@@ -317,7 +317,7 @@ export function setupImagePlugin(editor) {
                 // Add "Copy Link" overlay
                 const copyBtn = document.createElement('button');
                 copyBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>';
-                copyBtn.title = 'Copy Link';
+                copyBtn.title = editor.i18n.t('plugins.image.copyLink');
                 copyBtn.style.position = 'absolute';
                 copyBtn.style.top = '4px';
                 copyBtn.style.right = '4px';
@@ -374,14 +374,14 @@ export function setupImagePlugin(editor) {
                 if (!loadMoreBtn) {
                     loadMoreBtn = document.createElement('button');
                     loadMoreBtn.className = 'penman-btn penman-gallery-load-more';
-                    loadMoreBtn.textContent = 'Load More';
+                    loadMoreBtn.textContent = editor.i18n.t('plugins.image.loadMore');
                     loadMoreBtn.style.gridColumn = '1 / -1';
                     loadMoreBtn.style.marginTop = '10px';
                     loadMoreBtn.style.padding = '8px';
 
                     loadMoreBtn.addEventListener('click', () => {
                         const originalText = loadMoreBtn.textContent;
-                        loadMoreBtn.textContent = 'Loading...';
+                        loadMoreBtn.textContent = editor.i18n.t('plugins.image.loading');
                         loadMoreBtn.disabled = true;
 
                         source.list(source._nextCursor).then(res => {
@@ -442,7 +442,7 @@ export function setupImagePlugin(editor) {
             const sources = editor.image.gallery.getRegisteredSources();
             
             if (sources.length === 0) {
-              galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>No gallery sources registered.</p></div>';
+              galleryContainer.innerHTML = `<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.noSources')}</p></div>`;
               galleryContainer.dataset.loaded = 'true';
               return;
             }
@@ -464,14 +464,14 @@ export function setupImagePlugin(editor) {
                         source._nextCursor = res.nextCursor || null;
                         renderGalleryItems(res.items, galleryContainer, modal, editor, source, elModal, false);
                     } else {
-                         galleryContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>Gallery is empty.</p></div>';
+                         galleryContainer.innerHTML = `<div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.galleryEmpty')}</p></div>`;
                          galleryContainer.dataset.loaded = 'true';
                     }
                 }).catch(err => {
-                    galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error loading gallery: ${err.message}</p></div>`;
+                    galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.galleryError').replace('{error}', err.message)}</p></div>`;
                 });
             }).catch(err => {
-                galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>Error initializing gallery source: ${err.message}</p></div>`;
+                galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.errorInit').replace('{error}', err.message)}</p></div>`;
             });
           }
           });
@@ -481,6 +481,7 @@ export function setupImagePlugin(editor) {
         const urlSubmit = elModal.querySelector('#penman-image-url-submit');
         if (urlSubmit) {
           urlSubmit.addEventListener('click', () => {
+
             const urlInput = elModal.querySelector('#penman-image-url-input');
             const altInput = elModal.querySelector('#penman-image-alt-input');
             const url = urlInput ? urlInput.value.trim() : '';
@@ -505,11 +506,11 @@ export function setupImagePlugin(editor) {
                 }
                 
                 // Otherwise, insert new
+                editor.selection.restore();
+                editor.selection.save();
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
-              } catch (err) {
-                alert('Invalid Image URL');
-              }
+              } catch (err) { alert(editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', err.message)); }
             }
           });
         }
@@ -599,21 +600,21 @@ export function setupImagePlugin(editor) {
                 
                 if (item.status === 'SUCCESS') {
                     const successText = document.createElement('span');
-                    successText.textContent = 'SUCCESS';
+                    successText.textContent = editor.i18n.t('plugins.image.success');
                     successText.style.color = '#28a745';
                     successText.style.fontSize = '12px';
                     successText.style.fontWeight = 'bold';
                     statusDiv.appendChild(successText);
                 } else if (item.status === 'ERROR') {
                     const errText = document.createElement('span');
-                    errText.textContent = 'ERROR: ' + (item.error || 'Failed');
+                    errText.textContent = `${editor.i18n.t('plugins.image.error')}: ` + (item.error || editor.i18n.t('plugins.image.failed'));
                     errText.style.color = '#dc3545';
                     errText.style.fontSize = '12px';
                     errText.style.fontWeight = 'bold';
                     statusDiv.appendChild(errText);
                     
                     const retryBtn = document.createElement('span');
-                    retryBtn.textContent = 'Retry';
+                    retryBtn.textContent = editor.i18n.t('plugins.image.retry');
                     retryBtn.style.color = '#007bff';
                     retryBtn.style.fontSize = '12px';
                     retryBtn.style.cursor = 'pointer';
@@ -658,7 +659,7 @@ export function setupImagePlugin(editor) {
                 const metaDiv = document.createElement('div');
                 metaDiv.style.fontSize = '12px';
                 metaDiv.style.color = '#888';
-                metaDiv.innerHTML = `Format: <span style="color:#333;font-weight:500;margin-right:8px;">${item.format}</span> Size: <span style="color:#333;font-weight:500;">${item.size}</span>`;
+                metaDiv.innerHTML = `${editor.i18n.t('plugins.image.format')}<span style="color:#333;font-weight:500;margin-right:8px;">${item.format}</span> ${editor.i18n.t('plugins.image.size')}<span style="color:#333;font-weight:500;">${item.size}</span>`;
                 contentDiv.appendChild(metaDiv);
                 
                 el.appendChild(contentDiv);

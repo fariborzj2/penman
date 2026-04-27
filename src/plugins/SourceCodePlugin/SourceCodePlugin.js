@@ -47,7 +47,7 @@ function openSourceCodeModal(editor) {
     width: '800px',
     body: `
       <div class="penman-source-code-header" style="border-bottom: 1px solid #E2E8F0; display: flex; gap: 8px; padding: 10px 15px 10px; margin-bottom: 10px;" dir="ltr">
-         <input type="text" id="penman-cm-search" placeholder="Search..." autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace; margin-top: 0;">
+         <input type="text" id="penman-cm-search" placeholder="${editor.i18n.t('plugins.sourceCode.searchPlaceholder')}" autocomplete="off" style="flex: 1; padding: 6px; font-family: monospace; margin-top: 0;">
          <button type="button" id="penman-cm-search-prev" class="penman-btn" style="border: 1px solid #ccc; border-radius: 3px;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg>
          </button>

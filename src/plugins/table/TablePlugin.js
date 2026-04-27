@@ -32,31 +32,31 @@ export function setupTablePlugin(editor) {
               body: `
                 <div style="padding: 15px">
                     <div class="penman-modal-form-row">
-                        <label>Width:</label>
-                        <input type="text" name="width" value="${currentWidth}" placeholder="e.g. 100% or 500px">
+                        <label>${editor.i18n.t('plugins.table.widthLabel')}</label>
+                        <input type="text" name="width" value="${currentWidth}" placeholder="${editor.i18n.t('plugins.table.widthPlaceholder')}" dir="ltr">
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Border:</label>
-                        <input type="text" name="border" value="${currentBorder}" placeholder="e.g. 1 or 0">
+                        <label>${editor.i18n.t('plugins.table.borderLabel')}</label>
+                        <input type="text" name="border" value="${currentBorder}" placeholder="${editor.i18n.t('plugins.table.borderPlaceholder')}" dir="ltr">
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Border Color:</label>
-                        <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="e.g. #000 or red">
+                        <label>${editor.i18n.t('plugins.table.borderColorLabel')}</label>
+                        <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="${editor.i18n.t('plugins.table.borderColorPlaceholder')}" dir="ltr">
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Cell Padding:</label>
-                        <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="e.g. 5">
+                        <label>${editor.i18n.t('plugins.table.cellPaddingLabel')}</label>
+                        <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="${editor.i18n.t('plugins.table.cellPaddingPlaceholder')}" dir="ltr">
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Cell Spacing:</label>
-                        <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="e.g. 0">
+                        <label>${editor.i18n.t('plugins.table.cellSpacingLabel')}</label>
+                        <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="${editor.i18n.t('plugins.table.cellSpacingPlaceholder')}" dir="ltr">
                     </div>
                     <div class="penman-modal-form-row">
-                        <label>Direction:</label>
+                        <label>${editor.i18n.t('plugins.table.directionLabel')}</label>
                         <select name="dir">
                             <option value="" ${!currentDir ? 'selected' : ''}>Default</option>
-                            <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>LTR</option>
-                            <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>RTL</option>
+                            <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>${editor.i18n.t('plugins.table.ltr')}</option>
+                            <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>${editor.i18n.t('plugins.table.rtl')}</option>
                         </select>
                     </div>
                     <div class="penman-modal-form-row">

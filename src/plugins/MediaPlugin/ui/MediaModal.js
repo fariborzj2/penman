@@ -18,7 +18,7 @@ export class MediaModal {
     const isEditMode = !!this.existingData;
 
     const modal = this.editor.ui.createModal({
-      title: isEditMode ? 'Edit Media' : 'Insert Media',
+      title: isEditMode ? this.editor.i18n.t('plugins.media.editTitle') : this.editor.i18n.t('plugins.media.insertTitle'),
       width: '650px',
       hideFooter: true,
       body: `
@@ -91,18 +91,18 @@ export class MediaModal {
           <!-- Direct Link Tab -->
           <div id="tab-direct" class="penman-media-tab-content">
             <div style="margin-bottom: 10px;">
-              <label style="display:block; font-weight: 500;">Direct File URL (.mp4, .mp3, etc)</label>
-              <input type="text" id="penman-media-direct-url" class="penman-input" placeholder="https://example.com/video.mp4" style="width: 100%; box-sizing: border-box;" />
+              <label style="display:block; font-weight: 500;">${this.editor.i18n.t('plugins.media.directUrlLabel')}</label>
+              <input type="text" id="penman-media-direct-url" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.directPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" />
             </div>
             
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
               <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">Title (Optional)</label>
-                <input type="text" id="penman-media-title" class="penman-input" placeholder="Media title" style="width: 100%; box-sizing: border-box;" />
+                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.titleOptionalLabel')}</label>
+                <input type="text" id="penman-media-title" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.mediaTitlePlaceholder')}" style="width: 100%; box-sizing: border-box;" />
               </div>
               <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">Poster Image URL (Optional)</label>
-                <input type="text" id="penman-media-poster" class="penman-input" placeholder="https://..." style="width: 100%; box-sizing: border-box;" />
+                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.posterOptionalLabel')}</label>
+                <input type="text" id="penman-media-poster" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.posterPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" />
               </div>
             </div>
 
@@ -127,11 +127,11 @@ export class MediaModal {
                 <span id="penman-media-provider-badge" class="penman-media-badge" style="display: none;"></span>
               </div>
             </div>
-            <input type="text" id="penman-media-url" class="penman-input" placeholder="https://youtube.com/watch?v=... or https://aparat.com/v/..." style="width: 100%; box-sizing: border-box; margin-bottom: 10px;" />
+            <input type="text" id="penman-media-url" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.embedPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box; margin-bottom: 10px;" />
             
             <div style="margin-bottom: 10px;">
-              <label style="display:block; font-size: 12px; margin-bottom: 4px;">Title (Optional)</label>
-              <input type="text" id="penman-media-embed-title" class="penman-input" placeholder="Media title for iframe" style="width: 100%; box-sizing: border-box;" />
+              <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.titleOptionalLabel')}</label>
+              <input type="text" id="penman-media-embed-title" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.embedTitlePlaceholder')}" style="width: 100%; box-sizing: border-box;" />
             </div>
 
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
@@ -234,7 +234,7 @@ export class MediaModal {
       if (activeTab === 'embed') {
         const url = urlInput.value.trim();
         if (!url) {
-          preview.innerHTML = '<span style="color: #888;">Enter a valid URL to preview</span>';
+          preview.innerHTML = `<span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>`;
           return;
         }
 
@@ -247,8 +247,8 @@ export class MediaModal {
             badge.textContent = data.provider;
             badge.style.display = 'inline-block';
           } else {
-            preview.innerHTML = '<span style="color: #dc3545;">Invalid or unsupported URL</span>';
-            errorDiv.textContent = 'This URL is not supported by any active embed provider.';
+            preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.invalidEmbedUrl')}</span>`;
+            errorDiv.textContent = this.editor.i18n.t('plugins.media.invalidEmbedUrlMsg');
             errorDiv.style.display = 'block';
           }
         } else {
@@ -256,8 +256,8 @@ export class MediaModal {
           if (customData && customData.provider === 'custom') {
             finalData = customData;
           } else {
-            preview.innerHTML = '<span style="color: #dc3545;">Domain not whitelisted</span>';
-            errorDiv.textContent = 'This URL domain is not whitelisted for custom embeds.';
+            preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.domainNotWhitelisted')}</span>`;
+            errorDiv.textContent = this.editor.i18n.t('plugins.media.domainNotWhitelistedMsg');
             errorDiv.style.display = 'block';
           }
         }
@@ -281,7 +281,7 @@ export class MediaModal {
       } else if (activeTab === 'direct') {
         const url = directUrlInput.value.trim();
         if (!url) {
-          preview.innerHTML = '<span style="color: #888;">Enter a valid URL to preview</span>';
+          preview.innerHTML = `<span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>`;
           return;
         }
 
@@ -308,8 +308,8 @@ export class MediaModal {
           }
           submitBtn.disabled = false;
         } else {
-          preview.innerHTML = '<span style="color: #dc3545;">Invalid direct file URL</span>';
-          errorDiv.textContent = 'The URL does not point to a supported audio/video format.';
+          preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.invalidDirectUrl')}</span>`;
+          errorDiv.textContent = this.editor.i18n.t('plugins.media.invalidDirectUrlMsg');
           errorDiv.style.display = 'block';
         }
       }

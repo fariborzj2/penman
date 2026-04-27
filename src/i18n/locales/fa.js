@@ -44,7 +44,23 @@ export default {
       cancel: 'انصراف',
       autoplay: 'پخش خودکار',
       controls: 'نمایش کنترل‌ها',
-      posterPlaceholder: 'لینک تصویر پوستر (اختیاری)'
+      posterPlaceholder: 'لینک تصویر پوستر (اختیاری)',
+      editTitle: 'ویرایش رسانه',
+      insertTitle: 'درج رسانه',
+      invalidUrlPreview: 'یک لینک معتبر برای پیش‌نمایش وارد کنید',
+      invalidEmbedUrl: 'لینک نامعتبر یا پشتیبانی‌نشده',
+      invalidEmbedUrlMsg: 'این لینک توسط هیچ ارائه‌دهنده‌ای پشتیبانی نمی‌شود.',
+      domainNotWhitelisted: 'دامنه مجاز نیست',
+      domainNotWhitelistedMsg: 'این دامنه برای جاسازی سفارشی مجاز نیست.',
+      embedTitlePlaceholder: 'عنوان رسانه برای iframe',
+      mediaTitlePlaceholder: 'عنوان رسانه',
+      invalidDirectUrl: 'لینک فایل نامعتبر است',
+      invalidDirectUrlMsg: 'لینک به یک فرمت صوتی/تصویری پشتیبانی‌شده اشاره نمی‌کند.'
+    ,
+      directUrlLabel: 'لینک مستقیم فایل (.mp4, .mp3, غیره)',
+      titleOptionalLabel: 'عنوان (اختیاری)',
+      posterOptionalLabel: 'لینک تصویر پوستر (اختیاری)',
+      embedUrlLabel: 'لینک جاسازی ویدیو/صدا'
     },
     draft: {
       recoveryBannerMsg: 'یک نسخه ذخیره‌نشده جدیدتر از این سند یافت شد.',
@@ -78,6 +94,8 @@ export default {
       title: 'کد منبع',
       apply: 'اعمال تغییرات',
       cancel: 'انصراف'
+    ,
+      searchPlaceholder: 'جستجو...'
     },
     direction: {
       rtl: 'راست‌چین (RTL)',
@@ -114,6 +132,11 @@ export default {
       openInNewTab: 'باز شدن در پنجره جدید',
       save: 'ذخیره',
       cancel: 'انصراف'
+    ,
+      relPlaceholder: 'مثلا nofollow'
+    ,
+      urlLabel: 'لینک',
+      relLabel: 'ارتباط (Rel)'
     },
     color: {
       textColor: 'رنگ متن',
@@ -135,7 +158,23 @@ export default {
       row: 'سطر',
       column: 'ستون',
       properties: 'تنظیمات جدول',
-      selectTable: 'انتخاب جدول'
+      selectTable: 'انتخاب جدول',
+      widthPlaceholder: 'مثلا 100% یا 500px',
+      borderPlaceholder: 'مثلا 1 یا 0',
+      borderColorPlaceholder: 'مثلا #000 یا red',
+      cellPaddingPlaceholder: 'مثلا 5',
+      cellSpacingPlaceholder: 'مثلا 0'
+    ,
+      widthLabel: 'عرض:',
+      borderLabel: 'حاشیه:',
+      borderColorLabel: 'رنگ حاشیه:',
+      cellPaddingLabel: 'فاصله داخلی سلول:',
+      cellSpacingLabel: 'فاصله خارجی سلول:',
+      directionLabel: 'جهت:'
+    ,
+      defaultDir: 'پیش‌فرض',
+      ltr: 'چپ‌چین (LTR)',
+      rtl: 'راست‌چین (RTL)'
     }
   },
 
@@ -161,6 +200,7 @@ export default {
     insert: 'درج',
     delete: 'حذف',
     edit: 'ویرایش',
-    ok: 'تایید'
+    ok: 'تایید',
+    dialog: 'پنجره'
   }
 };
