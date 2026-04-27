@@ -452,46 +452,46 @@ export function setupTablePlugin(editor) {
            <div class="penman-floating-tail-inner" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
            <div class="penman-floating-tail-outer" style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
 
-           <button type="button" class="penman-btn penman-btn-table-prop" title="Table Properties" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+           <button type="button" class="penman-btn penman-btn-table-prop" title="Table Properties" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+           <button type="button" class="penman-btn penman-btn-del-table" title="Delete Table" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ff5b5d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
            </button>
-           <button type="button" class="penman-btn penman-btn-del-table" title="Delete Table" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
-           </button>
-           <button type="button" class="penman-btn penman-btn-select-table" title="Select Entire Table" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="12" cy="12" r="1" fill="currentColor"/></svg>
+           <button type="button" class="penman-btn penman-btn-select-table" title="Select Entire Table" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.034 12.681a.498.498 0 0 1 .647-.647l9 3.5a.5.5 0 0 1-.033.943l-3.444 1.068a1 1 0 0 0-.66.66l-1.067 3.443a.5.5 0 0 1-.943.033z"/><path d="M21 11V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h6"/></svg>
            </button>
 
 
-           <button type="button" class="penman-btn penman-btn-merge-cells" title="Merge Cells" style="padding: 4px; display:none; align-items:center; color: #111827;">
+           <button type="button" class="penman-btn penman-btn-merge-cells" title="Merge Cells" style="padding: 4px; display:none; align-items:center; ">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 14h6v6H4z"/><path d="M14 14h6v6h-6z"/><path d="M4 4h16v6H4z"/></svg>
            </button>
-           <button type="button" class="penman-btn penman-btn-split-cell" title="Split Cell" style="padding: 4px; display:none; align-items:center; color: #111827;">
+           <button type="button" class="penman-btn penman-btn-split-cell" title="Split Cell" style="padding: 4px; display:none; align-items:center; ">
                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M12 4v16"/><path d="M4 12h16"/></svg>
            </button>
 
            <div class="penman-btn-bg-color-wrapper" style="position:relative; display:flex;">
-               <button type="button" class="penman-btn penman-btn-bg-color-trigger" title="Background Color" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+               <button type="button" class="penman-btn penman-btn-bg-color-trigger" title="Background Color" style="padding: 4px; display:flex; align-items:center; ">
+                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m14.622 17.897-10.68-2.913"/><path d="M18.376 2.622a1 1 0 1 1 3.002 3.002L17.36 9.643a.5.5 0 0 0 0 .707l.944.944a2.41 2.41 0 0 1 0 3.408l-.944.944a.5.5 0 0 1-.707 0L8.354 7.348a.5.5 0 0 1 0-.707l.944-.944a2.41 2.41 0 0 1 3.408 0l.944.944a.5.5 0 0 0 .707 0z"/><path d="M9 8c-1.804 2.71-3.97 3.46-6.583 3.948a.507.507 0 0 0-.302.819l7.32 8.883a1 1 0 0 0 1.185.204C12.735 20.405 16 16.792 16 15"/></svg>
                </button>
            </div>
 
            <span style="width: 1px; height: 16px; background: #e0e0e0; margin: 0 2px;"></span>
 
-           <button type="button" class="penman-btn penman-btn-add-row" title="Add Row Below" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="12" y1="12" x2="12" y2="18"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+           <button type="button" class="penman-btn penman-btn-add-row" title="Add Row Below" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"/><path d="M3 9H21"/><path d="M10 15H14"/><path d="M12 13V17"/></svg>
            </button>
-           <button type="button" class="penman-btn penman-btn-remove-row" title="Delete Row" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="9" y1="15" x2="15" y2="15"></line></svg>
+           <button type="button" class="penman-btn penman-btn-remove-row" title="Delete Row" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"/><path d="M3 9H21"/><path d="M10 15H14"/></svg>
            </button>
 
            <span style="width: 1px; height: 16px; background: #e0e0e0; margin: 0 2px;"></span>
 
-           <button type="button" class="penman-btn penman-btn-add-col" title="Add Column Right" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="15" y1="9" x2="15" y2="15"></line><line x1="12" y1="12" x2="18" y2="12"></line></svg>
+           <button type="button" class="penman-btn penman-btn-add-col" title="Add Column Right" style="padding: 4px; display:flex; align-items:center;">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"/><path d="M15 3V21"/><path d="M7 12H11"/><path d="M9 10V14"/></svg>
            </button>
-           <button type="button" class="penman-btn penman-btn-remove-col" title="Delete Column" style="padding: 4px; display:flex; align-items:center; color: #111827;">
-               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line><line x1="12" y1="12" x2="18" y2="12"></line></svg>
+           <button type="button" class="penman-btn penman-btn-remove-col" title="Delete Column" style="padding: 4px; display:flex; align-items:center; ">
+               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 3H5C3.89543 3 3 3.89543 3 5V19C3 20.1046 3.89543 21 5 21H19C20.1046 21 21 20.1046 21 19V5C21 3.89543 20.1046 3 19 3Z"/><path d="M15 3V21"/><path d="M7 12H11"/></svg>
            </button>
         </div>
      `;

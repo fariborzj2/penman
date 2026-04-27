@@ -106,7 +106,8 @@
         return {
           ...defaultConfig,
           height: parseInt(el.dataset.height, 10) || 300,
-          direction: el.dataset.direction || 'auto'
+          direction: el.dataset.direction || 'auto',
+          lang: 'en'
         };
       }
     });

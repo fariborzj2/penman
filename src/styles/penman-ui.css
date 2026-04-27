@@ -86,10 +86,6 @@
   border-color: transparent;
 }
 
-.penman-table-toolbar .penman-btn svg {
-  fill: none;
-  stroke: #64748B
-}
 .penman-btn-active {
   background-color: rgb(234, 239, 244);
   color: rgb(52, 132, 212);
