@@ -706,6 +706,40 @@ export class Editor extends EventEmitter {
     let html = clipboardData.getData('text/html');
     let text = clipboardData.getData('text/plain');
 
+    // MAGIC PASTE: If selection exists and clipboard is a URL, wrap selection in link
+    const sel = window.getSelection();
+    const selectedNode = this.selection.getSelectedNode();
+    const hasTextSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed && this.editableArea.contains(sel.anchorNode);
+
+    if ((selectedNode || hasTextSelection) && text && this._isUrl(text)) {
+      let url = text.trim();
+      if (url.toLowerCase().startsWith('www.')) {
+        url = 'http://' + url;
+      }
+
+      if (selectedNode) {
+        const parent = selectedNode.parentNode;
+        if (parent && parent.tagName === 'A') {
+          parent.href = url;
+        } else {
+          const a = document.createElement('a');
+          a.href = url;
+          parent.replaceChild(a, selectedNode);
+          a.appendChild(selectedNode);
+        }
+        this.selection.clearNodeSelection();
+      } else {
+        document.execCommand('createLink', false, url);
+      }
+
+      if (this.history) {
+        this.history.pushImmediate();
+      }
+      this.emit('change', this.getContent());
+      this._syncToTextarea();
+      return;
+    }
+
     let contentToInsert = '';
 
     if (html) {
@@ -789,6 +823,12 @@ export class Editor extends EventEmitter {
       this.commands.execute(cmd, value);
       this.emit('selectionChange');
     }
+  }
+
+  _isUrl(str) {
+    if (!str) return false;
+    const pattern = /^(https?:\/\/|www\.)\S+$/i;
+    return pattern.test(str.trim());
   }
 
   /**
