@@ -43,7 +43,11 @@ describe('Magic Paste as Link', () => {
 
     editor.editableArea.dispatchEvent(pasteEvent);
 
-    expect(document.execCommand).toHaveBeenCalledWith('createLink', false, 'https://example.com');
+    const link = editor.editableArea.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link.href).toBe('https://example.com/');
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener');
   });
 
   it('should prepend http:// to www. URLs when pasting over text', () => {
@@ -68,7 +72,9 @@ describe('Magic Paste as Link', () => {
 
     editor.editableArea.dispatchEvent(pasteEvent);
 
-    expect(document.execCommand).toHaveBeenCalledWith('createLink', false, 'http://www.example.com');
+    const link = editor.editableArea.querySelector('a');
+    expect(link).not.toBeNull();
+    expect(link.href).toBe('http://www.example.com/');
   });
 
   it('should wrap a selected block node in a link when a URL is pasted', () => {
@@ -94,6 +100,8 @@ describe('Magic Paste as Link', () => {
     const link = editor.editableArea.querySelector('a');
     expect(link).not.toBeNull();
     expect(link.href).toBe('https://example.com/'); // JSDOM normalizes href
+    expect(link.getAttribute('target')).toBe('_blank');
+    expect(link.getAttribute('rel')).toBe('noopener');
     expect(link.firstChild).toBe(figure);
   });
 

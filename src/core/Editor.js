@@ -721,15 +721,37 @@ export class Editor extends EventEmitter {
         const parent = selectedNode.parentNode;
         if (parent && parent.tagName === 'A') {
           parent.href = url;
+          parent.setAttribute('target', '_blank');
+          parent.setAttribute('rel', 'noopener');
         } else {
           const a = document.createElement('a');
           a.href = url;
+          a.setAttribute('target', '_blank');
+          a.setAttribute('rel', 'noopener');
           parent.replaceChild(a, selectedNode);
           a.appendChild(selectedNode);
         }
         this.selection.clearNodeSelection();
       } else {
-        document.execCommand('createLink', false, url);
+        // execCommand('createLink') doesn't support target/rel.
+        // We must manually wrap the selection to include them.
+        const a = document.createElement('a');
+        a.href = url;
+        a.setAttribute('target', '_blank');
+        a.setAttribute('rel', 'noopener');
+
+        const selection = window.getSelection();
+        if (selection.rangeCount > 0) {
+          const range = selection.getRangeAt(0);
+          a.appendChild(range.extractContents());
+          range.insertNode(a);
+
+          // Selection is lost after insertNode in some cases, so we re-select the link
+          selection.removeAllRanges();
+          const newRange = document.createRange();
+          newRange.selectNode(a);
+          selection.addRange(newRange);
+        }
       }
 
       if (this.history) {
