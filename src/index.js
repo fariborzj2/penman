@@ -12,18 +12,18 @@ export const penmanDefaults = {
   plugins: [],
   toolbar: '',
   blockTypes: [
-    { name: 'Paragraph', cmd: 'p' },
-    { name: 'Heading 1', cmd: 'h1' },
-    { name: 'Heading 2', cmd: 'h2' },
-    { name: 'Heading 3', cmd: 'h3' },
-    { name: 'Heading 4', cmd: 'h4' },
-    { name: 'Heading 5', cmd: 'h5' },
-    { name: 'Heading 6', cmd: 'h6' },
-    { name: 'Blockquote', cmd: 'blockquote' },
-    { name: 'Success', cmd: 'div', class: 'green-block', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e' } },
-    { name: 'Info', cmd: 'div', class: 'blue-block', optionStyle: { color: '#1e3a8a', background: '#dbeafe', fontWeight: 'bold', borderRight: '3px solid #3b82f6' } },
-    { name: 'Warning', cmd: 'div', class: 'orange-block', optionStyle: { color: '#9a3412', background: '#ffedd5', fontWeight: 'bold', borderRight: '3px solid #f97316' } },
-    { name: 'Danger', cmd: 'div', class: 'red-block', optionStyle: { color: '#7f1d1d', background: '#fee2e2', fontWeight: 'bold', borderRight: '3px solid #ef4444' } }
+    { name: 'Paragraph', cmd: 'p', i18nKey: 'plugins.blockType.paragraph' },
+    { name: 'Heading 1', cmd: 'h1', i18nKey: 'plugins.blockType.heading1' },
+    { name: 'Heading 2', cmd: 'h2', i18nKey: 'plugins.blockType.heading2' },
+    { name: 'Heading 3', cmd: 'h3', i18nKey: 'plugins.blockType.heading3' },
+    { name: 'Heading 4', cmd: 'h4', i18nKey: 'plugins.blockType.heading4' },
+    { name: 'Heading 5', cmd: 'h5', i18nKey: 'plugins.blockType.heading5' },
+    { name: 'Heading 6', cmd: 'h6', i18nKey: 'plugins.blockType.heading6' },
+    { name: 'Blockquote', cmd: 'blockquote', i18nKey: 'plugins.blockType.blockquote' },
+    { name: 'Success', cmd: 'div', class: 'green-block', i18nKey: 'plugins.blockType.success', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e' } },
+    { name: 'Info', cmd: 'div', class: 'blue-block', i18nKey: 'plugins.blockType.info', optionStyle: { color: '#1e3a8a', background: '#dbeafe', fontWeight: 'bold', borderRight: '3px solid #3b82f6' } },
+    { name: 'Warning', cmd: 'div', class: 'orange-block', i18nKey: 'plugins.blockType.warning', optionStyle: { color: '#9a3412', background: '#ffedd5', fontWeight: 'bold', borderRight: '3px solid #f97316' } },
+    { name: 'Danger', cmd: 'div', class: 'red-block', i18nKey: 'plugins.blockType.danger', optionStyle: { color: '#7f1d1d', background: '#fee2e2', fontWeight: 'bold', borderRight: '3px solid #ef4444' } }
   ]
 };
 

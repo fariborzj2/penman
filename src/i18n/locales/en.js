@@ -32,7 +32,11 @@ export default {
       heading5: 'Heading 5',
       heading6: 'Heading 6',
       blockquote: 'Blockquote',
-      pre: 'Preformatted'
+      pre: 'Preformatted',
+      success: 'Success',
+      info: 'Info',
+      warning: 'Warning',
+      danger: 'Danger'
     },
     media: {
       title: 'Insert Media',
