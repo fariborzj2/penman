@@ -83,27 +83,27 @@ export function setupLinkPlugin(editor) {
         body: `
           <div style="padding: 15px">
             <div class="penman-modal-form-row">
-              <label for="penman-link-url">URL</label>
+              <label for="penman-link-url">${editor.i18n.t('plugins.link.urlLabel')}</label>
               <input type="url" id="penman-link-url" name="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" dir="ltr" style="text-align: left;" required>
             </div>
             <div class="penman-modal-form-row">
-              <label for="penman-link-text">${editor.i18n.t('plugins.link.textPlaceholder')}</label>
+              <label for="penman-link-text">${editor.i18n.t('plugins.link.textLabel')}</label>
               <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${currentText}">
             </div>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
               <div style="flex: 1;">
-                <label for="penman-link-target">Target</label>
-                <select id="penman-link-target" name="target" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px;">
-                  <option value="">None</option>
-                  <option value="_blank">New Window (_blank)</option>
-                  <option value="_self">Same Window (_self)</option>
-                  <option value="_parent">Parent Frame (_parent)</option>
-                  <option value="_top">Top Frame (_top)</option>
+                <label for="penman-link-target">${editor.i18n.t('plugins.link.targetLabel')}</label>
+                <select id="penman-link-target" name="target" dir="ltr" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px; text-align: left;">
+                  <option value="">${editor.i18n.t('plugins.link.targetNone')}</option>
+                  <option value="_blank">${editor.i18n.t('plugins.link.targetBlank')}</option>
+                  <option value="_self">${editor.i18n.t('plugins.link.targetSelf')}</option>
+                  <option value="_parent">${editor.i18n.t('plugins.link.targetParent')}</option>
+                  <option value="_top">${editor.i18n.t('plugins.link.targetTop')}</option>
                 </select>
               </div>
               <div style="flex: 1;">
-                <label for="penman-link-rel">Rel</label>
-                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}">
+                <label for="penman-link-rel">${editor.i18n.t('plugins.link.relLabel')}</label>
+                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}" dir="ltr" style="text-align: left;">
               </div>
             </div>
           </div>

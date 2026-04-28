@@ -145,12 +145,11 @@ export default {
       textPlaceholder: 'Text to display',
       openInNewTab: 'Open in new tab',
       save: 'Save',
-      cancel: 'Cancel'
-    ,
-      relPlaceholder: 'e.g. nofollow'
-    ,
+      cancel: 'Cancel',
+      relPlaceholder: 'e.g. nofollow',
       urlLabel: 'URL',
-      relLabel: 'Rel'
+      relLabel: 'Rel',
+      relPlaceholder: 'e.g. nofollow',
     },
     color: {
       textColor: 'Text Color',
