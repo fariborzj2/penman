@@ -134,7 +134,14 @@ export class Editor extends EventEmitter {
     const chars = text.replace(/\n/g, '').length;
     // Match words (simple word count)
     let words = 0; if (text.trim()) { words = text.trim().split(/\s+/).filter(w => w.length > 0).length; }
-    this.footerStats.innerText = `Words: ${words} | Characters: ${chars}`;
+
+    const formattedWords = new Intl.NumberFormat(this.i18n.lang).format(words);
+    const formattedChars = new Intl.NumberFormat(this.i18n.lang).format(chars);
+
+    this.footerStats.innerText = this.i18n.t('ui.stats', {
+      words: formattedWords,
+      chars: formattedChars
+    });
 
     // Update HTML Path (simplified implementation)
     if (this.selection) {
