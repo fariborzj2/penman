@@ -3,7 +3,7 @@
 ## Executive Summary
 Penman is a sophisticated, framework-agnostic Vanilla JavaScript rich text editor designed as a modular and lightweight alternative to heavy enterprise editors. Currently, it is **"Production-Grade for Standard Use Cases."** It excels in environments requiring high-fidelity HTML editing, RTL (Right-to-Left) language support, and a plug-and-play developer experience (DX).
 
-However, for "High-Enterprise" requirements—specifically real-time collaboration and structured data portability (JSON/AST)—Penman is not yet ready. Its architecture is strictly DOM-based, which prioritizes simplicity and performance for single-user web editing but limits its use in complex collaborative or cross-platform (native mobile) ecosystems.
+However, for "High-Enterprise" requirements—specifically real-time collaboration and structured data portability (JSON/AST)—Penman's core editing engine is an architectural dead-end. While the UI and plugin framework provide a stable foundation, the transition to a structured model requires a replacement of the state and selection engines rather than a simple evolutionary upgrade.
 
 ---
 
@@ -25,57 +25,40 @@ However, for "High-Enterprise" requirements—specifically real-time collaborati
 
 ---
 
-## Architectural Review
+## Architectural Review: The "Total Rewrite" Reality
 
-### 1. Source of Truth (DOM-Based)
-Penman operates directly on the DOM using `contenteditable`. While this ensures high performance and low complexity, it represents a significant "Architectural Debt" for enterprise scenarios. The editor lacks an internal state model (like Prosemirror's Schema or Slate's JSON), meaning structural integrity relies on the browser's DOM parser.
+A brutalist audit of the core systems reveals that the migration to a structured model (AST/IR) is a **Replacement**, not an **Upgrade** for the editing engine.
 
-### 2. History & State Management
-The editor uses a **Snapshot-based History System**. It captures full HTML strings for Undo/Redo. While efficient for most web documents, it creates a memory overhead of $O(n \times historyDepth)$ and lacks the semantic granularity of a Transactional Model.
+### 1. Reuse Breakdown (Layer-by-Layer)
+| Core System | Current Implementation | Migration Impact | Reuse % |
+| :--- | :--- | :--- | :---: |
+| **Selection Model** | Marker-based (DOM <span> injection) | **DEAD END**. Must be rewritten to use Block-ID + Offset mapping. | 0% |
+| **History Model** | HTML String Snapshots | **DEAD END**. Must be replaced with a Delta-based Transaction engine. | 0% |
+| **Editing Engine** | `execCommand` + DOM Mutation | **DEAD END**. Logic must shift from DOM manipulation to State reconciliation. | 10% |
+| **Paste Pipeline** | `DOMParser` + HTML Sanitization | **PARTIAL REUSE**. Sanitizer logic can be adapted as an IR parser. | 40% |
+| **UI Framework** | CSS, Modals, Toolbars, Icons | **SAFE**. The UI shell is decoupled from the content model. | 90% |
+| **Infrastructure** | Event Emitter, I18n, Utilities | **SAFE**. Stable foundation regardless of the data model. | 100% |
 
-### 3. Selection & Markers
-The system uses a **Marker-based Selection Manager**. It injects temporary markers into the DOM to save/restore carets. While robustly implemented, this approach is inherently more fragile than index-based selection systems when dealing with aggressive normalization or collaborative remote mutations.
+**Total Weighted Codebase Reusability: ~45%**
 
-### 4. Sanitization & "Smart Paste"
-This is a standout commercial feature. The `Sanitizer.js` and "Smart Paste" logic effectively handle the complexity of pasting from external sources, ensuring that the resulting HTML is structural, clean, and consistent with the editor's internal expectations.
+### 2. Architectural Dead Ends
+*   **Source of Truth**: `contenteditable` (DOM) is currently the source of truth. In an AST model, it must become a pure "rendering sink."
+*   **Dependency Graph**: Systems like `SelectionManager` and `HistoryManager` are **"Mutation-Aware"** (watching the DOM). They cannot survive a transition to a **"State-Aware"** architecture where the DOM watches the state.
 
 ---
 
-## Architecture Migration Path (Future Proofing)
+## Final Verdict
 
-A critical commercial advantage of Penman is its **intentional migration roadmap**. The project explicitly acknowledges its current DOM-based limitations and has a "Frozen" architectural blueprint (`docs/13-minimal-ir-architecture.md`) ready for transition.
+Based on the audit of dependencies on `contenteditable` and DOM-string snapshots:
 
-### Can you migrate from DOM to AST later?
-**Yes.** The editor is designed with a "Phase-Gated" philosophy. You can start with the current DOM-based version today and migrate to the AST-based (Internal Representation) model when your product reaches specific "Migration Triggers" (e.g., needing real-time collaboration or native mobile apps).
-
-### The Planned Transition:
-1.  **State Model**: Moving from `innerHTML` snapshots to a **Flat Array of Blocks** IR.
-2.  **Transactions**: Shifting from full string copies to **Semantic Delta Transactions** (Atomic Operations).
-3.  **Selection**: Transitioning from DOM markers to **Virtual Offset-based selection**.
-
-### Technical Verdict: Redesign vs. Evolution
-A common concern is whether this "Minimal IR" is a bridge or a dead-end compared to industry standards like **ProseMirror** or **Lexical**.
-
-*   **The "Bridge" (Evolutionary):** The **Transaction Engine** and **Virtual Selection** systems in the roadmap are absolute requirements for any top-tier editor. By implementing them, Penman builds 70-80% of the enterprise-grade infrastructure.
-*   **The "Gap" (Redesign Requirement):** The current roadmap explicitly chooses a **Linear Model** (Block -> Text) over a **Recursive Tree Model** (Nested Blocks) to maintain simplicity.
-*   **Final Answer**: Reaching "ProseMirror-level" (e.g., tables inside tables, lists inside lists) would require a **Redesign of the Data Model layer** (Linear to Tree), but **NOT a from-scratch rewrite** of the entire project. The Event System, UI Registry, Command Manager, and Sanitizer would remain largely intact.
-
-### Why this matters for business:
-This path ensures that you are not "locked in" to a dead-end architecture. The current system serves as a stable, high-performance foundation for HTML-heavy use cases, while the IR roadmap provides a clear evolutionary path that protects your investment in the plugin ecosystem and core logic.
+> **"Penman in its current state is a partial rewrite disguised as a migration; while the UI shell is evolutionary, the core editing engine is an architectural dead-end for structured document requirements."**
 
 ---
 
 ## Final Recommendation
 
 ### **Viable Scenario: Commercial SaaS & CMS**
-Penman is an excellent choice for SaaS products, CMS platforms, and internal tools that need:
-*   A lightweight, zero-dependency editor.
-*   First-class support for Persian, Arabic, or other RTL languages.
-*   Robust table and image editing without the overhead of TinyMCE or CKEditor.
-*   Simple integration with existing web forms (`<textarea>` replacement).
+Penman is an excellent choice for products needing a lightweight, zero-dependency editor with superior RTL support and robust media widgets (Tables/Images) where HTML output is the final goal.
 
-### **Alternative Necessary: High-End Collaborative Suites**
-A custom solution or a more complex library (e.g., Prosemirror, TipTap, or Lexical) would be required if the project demands:
-*   **Real-time collaboration** (multiple users editing the same paragraph simultaneously).
-*   **Multi-platform synchronization** (editing on web, then consuming structured JSON on a native iOS/Android app).
-*   **Deep structural constraints** (e.g., restricted nested structures that a DOM-only sanitizer cannot strictly enforce).
+### **Alternative Necessary: High-Enterprise Suites**
+If the project requires **Real-time collaboration** or **Native Mobile synchronization (JSON)**, Penman's current "Heart" (The State Engine) must be built from scratch. You will keep the "Skin" (UI/Plugins), but the investment in core editing logic will not be preserved.
