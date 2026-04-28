@@ -149,7 +149,13 @@ export default {
       relPlaceholder: 'e.g. nofollow',
       urlLabel: 'URL',
       relLabel: 'Rel',
-      relPlaceholder: 'e.g. nofollow',
+      textLabel: 'Display Text',
+      targetLabel: 'Target',
+      targetNone: 'None',
+      targetBlank: 'New Window (_blank)',
+      targetSelf: 'Same Window (_self)',
+      targetParent: 'Parent Frame (_parent)',
+      targetTop: 'Top Frame (_top)'
     },
     color: {
       textColor: 'Text Color',
