@@ -105,26 +105,26 @@ export function setupLinkPlugin(editor) {
         body: `
           <div style="padding: 15px">
             <div class="penman-modal-form-row">
-              <label for="penman-link-url">${editor.i18n.t('plugins.link.urlLabel')}</label>
-              <input type="url" id="penman-link-url" name="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" dir="ltr" style="text-align: left;" required>
+              <label for="penman-link-url">${editor.i18n.t('plugins.link.urlLabel')}</label></label>
+              <input type="url" id="penman-link-url" name="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" value="${escapeHtmlAttr(initialData.url)}" dir="ltr" style="text-align: left;" required>
             </div>
             <div class="penman-modal-form-row">
-              <label for="penman-link-text">${editor.i18n.t('plugins.link.textLabel')}</label>
+              <label for="penman-link-text">${editor.i18n.t('plugins.link.textLabel')}</label></label>
               <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${escapeHtmlAttr(initialData.text)}">
             </div>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
               <div style="flex: 1;">
-                <label for="penman-link-target">${editor.i18n.t('plugins.link.targetLabel')}</label>
-                <select id="penman-link-target" name="target" dir="ltr" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px; text-align: left;">                  
-                  <option value="" ${initialData.target === '' ? 'selected' : ''}>>${editor.i18n.t('plugins.link.targetNone')}</option>
-                  <option value="_blank" ${initialData.target === '_blank' ? 'selected' : ''}>New Window (_blank)</option>
+                <label for="penman-link-target">${editor.i18n.t('plugins.link.targetLabel')}</label></label>
+                <select id="penman-link-target" name="target" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px;">
+                  <option value="" ${initialData.target === '' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetNone')}</option>
+                  <option value="_blank" ${initialData.target === '_blank' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetBlank')}</option>
                   <option value="_self" ${initialData.target === '_self' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetSelf')}</option>
-                  <option value="_parent" ${initialData.target === '_parent' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetParent')</option>
+                  <option value="_parent" ${initialData.target === '_parent' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetParent')}</option>
                   <option value="_top" ${initialData.target === '_top' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetTop')}</option>
                 </select>
               </div>
               <div style="flex: 1;">
-                <label for="penman-link-rel">${editor.i18n.t('plugins.link.relLabel')}</label>
+                <label for="penman-link-rel">${editor.i18n.t('plugins.link.relLabel')}</label></label>
                 <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}" value="${escapeHtmlAttr(initialData.rel)}" dir="ltr" style="text-align: left;">
               </div>
             </div>
@@ -144,7 +144,7 @@ export function setupLinkPlugin(editor) {
               existingLink.setAttribute('href', data.url);
               if (data.target) existingLink.setAttribute('target', data.target);
               else existingLink.removeAttribute('target');
-
+              
               if (data.rel) existingLink.setAttribute('rel', data.rel);
               else existingLink.removeAttribute('rel');
 
