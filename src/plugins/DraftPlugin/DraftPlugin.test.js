@@ -434,6 +434,38 @@ describe('DraftPlugin', () => {
     e6.destroy();
   });
 
+  it('shows recovery banner with Persian date when lang is fa', async () => {
+    localStorage.setItem(
+      'penman:draft:fa-test',
+      JSON.stringify({
+        content: '<p>Recovered draft content.</p>',
+        lastSavedAt: Date.now(),
+        documentId: 'fa-test',
+        title: '',
+      })
+    );
+
+    document.body.innerHTML = '<textarea id="editor-fa"></textarea>';
+    const e_fa = new Editor({
+      selector: '#editor-fa',
+      draftDocumentId: 'fa-test',
+      lang: 'fa'
+    });
+    setupDraftPlugin(e_fa);
+
+    await sleep(50);
+
+    const banner = document.querySelector('.penman-draft-banner');
+    expect(banner).not.toBeNull();
+
+    const dateEl = banner.querySelector('.penman-draft-banner-date');
+    expect(dateEl).not.toBeNull();
+    // Persian digits regex: [\u06F0-\u06F9]
+    expect(dateEl.textContent).toMatch(/[\u06F0-\u06F9]/);
+
+    e_fa.destroy();
+  });
+
   it('does not load plugin without a documentId', () => {
     document.body.innerHTML = '<textarea id="editor-noid"></textarea>';
     const e7 = new Editor({ selector: '#editor-noid' }); // no draftDocumentId, no textarea id

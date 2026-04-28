@@ -59,9 +59,9 @@ function injectStyles() {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function formatDateTime(ts) {
+function formatDateTime(ts, lang) {
   try {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat(lang, {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(ts));
@@ -177,7 +177,7 @@ export function setupDraftPlugin(editor) {
 
     const dateNote = document.createElement('span');
     dateNote.className = 'penman-draft-banner-date';
-    dateNote.textContent = editor.i18n.t('plugins.draft.lastAutoSaved') + formatDateTime(draft.lastSavedAt);
+    dateNote.textContent = editor.i18n.t('plugins.draft.lastAutoSaved') + formatDateTime(draft.lastSavedAt, editor.i18n.lang);
     msg.appendChild(dateNote);
 
     const actions = document.createElement('div');
