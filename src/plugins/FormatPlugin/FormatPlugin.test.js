@@ -15,11 +15,13 @@ describe('FormatPlugin', () => {
     setupFormatPlugin(editor);
   });
 
-  it('should register bold, italic, underline, and strikethrough buttons', () => {
+  it('should register bold, italic, underline, strikethrough, superscript, and subscript buttons', () => {
     expect(editor.ui.registry.buttons['bold']).toBeDefined();
     expect(editor.ui.registry.buttons['italic']).toBeDefined();
     expect(editor.ui.registry.buttons['underline']).toBeDefined();
     expect(editor.ui.registry.buttons['strikethrough']).toBeDefined();
+    expect(editor.ui.registry.buttons['superscript']).toBeDefined();
+    expect(editor.ui.registry.buttons['subscript']).toBeDefined();
   });
 
   it('should execute command when format button is clicked on non-collapsed selection', () => {

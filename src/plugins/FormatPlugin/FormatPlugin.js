@@ -1,11 +1,13 @@
 export function setupFormatPlugin(editor) {
-  const formats = ['bold', 'italic', 'underline', 'strikethrough'];
+  const formats = ['bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript'];
 
   const tagMap = {
     bold: 'STRONG',
     italic: 'EM',
     underline: 'U',
-    strikethrough: 'S'
+    strikethrough: 'S',
+    superscript: 'SUP',
+    subscript: 'SUB'
   };
 
   function replaceTag(oldTag, newTagName) {
@@ -22,7 +24,7 @@ export function setupFormatPlugin(editor) {
       'I': 'EM',
       'STRIKE': 'S'
     };
-    const inlineTags = ['STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE'];
+    const inlineTags = ['STRONG', 'B', 'EM', 'I', 'U', 'S', 'STRIKE', 'SUP', 'SUB'];
     const tagSelector = inlineTags.join(', ');
 
     // 1. Standardize tags
