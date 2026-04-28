@@ -230,6 +230,7 @@ export default {
     delete: 'Delete',
     edit: 'Edit',
     ok: 'OK',
-    dialog: 'Dialog'
+    dialog: 'Dialog',
+    stats: 'Words: {words} | Characters: {chars}'
   }
 };

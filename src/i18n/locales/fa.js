@@ -230,6 +230,7 @@ export default {
     delete: 'حذف',
     edit: 'ویرایش',
     ok: 'تایید',
-    dialog: 'پنجره'
+    dialog: 'پنجره',
+    stats: 'تعداد کلمات: {words} | تعداد کاراکترها: {chars}'
   }
 };
