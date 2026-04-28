@@ -41,6 +41,23 @@ This is a standout commercial feature. The `Sanitizer.js` and "Smart Paste" logi
 
 ---
 
+## Architecture Migration Path (Future Proofing)
+
+A critical commercial advantage of Penman is its **intentional migration roadmap**. The project explicitly acknowledges its current DOM-based limitations and has a "Frozen" architectural blueprint (`docs/13-minimal-ir-architecture.md`) ready for transition.
+
+### Can you migrate from DOM to AST later?
+**Yes.** The editor is designed with a "Phase-Gated" philosophy. You can start with the current DOM-based version today and migrate to the AST-based (Internal Representation) model when your product reaches specific "Migration Triggers" (e.g., needing real-time collaboration or native mobile apps).
+
+### The Planned Transition:
+1.  **State Model**: Moving from `innerHTML` snapshots to a **Flat Array of Blocks** IR.
+2.  **Transactions**: Shifting from full string copies to **Semantic Delta Transactions** (Atomic Operations).
+3.  **Selection**: Transitioning from DOM markers to **Virtual Offset-based selection**.
+
+### Why this matters for business:
+This path ensures that you are not "locked in" to a dead-end architecture. The current system serves as a stable, high-performance foundation for HTML-heavy use cases, while the IR roadmap provides a clear exit strategy for high-enterprise scaling.
+
+---
+
 ## Final Recommendation
 
 ### **Viable Scenario: Commercial SaaS & CMS**
