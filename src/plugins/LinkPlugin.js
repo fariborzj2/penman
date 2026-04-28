@@ -75,11 +75,33 @@ export function setupLinkPlugin(editor) {
 
       const preSelectedNode = editor.selection.getSelectedNode();
 
+      // Check if we are inside an existing link to edit it
+      let existingLink = null;
+      if (preSelectedNode && preSelectedNode.parentNode && preSelectedNode.parentNode.tagName === 'A') {
+        existingLink = preSelectedNode.parentNode;
+      } else if (sel && sel.rangeCount > 0) {
+        let node = sel.getRangeAt(0).startContainer;
+        while (node && node !== editor.editableArea) {
+          if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'a') {
+            existingLink = node;
+            break;
+          }
+          node = node.parentNode;
+        }
+      }
+
+      const initialData = {
+        url: existingLink ? existingLink.getAttribute('href') || '' : '',
+        text: existingLink ? existingLink.textContent : currentText,
+        target: existingLink ? existingLink.getAttribute('target') || '' : '_blank',
+        rel: existingLink ? existingLink.getAttribute('rel') || '' : 'noopener'
+      };
+
       // Save current selection before opening the modal so we know where to insert
       editor.selection.save();
 
       editor.ui.createModal({
-        title: editor.i18n.t('plugins.link.insert'),
+        title: existingLink ? editor.i18n.t('plugins.link.insert') : editor.i18n.t('plugins.link.insert'),
         body: `
           <div style="padding: 15px">
             <div class="penman-modal-form-row">
@@ -88,22 +110,22 @@ export function setupLinkPlugin(editor) {
             </div>
             <div class="penman-modal-form-row">
               <label for="penman-link-text">${editor.i18n.t('plugins.link.textLabel')}</label>
-              <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${currentText}">
+              <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${escapeHtmlAttr(initialData.text)}">
             </div>
             <div style="margin-top: 10px; display: flex; gap: 10px;">
               <div style="flex: 1;">
                 <label for="penman-link-target">${editor.i18n.t('plugins.link.targetLabel')}</label>
-                <select id="penman-link-target" name="target" dir="ltr" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px; text-align: left;">
-                  <option value="">${editor.i18n.t('plugins.link.targetNone')}</option>
-                  <option value="_blank">${editor.i18n.t('plugins.link.targetBlank')}</option>
-                  <option value="_self">${editor.i18n.t('plugins.link.targetSelf')}</option>
-                  <option value="_parent">${editor.i18n.t('plugins.link.targetParent')}</option>
-                  <option value="_top">${editor.i18n.t('plugins.link.targetTop')}</option>
+                <select id="penman-link-target" name="target" dir="ltr" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px; text-align: left;">                  
+                  <option value="" ${initialData.target === '' ? 'selected' : ''}>>${editor.i18n.t('plugins.link.targetNone')}</option>
+                  <option value="_blank" ${initialData.target === '_blank' ? 'selected' : ''}>New Window (_blank)</option>
+                  <option value="_self" ${initialData.target === '_self' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetSelf')}</option>
+                  <option value="_parent" ${initialData.target === '_parent' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetParent')</option>
+                  <option value="_top" ${initialData.target === '_top' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetTop')}</option>
                 </select>
               </div>
               <div style="flex: 1;">
                 <label for="penman-link-rel">${editor.i18n.t('plugins.link.relLabel')}</label>
-                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}" dir="ltr" style="text-align: left;">
+                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}" value="${escapeHtmlAttr(initialData.rel)}" dir="ltr" style="text-align: left;">
               </div>
             </div>
           </div>
@@ -114,13 +136,26 @@ export function setupLinkPlugin(editor) {
 
           if (data.url) {
             const safeUrl = escapeHtmlAttr(data.url);
-            // We escape text as well to avoid accidental HTML injection through the display text
             const safeText = data.text ? escapeHtmlAttr(data.text) : safeUrl;
-
             const targetAttr = data.target ? ` target="${escapeHtmlAttr(data.target)}"` : '';
             const relAttr = data.rel ? ` rel="${escapeHtmlAttr(data.rel)}"` : '';
 
-            if (preSelectedNode) {
+            if (existingLink) {
+              existingLink.setAttribute('href', data.url);
+              if (data.target) existingLink.setAttribute('target', data.target);
+              else existingLink.removeAttribute('target');
+
+              if (data.rel) existingLink.setAttribute('rel', data.rel);
+              else existingLink.removeAttribute('rel');
+
+              // If it's a text link, update text content. If it contains a widget, don't overwrite it with text
+              if (!preSelectedNode) {
+                existingLink.innerText = data.text;
+              }
+
+              editor.history.pushImmediate();
+              editor.emit('change', editor.getContent());
+            } else if (preSelectedNode) {
                // Wrap the selected node (e.g., an image figure) in the anchor tag instead of text
                const a = document.createElement('a');
                a.setAttribute('href', data.url);
