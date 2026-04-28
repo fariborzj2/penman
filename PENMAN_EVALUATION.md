@@ -53,8 +53,15 @@ A critical commercial advantage of Penman is its **intentional migration roadmap
 2.  **Transactions**: Shifting from full string copies to **Semantic Delta Transactions** (Atomic Operations).
 3.  **Selection**: Transitioning from DOM markers to **Virtual Offset-based selection**.
 
+### Technical Verdict: Redesign vs. Evolution
+A common concern is whether this "Minimal IR" is a bridge or a dead-end compared to industry standards like **ProseMirror** or **Lexical**.
+
+*   **The "Bridge" (Evolutionary):** The **Transaction Engine** and **Virtual Selection** systems in the roadmap are absolute requirements for any top-tier editor. By implementing them, Penman builds 70-80% of the enterprise-grade infrastructure.
+*   **The "Gap" (Redesign Requirement):** The current roadmap explicitly chooses a **Linear Model** (Block -> Text) over a **Recursive Tree Model** (Nested Blocks) to maintain simplicity.
+*   **Final Answer**: Reaching "ProseMirror-level" (e.g., tables inside tables, lists inside lists) would require a **Redesign of the Data Model layer** (Linear to Tree), but **NOT a from-scratch rewrite** of the entire project. The Event System, UI Registry, Command Manager, and Sanitizer would remain largely intact.
+
 ### Why this matters for business:
-This path ensures that you are not "locked in" to a dead-end architecture. The current system serves as a stable, high-performance foundation for HTML-heavy use cases, while the IR roadmap provides a clear exit strategy for high-enterprise scaling.
+This path ensures that you are not "locked in" to a dead-end architecture. The current system serves as a stable, high-performance foundation for HTML-heavy use cases, while the IR roadmap provides a clear evolutionary path that protects your investment in the plugin ecosystem and core logic.
 
 ---
 
