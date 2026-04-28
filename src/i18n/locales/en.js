@@ -213,6 +213,8 @@ export default {
     italic: 'Italic',
     underline: 'Underline',
     strikethrough: 'Strikethrough',
+    superscript: 'Superscript',
+    subscript: 'Subscript',
     justifyLeft: 'Align Left',
     justifyCenter: 'Align Center',
     justifyRight: 'Align Right',

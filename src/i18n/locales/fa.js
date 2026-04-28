@@ -213,6 +213,8 @@ export default {
     italic: 'کج',
     underline: 'زیرخط',
     strikethrough: 'خط‌خورده',
+    superscript: 'بالانویس',
+    subscript: 'پایین‌نویس',
     justifyLeft: 'چپ‌چین',
     justifyCenter: 'وسط‌چین',
     justifyRight: 'راست‌چین',
