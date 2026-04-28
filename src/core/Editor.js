@@ -770,8 +770,9 @@ export class Editor extends EventEmitter {
 
       // 2. SMART MERGE: If pasting into a block, unwrap leading/trailing block tags
       const sel = window.getSelection();
-      if (sel && sel.rangeCount > 0 && sel.isCollapsed) {
-        let container = sel.anchorNode;
+      if (sel && sel.rangeCount > 0) {
+        const range = sel.getRangeAt(0);
+        let container = range.commonAncestorContainer;
         if (container.nodeType === Node.TEXT_NODE) container = container.parentNode;
 
         // Find closest mergeable block
