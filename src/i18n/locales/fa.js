@@ -182,18 +182,22 @@ export default {
       borderPlaceholder: 'مثلا 1 یا 0',
       borderColorPlaceholder: 'مثلا #000 یا red',
       cellPaddingPlaceholder: 'مثلا 5',
-      cellSpacingPlaceholder: 'مثلا 0'
-    ,
+      cellSpacingPlaceholder: 'مثلا 0',
       widthLabel: 'عرض:',
       borderLabel: 'حاشیه:',
       borderColorLabel: 'رنگ حاشیه:',
       cellPaddingLabel: 'فاصله داخلی سلول:',
       cellSpacingLabel: 'فاصله خارجی سلول:',
-      directionLabel: 'جهت:'
-    ,
+      directionLabel: 'جهت:',
       defaultDir: 'پیش‌فرض',
       ltr: 'چپ‌چین (LTR)',
-      rtl: 'راست‌چین (RTL)'
+      rtl: 'راست‌چین (RTL)',
+      alignmentLabel: 'تراز:',
+      alignLeft: 'چپ',
+      alignCenter: 'وسط',
+      alignRight: 'راست',
+      cellBackgroundColor: 'رنگ پس‌زمینه سلول',
+      mergeError: 'ادغام امکان‌پذیر نیست: سلول‌های انتخاب‌شده یک مستطیل کامل را تشکیل نمی‌دهند.'
     }
   },
 

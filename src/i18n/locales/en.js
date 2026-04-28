@@ -182,18 +182,22 @@ export default {
       borderPlaceholder: 'e.g. 1 or 0',
       borderColorPlaceholder: 'e.g. #000 or red',
       cellPaddingPlaceholder: 'e.g. 5',
-      cellSpacingPlaceholder: 'e.g. 0'
-    ,
+      cellSpacingPlaceholder: 'e.g. 0',
       widthLabel: 'Width:',
       borderLabel: 'Border:',
       borderColorLabel: 'Border Color:',
       cellPaddingLabel: 'Cell Padding:',
       cellSpacingLabel: 'Cell Spacing:',
-      directionLabel: 'Direction:'
-    ,
+      directionLabel: 'Direction:',
       defaultDir: 'Default',
       ltr: 'LTR',
-      rtl: 'RTL'
+      rtl: 'RTL',
+      alignmentLabel: 'Alignment:',
+      alignLeft: 'Left',
+      alignCenter: 'Center',
+      alignRight: 'Right',
+      cellBackgroundColor: 'Background Color',
+      mergeError: 'Cannot merge: Selected cells do not form a perfect rectangle.'
     }
   },
 
