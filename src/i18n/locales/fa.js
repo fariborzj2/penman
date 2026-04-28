@@ -32,7 +32,11 @@ export default {
       heading5: 'تیتر ۵',
       heading6: 'تیتر ۶',
       blockquote: 'نقل‌قول',
-      pre: 'پیش‌فرمت'
+      pre: 'پیش‌فرمت',
+      success: 'موفقیت',
+      info: 'اطلاع',
+      warning: 'هشدار',
+      danger: 'خطر'
     },
     media: {
       title: 'درج رسانه',
