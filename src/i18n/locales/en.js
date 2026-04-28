@@ -119,7 +119,9 @@ export default {
     },
     list: {
       bullet: 'Bullet List',
-      numbered: 'Numbered List'
+      numbered: 'Numbered List',
+      indent: 'Indent List',
+      outdent: 'Outdent List'
     },
     hr: {
       title: 'Insert Horizontal Rule'

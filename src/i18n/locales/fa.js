@@ -119,7 +119,9 @@ export default {
     },
     list: {
       bullet: 'لیست نشانه‌دار',
-      numbered: 'لیست شماره‌دار'
+      numbered: 'لیست شماره‌دار',
+      indent: 'افزایش تو رفتگی',
+      outdent: 'کاهش تو رفتگی'
     },
     hr: {
       title: 'درج خط افقی'
