@@ -242,3 +242,10 @@ figure.penman-media-block.penman-selected-node {
   outline: 3px solid #007bff;
   outline-offset: 4px;
 }
+[dir="rtl"] .penman-modal-body input {
+  font-family: 'vazirmatn', sans-serif !important;
+}
+[dir="rtl"] .penman-modal-body input::placeholder {
+  direction: rtl !important;
+  text-align: right;
+}
