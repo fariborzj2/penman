@@ -145,12 +145,17 @@ export default {
       textPlaceholder: 'متن نمایشی',
       openInNewTab: 'باز شدن در پنجره جدید',
       save: 'ذخیره',
-      cancel: 'انصراف'
-    ,
-      relPlaceholder: 'مثلا nofollow'
-    ,
+      cancel: 'انصراف',
+      relPlaceholder: 'مثلا nofollow',
       urlLabel: 'لینک',
-      relLabel: 'ارتباط (Rel)'
+      relLabel: 'ارتباط (Rel)',
+      textLabel: 'متن نمایشی',
+      targetLabel: 'مقصد',
+      targetNone: 'هیچ‌کدام',
+      targetBlank: 'پنجره جدید (_blank)',
+      targetSelf: 'همان پنجره (_self)',
+      targetParent: 'فریم والد (_parent)',
+      targetTop: 'بالاترین فریم (_top)'
     },
     color: {
       textColor: 'رنگ متن',
