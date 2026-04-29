@@ -66,7 +66,7 @@ describe('CodeBlockPlugin', () => {
   it('should create a code block on execute', () => {
     editor.setContent('<p>Hello World</p>');
     const p = editor.editableArea.querySelector('p');
-
+    
     // Select the text inside paragraph
     const range = document.createRange();
     range.selectNodeContents(p);
@@ -86,7 +86,7 @@ describe('CodeBlockPlugin', () => {
   it('should revert a code block to paragraph on second execute', () => {
     editor.setContent('<pre dir="ltr"><code dir="ltr">Hello World</code></pre>');
     const code = editor.editableArea.querySelector('code');
-
+    
     const range = document.createRange();
     range.selectNodeContents(code);
     const sel = window.getSelection();
@@ -104,7 +104,7 @@ describe('CodeBlockPlugin', () => {
   it('should intercept paste inside code block and insert plain text', () => {
     editor.setContent('<pre dir="ltr"><code dir="ltr">Line 1</code></pre>');
     const code = editor.editableArea.querySelector('code');
-
+    
     const range = document.createRange();
     range.selectNodeContents(code);
     range.collapse(false); // end

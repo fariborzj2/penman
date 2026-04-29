@@ -67,7 +67,7 @@ export function setupCodeBlockPlugin(editor) {
                  }
              }
              preNode.parentNode.replaceChild(p, preNode);
-
+             
              // restore selection
              const newSel = window.getSelection();
              newSel.removeAllRanges();
@@ -84,13 +84,13 @@ export function setupCodeBlockPlugin(editor) {
         while (blockNode && blockNode !== editor.editableArea && !editor.sanitizer.blockTags.has(blockNode.tagName.toLowerCase())) {
             blockNode = blockNode.parentNode;
         }
-
+        
         if (blockNode && blockNode !== editor.editableArea) {
              const pre = document.createElement('pre');
              const code = document.createElement('code');
              pre.appendChild(code);
-
-
+             
+             
              pre.setAttribute('dir', 'ltr');
              pre.style.textAlign = 'left';
              pre.style.whiteSpace = 'pre-wrap';
@@ -107,9 +107,9 @@ export function setupCodeBlockPlugin(editor) {
              while (blockNode.firstChild) {
                  code.appendChild(blockNode.firstChild);
              }
-
+             
              blockNode.parentNode.replaceChild(pre, blockNode);
-
+             
              // Restore selection inside code
              const newSel = window.getSelection();
              newSel.removeAllRanges();
@@ -125,7 +125,7 @@ export function setupCodeBlockPlugin(editor) {
                 let newNode = newSel.getRangeAt(0).startContainer;
                 while(newNode && newNode !== editor.editableArea) {
                     if (newNode.tagName && newNode.tagName.toLowerCase() === 'pre') {
-
+                        
                         newNode.setAttribute('dir', 'ltr');
                         newNode.style.textAlign = 'left';
                         newNode.style.whiteSpace = 'pre-wrap';
@@ -158,6 +158,7 @@ export function setupCodeBlockPlugin(editor) {
   });
 
 
+  
   // Intercept keydown inside codeblock
   editor.editableArea.addEventListener('keydown', (e) => {
     const sel = window.getSelection();
@@ -177,32 +178,32 @@ export function setupCodeBlockPlugin(editor) {
       if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
-
+        
         // Insert a newline character
         const range = sel.getRangeAt(0);
         range.deleteContents();
         const textNode = document.createTextNode('\n');
         range.insertNode(textNode);
-
+        
         // Collapse selection after the newline
         range.setStartAfter(textNode);
         range.setEndAfter(textNode);
         sel.removeAllRanges();
         sel.addRange(range);
-
+        
         if (editor.history) {
             // only push history periodically or it gets too noisy on typing
         }
       } else if (e.key === 'Tab') {
         e.preventDefault();
         e.stopPropagation();
-
+        
         // Insert 2 spaces for indent
         const range = sel.getRangeAt(0);
         range.deleteContents();
         const textNode = document.createTextNode('  ');
         range.insertNode(textNode);
-
+        
         range.setStartAfter(textNode);
         range.setEndAfter(textNode);
         sel.removeAllRanges();
@@ -234,7 +235,7 @@ export function setupCodeBlockPlugin(editor) {
 
       const clipboardData = (e.originalEvent || e).clipboardData;
       let text = clipboardData.getData('text/plain');
-
+      
       if (text) {
           // Insert plain text at cursor
           const range = sel.getRangeAt(0);
@@ -245,7 +246,7 @@ export function setupCodeBlockPlugin(editor) {
           range.setEndAfter(textNode);
           sel.removeAllRanges();
           sel.addRange(range);
-
+          
           if (editor.history) {
             editor.history.pushImmediate();
           }
