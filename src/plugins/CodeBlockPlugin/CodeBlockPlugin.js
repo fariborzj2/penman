@@ -90,16 +90,19 @@ export function setupCodeBlockPlugin(editor) {
              const code = document.createElement('code');
              pre.appendChild(code);
 
+
              pre.setAttribute('dir', 'ltr');
              pre.style.textAlign = 'left';
              pre.style.whiteSpace = 'pre-wrap';
-             pre.style.fontFamily = 'monospace';
-             pre.style.backgroundColor = '#f4f4f4';
-             pre.style.padding = '10px';
+             pre.style.fontFamily = 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace';
+             pre.style.backgroundColor = '#1e1e1e';
+             pre.style.color = '#d4d4d4';
+             pre.style.padding = '1em';
              pre.style.borderRadius = '5px';
              pre.style.overflowX = 'auto';
              code.setAttribute('dir', 'ltr');
-             code.style.fontFamily = 'monospace';
+             code.style.fontFamily = 'inherit';
+
 
              while (blockNode.firstChild) {
                  code.appendChild(blockNode.firstChild);
@@ -122,12 +125,14 @@ export function setupCodeBlockPlugin(editor) {
                 let newNode = newSel.getRangeAt(0).startContainer;
                 while(newNode && newNode !== editor.editableArea) {
                     if (newNode.tagName && newNode.tagName.toLowerCase() === 'pre') {
+
                         newNode.setAttribute('dir', 'ltr');
                         newNode.style.textAlign = 'left';
                         newNode.style.whiteSpace = 'pre-wrap';
-                        newNode.style.fontFamily = 'monospace';
-                        newNode.style.backgroundColor = '#f4f4f4';
-                        newNode.style.padding = '10px';
+                        newNode.style.fontFamily = 'Consolas, Monaco, "Andale Mono", "Ubuntu Mono", monospace';
+                        newNode.style.backgroundColor = '#1e1e1e';
+                        newNode.style.color = '#d4d4d4';
+                        newNode.style.padding = '1em';
                         newNode.style.borderRadius = '5px';
                         newNode.style.overflowX = 'auto';
 
@@ -135,7 +140,8 @@ export function setupCodeBlockPlugin(editor) {
                         if (!newNode.querySelector('code')) {
                             const codeTag = document.createElement('code');
                             codeTag.setAttribute('dir', 'ltr');
-                            codeTag.style.fontFamily = 'monospace';
+                            codeTag.style.fontFamily = 'inherit';
+
                             while(newNode.firstChild) {
                                 codeTag.appendChild(newNode.firstChild);
                             }
@@ -150,6 +156,60 @@ export function setupCodeBlockPlugin(editor) {
     }
     }
   });
+
+
+  // Intercept keydown inside codeblock
+  editor.editableArea.addEventListener('keydown', (e) => {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    let node = sel.getRangeAt(0).startContainer;
+    let inCodeBlock = false;
+    while (node && node !== editor.editableArea) {
+      if (node.tagName && (node.tagName.toLowerCase() === 'pre' || node.tagName.toLowerCase() === 'code')) {
+        inCodeBlock = true;
+        break;
+      }
+      node = node.parentNode;
+    }
+
+    if (inCodeBlock) {
+      if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Insert a newline character
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const textNode = document.createTextNode('\n');
+        range.insertNode(textNode);
+
+        // Collapse selection after the newline
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        if (editor.history) {
+            // only push history periodically or it gets too noisy on typing
+        }
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // Insert 2 spaces for indent
+        const range = sel.getRangeAt(0);
+        range.deleteContents();
+        const textNode = document.createTextNode('  ');
+        range.insertNode(textNode);
+
+        range.setStartAfter(textNode);
+        range.setEndAfter(textNode);
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    }
+  }, true);
 
   // Intercept Paste inside codeblock
   editor.editableArea.addEventListener('paste', (e) => {
