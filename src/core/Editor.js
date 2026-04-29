@@ -234,8 +234,57 @@ export class Editor extends EventEmitter {
       const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
       const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
       const isRedo = (isMac ? e.metaKey && e.shiftKey && e.key.toLowerCase() === 'z' : (e.ctrlKey && e.key.toLowerCase() === 'y'));
+      const isBreakout = (isMac ? e.metaKey : e.ctrlKey) && e.key === 'Enter';
 
       const selectedNode = this.selection.getSelectedNode();
+
+      if (isBreakout) {
+        e.preventDefault();
+        const sel = window.getSelection();
+        if (!sel || sel.rangeCount === 0) return;
+
+        let node = sel.anchorNode;
+        if (node.nodeType === Node.TEXT_NODE) node = node.parentNode;
+
+        // AGGRESSIVE BREAKOUT: Find the top-most block level container that is a direct child of editableArea
+        let topBlock = null;
+        let curr = node;
+        const blockTags = ['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'figure', 'table', 'pre', 'div', 'ul', 'ol'];
+
+        while (curr && curr !== this.editableArea && this.editableArea.contains(curr)) {
+          const tag = curr.tagName ? curr.tagName.toLowerCase() : '';
+          if (blockTags.includes(tag)) {
+            topBlock = curr;
+          }
+          curr = curr.parentNode;
+        }
+
+        if (topBlock) {
+          const newP = document.createElement('p');
+          newP.innerHTML = '<br>';
+
+          // Insert after the identified top-level block
+          if (topBlock.nextSibling) {
+            topBlock.parentNode.insertBefore(newP, topBlock.nextSibling);
+          } else {
+            topBlock.parentNode.appendChild(newP);
+          }
+
+          // Move cursor to new p
+          sel.removeAllRanges();
+          const newRange = document.createRange();
+          newRange.setStart(newP, 0);
+          newRange.collapse(true);
+          sel.addRange(newRange);
+
+          if (this.history) {
+            this.history.pushImmediate();
+          }
+          this.emit('change', this.getContent());
+          this._syncToTextarea();
+          return;
+        }
+      }
 
       if (selectedNode) {
         if (e.key === 'Backspace' || e.key === 'Delete') {

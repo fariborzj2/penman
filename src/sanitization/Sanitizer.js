@@ -20,6 +20,8 @@ export class Sanitizer {
       s: [],
       strike: [],
       blockquote: [],
+      pre: [],
+      code: [],
       h1: ["dir"],
       h2: ["dir"],
       h3: ["dir"],
@@ -59,7 +61,7 @@ export class Sanitizer {
     };
 
     this.blockTags = new Set([
-      "p", "div", "ul", "ol", "li", "blockquote",
+      "p", "div", "ul", "ol", "li", "blockquote", "pre", "code",
       "h1", "h2", "h3", "h4", "h5", "h6",
       "figure", "table", "thead", "tbody", "tfoot", "tr", "th", "td",
       "caption", "figcaption"
