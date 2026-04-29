@@ -105,6 +105,9 @@ export default {
     fontSize: {
       title: 'Size'
     },
+    codeBlock: {
+      title: 'Code Block'
+    },
     sourceCode: {
       title: 'Source Code',
       apply: 'Apply Changes',
