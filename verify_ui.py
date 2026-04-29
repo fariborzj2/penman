@@ -580,6 +580,39 @@ def test_editor_undo_redo_e2e(page: Page):
     print("  ✓ Undo/Redo basic flow executed without crash")
 
 
+def test_editor_block_breakout_e2e(page: Page):
+    """Block Breakout: تایید خروج از بلوک با Cmd/Ctrl+Enter."""
+    wait_for_editor(page)
+    time.sleep(1)
+    editable = page.locator(".penman-editor-area").nth(1)
+    editable.click()
+
+    # ساخت یک ساختار تو در تو: blockquote > p
+    editable.evaluate("node => node.innerHTML = '<blockquote><p id=\"breakout-p\">Nested</p></blockquote>'")
+
+    # قرار دادن cursor داخل p
+    editable.evaluate("""node => {
+        const p = node.querySelector('#breakout-p');
+        const range = document.createRange();
+        range.setStart(p.firstChild, 3);
+        range.collapse(true);
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(range);
+    }""")
+
+    # فشار دادن Control+Enter (شبیه‌سازی breakout)
+    page.keyboard.press("Control+Enter")
+
+    # باید یک پاراگراف جدید خارج از blockquote ایجاد شده باشد
+    # ساختار نهایی: <blockquote>...</blockquote><p><br></p>
+    html = editable.evaluate("node => node.innerHTML")
+    assert "</blockquote><p><br></p>" in html.lower() or "</blockquote><p></p>" in html.lower(), \
+        f"Aggressive breakout failed. HTML: {html}"
+
+    print("  ✓ Aggressive Block Breakout works (one-shot exit)")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # runner اصلی
 # ─────────────────────────────────────────────────────────────────────────────
@@ -602,6 +635,7 @@ TESTS = [
     ("BlockType: p → h1",                 test_editor_blocktype_plugin_e2e),
     ("BlockType: custom class",           test_editor_blocktype_custom_class_e2e),
     ("Undo/Redo: basic flow",             test_editor_undo_redo_e2e),
+    ("Block Breakout: aggressive",        test_editor_block_breakout_e2e),
 ]
 
 
