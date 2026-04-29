@@ -310,7 +310,8 @@ export class Editor extends EventEmitter {
         this.history.redo();
       }
 
-      // 1.a Block Breakout Logic (Tables, Figures)
+      // 1.a Contextual Edge Navigation (Tables, Figures)
+      // Allows navigating out of complex widgets using Enter or Arrows at the very start/end
       if ((e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'ArrowRight' || e.key === 'ArrowLeft') && !e.shiftKey) {
         const sel = window.getSelection();
         if (!sel || sel.rangeCount === 0 || !sel.isCollapsed) return;
@@ -418,17 +419,13 @@ export class Editor extends EventEmitter {
         }
 
         if (blockContainer) {
-            // Try breakout before
+            // Try navigation before
             if ((e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowLeft') && isAtStart(blockContainer, range)) {
-                // If it's already preceeded by a paragraph, no need to break out unless we want to move cursor?
-                // Actually if pressing Enter at the very beginning of a table, we always want to add a paragraph before it.
-                // Or maybe only if there isn't one already? If there is a P, arrow up just goes there.
-                // But Enter should probably push it down and create space.
                 if (e.key === 'Enter' || (!blockContainer.previousElementSibling || !['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(blockContainer.previousElementSibling.tagName.toLowerCase()))) {
                     e.preventDefault();
                     const newP = document.createElement('p');
                     newP.innerHTML = '<br>';
-                    this.editableArea.insertBefore(newP, blockContainer);
+                    blockContainer.parentNode.insertBefore(newP, blockContainer);
                     sel.removeAllRanges();
                     const newRange = document.createRange();
                     newRange.setStart(newP, 0);
@@ -444,16 +441,16 @@ export class Editor extends EventEmitter {
                 }
             }
 
-            // Try breakout after
+            // Try navigation after
             if ((e.key === 'Enter' || e.key === 'ArrowDown' || e.key === 'ArrowRight') && isAtEnd(blockContainer, range)) {
                 if (e.key === 'Enter' || (!blockContainer.nextElementSibling || !['p', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6'].includes(blockContainer.nextElementSibling.tagName.toLowerCase()))) {
                     e.preventDefault();
                     const newP = document.createElement('p');
                     newP.innerHTML = '<br>';
                     if (blockContainer.nextSibling) {
-                        this.editableArea.insertBefore(newP, blockContainer.nextSibling);
+                        blockContainer.parentNode.insertBefore(newP, blockContainer.nextSibling);
                     } else {
-                        this.editableArea.appendChild(newP);
+                        blockContainer.parentNode.appendChild(newP);
                     }
                     sel.removeAllRanges();
                     const newRange = document.createRange();
