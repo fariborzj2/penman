@@ -32,11 +32,11 @@ function tokenizeJavaScript(text) {
             tokens.push({ type: 'comment', value: match[1] });
         } else if (match[2]) {
             tokens.push({ type: 'comment', value: match[2] });
-        } else if (match[3] || match[4] || match[5]) {
+        } else if (match[3] !== undefined || match[4] !== undefined || match[6] !== undefined) {
             tokens.push({ type: 'string', value: match[0] });
-        } else if (match[8]) {
+        } else if (match[8] !== undefined) {
             tokens.push({ type: 'number', value: match[0] });
-        } else if (match[10]) {
+        } else if (match[10] !== undefined) {
             tokens.push({ type: 'keyword', value: match[0] });
         }
 
@@ -204,10 +204,12 @@ export function setupCodeBlockPlugin(editor) {
             let node = sel.getRangeAt(0).startContainer;
             let inCodeBlock = false;
             let codeNode = null;
+            let preNode = null;
             while (node && node !== editor.editableArea) {
-                if (node.tagName && node.tagName.toLowerCase() === 'code') {
+                if (node.tagName && node.tagName.toLowerCase() === 'pre') {
                     inCodeBlock = true;
-                    codeNode = node;
+                    preNode = node;
+                    codeNode = preNode.querySelector('code');
                     break;
                 }
                 node = node.parentNode;
@@ -215,7 +217,6 @@ export function setupCodeBlockPlugin(editor) {
 
             if (inCodeBlock) {
                 // Exit code block: Convert <pre><code> back to <p>
-                let preNode = codeNode.parentNode;
                 if (preNode && preNode.tagName.toLowerCase() === 'pre') {
                     const p = document.createElement('p');
                     const text = codeNode.textContent || '';
@@ -294,23 +295,41 @@ export function setupCodeBlockPlugin(editor) {
         if (!sel || sel.rangeCount === 0) return;
 
         let node = sel.getRangeAt(0).startContainer;
-        let codeNode = null;
+        let preNode = null;
+
         while (node && node !== editor.editableArea) {
-            if (node.tagName && node.tagName.toLowerCase() === 'code') {
-                codeNode = node;
+            if (node.tagName && node.tagName.toLowerCase() === 'pre') {
+                preNode = node;
                 break;
             }
             node = node.parentNode;
         }
 
-        if (codeNode) {
-            // Save absolute cursor
-            const offset = getCursorOffset(codeNode);
-            // Extract raw text, tokenize, and patch DOM
-            const rawText = codeNode.textContent || '';
+        if (preNode) {
+            // Heal any stray text inserted directly into <pre> (bypassing <code>)
+            const offset = getCursorOffset(preNode);
+            const rawText = preNode.textContent || '';
+
+            let codeNode = preNode.querySelector('code');
+            if (!codeNode) {
+                codeNode = document.createElement('code');
+                codeNode.setAttribute('dir', 'ltr');
+                codeNode.style.fontFamily = 'inherit';
+                preNode.appendChild(codeNode);
+            }
+
+            // Remove everything else in the <pre> to maintain strict structure
+            Array.from(preNode.childNodes).forEach(child => {
+                if (child !== codeNode) {
+                    preNode.removeChild(child);
+                }
+            });
+
+            // Re-highlight the <code> block with the full text
             const tokens = tokenizeJavaScript(rawText);
             patchDOM(codeNode, tokens);
-            // Restore absolute cursor
+
+            // Restore absolute cursor relative to the code block now that everything is inside it
             setCursorOffset(codeNode, offset);
         }
     });
@@ -321,23 +340,18 @@ export function setupCodeBlockPlugin(editor) {
         if (!sel || sel.rangeCount === 0) return;
 
         let node = sel.getRangeAt(0).startContainer;
-        let inCodeBlock = false;
+        let preNode = null;
         let codeNode = null;
         while (node && node !== editor.editableArea) {
-            if (node.tagName && node.tagName.toLowerCase() === 'code') {
-                inCodeBlock = true;
-                codeNode = node;
-                break;
-            }
             if (node.tagName && node.tagName.toLowerCase() === 'pre') {
-                inCodeBlock = true;
-                codeNode = node.querySelector('code');
+                preNode = node;
+                codeNode = preNode.querySelector('code');
                 break;
             }
             node = node.parentNode;
         }
 
-        if (inCodeBlock && codeNode) {
+        if (preNode && codeNode) {
             if (e.key === 'Backspace' || e.key === 'Delete') {
                 const offset = getCursorOffset(codeNode);
                 const textLen = (codeNode.textContent || '').length;
@@ -408,18 +422,18 @@ export function setupCodeBlockPlugin(editor) {
         if (!sel || sel.rangeCount === 0) return;
 
         let node = sel.getRangeAt(0).startContainer;
-        let inCodeBlock = false;
+        let preNode = null;
         let codeNode = null;
         while (node && node !== editor.editableArea) {
-            if (node.tagName && (node.tagName.toLowerCase() === 'pre' || node.tagName.toLowerCase() === 'code')) {
-                inCodeBlock = true;
-                codeNode = node.tagName.toLowerCase() === 'code' ? node : node.querySelector('code');
+            if (node.tagName && node.tagName.toLowerCase() === 'pre') {
+                preNode = node;
+                codeNode = preNode.querySelector('code');
                 break;
             }
             node = node.parentNode;
         }
 
-        if (inCodeBlock && codeNode) {
+        if (preNode && codeNode) {
             e.preventDefault();
             e.stopPropagation();
 
