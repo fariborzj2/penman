@@ -249,3 +249,91 @@ figure.penman-media-block.penman-selected-node {
   direction: rtl !important;
   text-align: right;
 }
+/* Syntax Highlighting (VS Code Dark inspired) */
+.penman-editor-area pre {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.penman-editor-area pre code {
+  direction: ltr !important;
+  text-align: left !important;
+}
+
+.penman-editor-area pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em;
+}
+
+.hljs-keyword,
+.hljs-selector-tag,
+.hljs-literal,
+.hljs-section,
+.hljs-link {
+  color: #569cd6;
+}
+
+.hljs-function .hljs-keyword {
+  color: #569cd6;
+}
+
+.hljs-literal {
+  color: #569cd6;
+}
+
+.hljs-number {
+  color: #b5cea8;
+}
+
+.hljs-string,
+.hljs-regexp {
+  color: #ce9178;
+}
+
+.hljs-title,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class {
+  color: #dcdcaa;
+}
+
+.hljs-params,
+.hljs-variable,
+.hljs-template-variable {
+  color: #9cdcfe;
+}
+
+.hljs-attribute {
+  color: #9cdcfe;
+}
+
+.hljs-comment,
+.hljs-quote {
+  color: #6a9955;
+  font-style: italic;
+}
+
+.hljs-tag {
+  color: #808080;
+}
+
+.hljs-attr {
+  color: #9cdcfe;
+}
+
+.hljs-symbol,
+.hljs-bullet,
+.hljs-subst,
+.hljs-meta,
+.hljs-addition {
+  color: #d4d4d4;
+}
+
+.hljs-emphasis {
+  font-style: italic;
+}
+
+.hljs-strong {
+  font-weight: bold;
+}

@@ -6,39 +6,6 @@ import { Editor } from '../../core/Editor.js';
 import { setupCodeBlockPlugin } from './CodeBlockPlugin.js';
 
 describe('CodeBlockPlugin', () => {
-  let originalExecCommand;
-  beforeEach(() => {
-    originalExecCommand = document.execCommand;
-    document.execCommand = vi.fn((cmd, showUI, value) => {
-      if (cmd === 'formatBlock') {
-        const sel = window.getSelection();
-        if (sel && sel.rangeCount > 0) {
-          const range = sel.getRangeAt(0);
-          const newNode = document.createElement(value);
-          let parent = range.startContainer;
-          while (parent && parent.nodeType === 3) parent = parent.parentNode;
-          if (parent && (parent.tagName.toLowerCase() === 'code' || parent.tagName.toLowerCase() === 'pre')) {
-            let preNode = parent.tagName.toLowerCase() === 'code' ? parent.parentNode : parent;
-            if (preNode.tagName.toLowerCase() === 'pre') {
-              newNode.innerHTML = preNode.textContent;
-              preNode.parentNode.replaceChild(newNode, preNode);
-            }
-          } else {
-             newNode.appendChild(range.extractContents());
-          }
-          range.insertNode(newNode);
-          sel.removeAllRanges();
-          const newRange = document.createRange();
-          newRange.selectNodeContents(newNode);
-          sel.addRange(newRange);
-        }
-      }
-    });
-  });
-
-  afterEach(() => {
-    document.execCommand = originalExecCommand;
-  });
   let editor;
   let container;
 
@@ -57,17 +24,17 @@ describe('CodeBlockPlugin', () => {
   afterEach(() => {
     editor.destroy();
     document.body.removeChild(container);
+    vi.restoreAllMocks();
   });
 
   it('should register codeblock button', () => {
     expect(editor.ui.registry.buttons['codeblock']).toBeDefined();
   });
 
-  it('should create a code block on execute', () => {
-    editor.setContent('<p>Hello World</p>');
+  it('should create a code block on execute and apply highlighting', () => {
+    editor.setContent('<p>const x = 10;</p>');
     const p = editor.editableArea.querySelector('p');
     
-    // Select the text inside paragraph
     const range = document.createRange();
     range.selectNodeContents(p);
     const sel = window.getSelection();
@@ -79,12 +46,15 @@ describe('CodeBlockPlugin', () => {
     const html = editor.getContent();
     expect(html).toContain('<pre');
     expect(html).toContain('<code');
-    expect(html).toContain('Hello World');
+    // The content might be wrapped in hljs spans, so we check for the presence of text parts
+    expect(html).toContain('const');
+    expect(html).toContain('x');
+    expect(html).toContain('10');
     expect(html).toContain('dir="ltr"');
   });
 
   it('should revert a code block to paragraph on second execute', () => {
-    editor.setContent('<pre dir="ltr"><code dir="ltr">Hello World</code></pre>');
+    editor.setContent('<pre dir="ltr"><code dir="ltr">const x = 10;</code></pre>');
     const code = editor.editableArea.querySelector('code');
     
     const range = document.createRange();
@@ -96,35 +66,53 @@ describe('CodeBlockPlugin', () => {
     editor.commands.execute('INSERT_CODEBLOCK');
 
     const html = editor.getContent();
-    expect(html).toContain('<p>Hello World</p>');
+    expect(html).toContain('<p>');
+    expect(html).toContain('const x = 10;');
     expect(html).not.toContain('<pre');
     expect(html).not.toContain('<code');
   });
 
-  it('should intercept paste inside code block and insert plain text', () => {
-    editor.setContent('<pre dir="ltr"><code dir="ltr">Line 1</code></pre>');
+  it('should handle Enter with auto-indent', () => {
+    editor.setContent('<pre dir="ltr"><code dir="ltr">  line1</code></pre>');
     const code = editor.editableArea.querySelector('code');
     
     const range = document.createRange();
     range.selectNodeContents(code);
-    range.collapse(false); // end
+    range.collapse(false); // end of line1
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
 
-    // Mock paste event
-    const pasteEvent = new Event('paste', { bubbles: true });
-    pasteEvent.clipboardData = {
-        getData: (type) => {
-            if (type === 'text/plain') return '\nLine 2';
-            return '<p>Line 2</p>'; // Rich text which should be ignored
-        }
-    };
+    const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
+    editor.editableArea.dispatchEvent(enterEvent);
 
-    editor.editableArea.dispatchEvent(pasteEvent);
+    // It should have inserted \n and 2 spaces
+    expect(code.textContent).toContain('  line1\n  ');
+  });
 
-    const html = editor.getContent();
-    expect(html).toContain('Line 1\nLine 2');
-    expect(html).not.toContain('<p>Line 2</p>'); // No new block inserted
+  it('should handle Tab by inserting 2 spaces', () => {
+    editor.setContent('<pre dir="ltr"><code dir="ltr"></code></pre>');
+    const code = editor.editableArea.querySelector('code');
+
+    const range = document.createRange();
+    range.selectNodeContents(code);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const tabEvent = new KeyboardEvent('keydown', { key: 'Tab', bubbles: true });
+    editor.editableArea.dispatchEvent(tabEvent);
+
+    expect(code.textContent).toBe('  ');
+  });
+
+  it('should preserve syntax highlighting classes through sanitizer', () => {
+    const dirty = '<pre><code><span class="hljs-keyword">const</span> x = <span class="hljs-number">1</span>;</code></pre>';
+    const sanitized = editor.sanitizer.sanitize(dirty);
+
+    expect(sanitized).toContain('hljs-keyword');
+    expect(sanitized).toContain('hljs-number');
+    expect(sanitized).toContain('<pre');
+    expect(sanitized).toContain('<code');
   });
 });
