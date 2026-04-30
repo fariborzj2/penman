@@ -269,11 +269,26 @@ export function setupCodeBlockPlugin(editor) {
         result = hljs.highlightAuto(text);
     }
 
-    // If the code block ends with a newline, we MUST append a propping \n or <br>
-    // to ensure the browser actually renders the empty line and allows the cursor to stay there.
+    // Using innerHTML with result.value is fine, but we must be careful with trailing newlines.
+    // highlight.js already escapes HTML.
+    // Browsers often ignore a single trailing \n in a block element.
+    // If the text ends with \n, we need to ensure it's rendered.
+    // Adding ONE \n is enough if the content doesn't already have one that the browser sees.
+    // However, if we add it on every re-highlight, it grows.
+
+    // Solution: highlight.js output doesn't include the trailing \n if we didn't give it one that it considers part of a "token".
+    // We only add a trailing \n if the ACTUAL text ends with a newline, to "prop" the last empty line.
     let htmlValue = result.value;
+
+    // If the text ends with a newline, browsers (Chrome/Firefox) typically need TWO newlines
+    // at the end of innerHTML to show ONE empty line at the bottom.
+    // But since result.value might already have the first one escaped or handled,
+    // we only add what's missing.
     if (text.endsWith('\n')) {
-        htmlValue += '\n';
+        // Only append if result.value doesn't already end with a newline character
+        if (!htmlValue.endsWith('\n')) {
+            htmlValue += '\n';
+        }
     }
 
     codeNode.innerHTML = htmlValue;
