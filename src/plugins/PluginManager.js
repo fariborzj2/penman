@@ -14,6 +14,7 @@ import { setupDraftPlugin } from './DraftPlugin/index.js';
 import { setupDirectionPlugin } from './DirectionPlugin/index.js';
 import { setupSuggestedPostsPlugin } from './Suggestedpostsplugin.js';
 import { setupMediaPlugin } from './MediaPlugin/index.js';
+import { setupCodeBlockPlugin } from './CodeBlockPlugin/CodeBlockPlugin.js';
 
 export const PluginManager = {
   plugins: {
@@ -33,6 +34,7 @@ export const PluginManager = {
     direction: setupDirectionPlugin,
     suggestedposts: setupSuggestedPostsPlugin,
     media: setupMediaPlugin,
+    codeblock: setupCodeBlockPlugin
   },
 
   add(name, setup) {
