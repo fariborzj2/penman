@@ -295,7 +295,9 @@ export function setupCodeBlockPlugin(editor) {
                     pre.style.overflowX = 'auto';
 
                     code.setAttribute('dir', 'ltr');
+                    code.style.display = 'block';
                     code.style.fontFamily = 'inherit';
+                    code.style.minHeight = '28px';
 
                     code.textContent = blockNode.textContent || '';
                     blockNode.parentNode.replaceChild(pre, blockNode);

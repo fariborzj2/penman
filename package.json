@@ -42,7 +42,6 @@
     "codemirror": "^6.0.2",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "highlight.js": "^11.11.1",
     "multer": "^2.1.1"
   }
 }
