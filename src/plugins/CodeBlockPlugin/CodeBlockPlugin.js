@@ -252,7 +252,8 @@ export function setupCodeBlockPlugin(editor) {
   });
 
   function highlightBlock(codeNode) {
-    const text = codeNode.innerText || codeNode.textContent || '';
+    // textContent is safer and more consistent than innerText for code blocks
+    let text = codeNode.textContent || '';
     let lang = codeNode.getAttribute('data-language');
 
     if (lang === 'null' || lang === 'undefined') lang = 'auto';
@@ -268,7 +269,14 @@ export function setupCodeBlockPlugin(editor) {
         result = hljs.highlightAuto(text);
     }
 
-    codeNode.innerHTML = result.value;
+    // If the code block ends with a newline, we MUST append a propping \n or <br>
+    // to ensure the browser actually renders the empty line and allows the cursor to stay there.
+    let htmlValue = result.value;
+    if (text.endsWith('\n')) {
+        htmlValue += '\n';
+    }
+
+    codeNode.innerHTML = htmlValue;
   }
 
   // Debounced auto-highlight
@@ -307,7 +315,11 @@ export function setupCodeBlockPlugin(editor) {
       const preCaretRange = range.cloneRange();
       preCaretRange.selectNodeContents(element);
       preCaretRange.setEnd(range.endContainer, range.endOffset);
-      caretOffset = preCaretRange.toString().length;
+
+      // Use textContent instead of toString for consistent offset calculation
+      const tempDiv = document.createElement('div');
+      tempDiv.appendChild(preCaretRange.cloneContents());
+      caretOffset = tempDiv.textContent.length;
     }
     return caretOffset;
   }
@@ -320,6 +332,7 @@ export function setupCodeBlockPlugin(editor) {
     let nodeStack = [element];
     let node;
     let found = false;
+    let lastNode = null;
 
     while (nodeStack.length > 0 && !found) {
       node = nodeStack.pop();
@@ -331,12 +344,20 @@ export function setupCodeBlockPlugin(editor) {
           found = true;
         }
         charCount = nextCharCount;
+        lastNode = node;
       } else {
         let i = node.childNodes.length;
         while (i--) {
           nodeStack.push(node.childNodes[i]);
         }
       }
+    }
+
+    // Edge case: offset is at the very end of the last text node
+    if (!found && lastNode && charCount === offset) {
+        range.setStart(lastNode, lastNode.length);
+        range.collapse(true);
+        found = true;
     }
 
     if (found) {
