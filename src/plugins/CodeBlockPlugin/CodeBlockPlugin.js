@@ -114,9 +114,19 @@ function patchDOM(codeNode, tokens) {
     }
 
     // Ensure a trailing propping <br> for browser rendering of empty lines
-    if (childNode && childNode.nodeType === 1 && childNode.tagName === 'BR' && childNode.getAttribute('data-penman-ui') === 'true') {
-        // Already has it, move past it
-        childNode = childNode.nextSibling;
+    let brNode = childNode;
+    while (brNode && !(brNode.nodeType === 1 && brNode.tagName === 'BR' && brNode.getAttribute('data-penman-ui') === 'true')) {
+        brNode = brNode.nextSibling;
+    }
+
+    if (brNode) {
+        // Remove everything between the last processed token and the propping BR
+        while (childNode && childNode !== brNode) {
+            const next = childNode.nextSibling;
+            codeNode.removeChild(childNode);
+            childNode = next;
+        }
+        childNode = brNode.nextSibling;
     } else {
         const br = document.createElement('br');
         br.setAttribute('data-penman-ui', 'true');
@@ -161,37 +171,62 @@ function getCursorOffset(codeNode) {
 function setCursorOffset(codeNode, offset) {
     if (offset < 0) return;
     const sel = window.getSelection();
+    if (!sel) return;
     const range = document.createRange();
     let charCount = 0;
-    let nodeStack = [codeNode];
-    let node;
     let found = false;
-    let lastTextNode = null;
 
-    while (nodeStack.length > 0 && !found) {
-        node = nodeStack.pop();
+    // Use a TreeWalker to iterate through all nodes (text and elements) in document order
+    const walker = document.createTreeWalker(codeNode, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null, false);
+    let node;
+
+    while ((node = walker.nextNode())) {
         if (node.nodeType === 3) {
             const nextCharCount = charCount + node.length;
-            if (offset <= nextCharCount) {
+            if (offset >= charCount && offset <= nextCharCount) {
                 range.setStart(node, offset - charCount);
                 range.collapse(true);
                 found = true;
+
+                // Optimization for newlines: if we are at the end of a node that ends with a newline,
+                // prefer placing the cursor after this node (before the next sibling).
+                // This helps browsers correctly render the cursor on the next line.
+                if (offset === nextCharCount && node.nodeValue.endsWith('\n')) {
+                    if (node.nextSibling) {
+                        range.setStartBefore(node.nextSibling);
+                        range.collapse(true);
+                    } else {
+                        // Fallback: stay at end of text node but try to ensure it's not collapsed away
+                        range.setStart(node, node.length);
+                        range.collapse(true);
+                    }
+                }
+                break;
             }
             charCount = nextCharCount;
-            lastTextNode = node;
-        } else {
-            // Push children in reverse order so they are popped in normal document order
-            let i = node.childNodes.length;
-            while (i--) {
-                nodeStack.push(node.childNodes[i]);
+        } else if (node.tagName === 'BR' && node.getAttribute('data-penman-ui') === 'true') {
+            // Special handling for our propping BR: if the offset points exactly here,
+            // we should be placed right before it.
+            if (offset === charCount) {
+                range.setStartBefore(node);
+                range.collapse(true);
+                found = true;
+                break;
             }
         }
     }
 
-    // Edge case: offset is at the very end of the last text node
-    if (!found && lastTextNode && charCount === offset) {
-        range.setStart(lastTextNode, lastTextNode.length);
-        range.collapse(true);
+    // Fallback for empty blocks or offset at the very end
+    if (!found && offset === charCount) {
+        range.selectNodeContents(codeNode);
+        range.collapse(false);
+
+        // If the last child is a propping BR, prefer being before it
+        const last = codeNode.lastChild;
+        if (last && last.tagName === 'BR' && last.getAttribute('data-penman-ui') === 'true') {
+            range.setStartBefore(last);
+            range.collapse(true);
+        }
         found = true;
     }
 
