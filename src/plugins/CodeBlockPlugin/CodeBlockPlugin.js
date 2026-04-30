@@ -61,6 +61,7 @@ export function setupCodeBlockPlugin(editor) {
       if (!badge) {
           badge = document.createElement('div');
           badge.className = 'penman-code-badge';
+          badge.setAttribute('data-penman-ui', 'true');
           badge.contentEditable = 'false';
           badge.style.position = 'absolute';
           badge.style.zIndex = '10';
@@ -153,6 +154,7 @@ export function setupCodeBlockPlugin(editor) {
 
   editor.commands.register('INSERT_CODEBLOCK', {
     execute: (editor, langValue = 'auto') => {
+      if (langValue === null) langValue = 'auto';
       const sel = window.getSelection();
       if (!sel || sel.rangeCount === 0) return;
 
@@ -174,7 +176,20 @@ export function setupCodeBlockPlugin(editor) {
         if (preNode && preNode.tagName.toLowerCase() === 'pre') {
           const p = document.createElement('p');
           const text = codeNode.innerText || codeNode.textContent || '';
-          p.innerHTML = text.replace(/\n/g, '<br>');
+
+          // Securely handle text content to avoid XSS when converting to HTML
+          if (text.includes('\n')) {
+              const lines = text.split('\n');
+              lines.forEach((line, index) => {
+                  p.appendChild(document.createTextNode(line));
+                  if (index < lines.length - 1) {
+                      p.appendChild(document.createElement('br'));
+                  }
+              });
+          } else {
+              p.textContent = text;
+          }
+
           if (p.innerHTML === '') p.innerHTML = '<br>';
           preNode.parentNode.replaceChild(p, preNode);
 
@@ -238,10 +253,12 @@ export function setupCodeBlockPlugin(editor) {
 
   function highlightBlock(codeNode) {
     const text = codeNode.innerText || codeNode.textContent || '';
-    const lang = codeNode.getAttribute('data-language');
+    let lang = codeNode.getAttribute('data-language');
+
+    if (lang === 'null' || lang === 'undefined') lang = 'auto';
 
     let result;
-    if (lang && lang !== 'auto') {
+    if (lang && lang !== 'auto' && hljs.getLanguage(lang)) {
         try {
             result = hljs.highlight(text, { language: lang });
         } catch (e) {

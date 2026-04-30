@@ -10,3 +10,7 @@
 4:30:15 AM [vite] (client) hmr update /src/styles/penman-content.css
 4:31:28 AM [vite] (client) page reload src/plugins/CodeBlockPlugin/CodeBlockPlugin.js
 4:33:18 AM [vite] (client) page reload src/sanitization/Sanitizer.js
+4:46:54 AM [vite] (client) page reload src/plugins/CodeBlockPlugin/CodeBlockPlugin.js
+4:52:08 AM [vite] (client) page reload src/plugins/CodeBlockPlugin/CodeBlockPlugin.js
+4:52:24 AM [vite] (client) page reload src/plugins/CodeBlockPlugin/CodeBlockPlugin.js
+4:52:31 AM [vite] (client) page reload src/sanitization/Sanitizer.js
