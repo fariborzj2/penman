@@ -265,6 +265,7 @@ export function setupCodeBlockPlugin(editor) {
                     pre.style.padding = '1em';
                     pre.style.borderRadius = '5px';
                     pre.style.overflowX = 'auto';
+                    pre.style.minHeight = '50px';
 
                     code.setAttribute('dir', 'ltr');
                     code.style.fontFamily = 'inherit';
