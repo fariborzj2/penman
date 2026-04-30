@@ -293,11 +293,13 @@ export function setupCodeBlockPlugin(editor) {
                     pre.style.padding = '1em';
                     pre.style.borderRadius = '5px';
                     pre.style.overflowX = 'auto';
+                    pre.style.minHeight = '60px';
 
                     code.setAttribute('dir', 'ltr');
                     code.style.display = 'block';
                     code.style.fontFamily = 'inherit';
                     code.style.minHeight = '28px';
+                    code.style.color = 'rgb(43, 162, 129)';
 
                     code.textContent = blockNode.textContent || '';
                     blockNode.parentNode.replaceChild(pre, blockNode);
@@ -360,10 +362,19 @@ export function setupCodeBlockPlugin(editor) {
         if (preNode && codeNode) {
             if (e.key === 'Backspace' || e.key === 'Delete') {
                 const offset = getCursorOffset(codeNode);
-                const textLen = (codeNode.textContent || '').length;
+                const text = codeNode.textContent || '';
+                const textLen = text.length;
+                
+                if (sel.isCollapsed && textLen === 0) {
+                    // If empty, convert back to paragraph
+                    e.preventDefault();
+                    editor.execCommand('INSERT_CODEBLOCK');
+                    return;
+                }
+
                 if ((e.key === 'Backspace' && offset === 0 && sel.isCollapsed) || 
                     (e.key === 'Delete' && offset === textLen && sel.isCollapsed)) {
-                    // Prevent unwrapping/merging behavior at edges
+                    // Prevent unwrapping/merging behavior at edges for non-empty blocks
                     e.preventDefault();
                     return;
                 }
