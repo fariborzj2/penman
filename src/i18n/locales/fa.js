@@ -77,7 +77,7 @@ export default {
       livePreview: 'پیش‌نمایش زنده'
     },
     draft: {
-      recoveryBannerMsg: 'یک نسخه ذخیره‌نشده جدیدتر از این سند یافت شد.',
+      recoveryBannerMsg: 'یک نسخه ذخیره‌ شده جدیدتر از این سند یافت شد.',
       lastAutoSaved: 'آخرین ذخیره خودکار: ',
       restoreDraft: 'بازیابی پیش‌نویس',
       discard: 'انصراف',
