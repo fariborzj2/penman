@@ -1,28 +1,32 @@
-# CodeBlock Plugin Examples
+# CodeBlockPlugin Examples
 
-### JavaScript Example
+## Enabling the Plugin
+
+To include the CodeBlockPlugin in your Penman editor initialization:
+
 ```javascript
-function hello() {
-  console.log("Hello Penman!");
+import { Editor } from 'penman';
+import { CodeBlockPlugin } from 'penman/plugins/CodeBlockPlugin';
+
+const editor = new Editor({
+    element: document.getElementById('editor-container'),
+    plugins: [
+        CodeBlockPlugin
+    ]
+});
+```
+
+## Basic JavaScript Syntax Highlighting
+
+Once enabled, using the `INSERT_CODEBLOCK` command or clicking the CodeBlock icon will insert an interactive, syntax-highlighted block:
+
+```javascript
+function helloWorld() {
+    // This is a comment
+    const greeting = "Hello, Penman!";
+    let count = 42;
+    console.log(greeting, count);
 }
 ```
 
-### HTML Example
-```html
-<div class="penman-editor">
-  <p>Rich text content</p>
-</div>
-```
-
-### CSS Example
-```css
-.hljs-keyword {
-  color: #569cd6;
-  font-weight: bold;
-}
-```
-
-### Toggling Behavior
-- **Before**: `<p>console.log("test")</p>` (Selected)
-- **Action**: Click Code Block
-- **After**: `<pre dir="ltr"><code><span class="hljs-variable language_">console</span>.<span class="hljs-title function_">log</span>(<span class="hljs-string">"test"</span>)</code></pre>`
+The plugin automatically processes this plain text to incrementally update spans representing `keyword`, `string`, `comment`, and `number` directly in the DOM, without lag.
