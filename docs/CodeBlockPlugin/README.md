@@ -1,9 +1,13 @@
 # CodeBlock Plugin
 
-Provides a simple way to format and present source code blocks (`<pre><code>`) in the editor content, avoiding complex structural parsing.
+Provides high-performance, syntax-highlighted code blocks (`<pre><code>`) in the editor content, similar to professional IDEs.
 
 ## Features
-- Toggle code block formatting on paragraphs.
-- Correctly formats `<pre>` and `<code>` elements with proper LTR styling, background, and fonts.
-- Reverts a code block back into a regular paragraph when toggled off.
-- Intercepts paste events inside the code block to insert plain text (preserving line breaks/indentation) and avoid creating rich text `p` wrappers.
+- **Real Syntax Highlighting**: Powered by `highlight.js` with automatic language detection.
+- **Smart Editing**:
+  - **Auto-indent**: Pressing Enter preserves the leading indentation of the previous line.
+  - **Tab Support**: Inserts 2 spaces for consistent code indentation.
+  - **Cursor Preservation**: Real-time highlighting does not disrupt the cursor position.
+- **LTR Enforcement**: Code blocks are always LTR and left-aligned, ensuring readability in RTL contexts.
+- **Toggle Mechanism**: Easily convert paragraphs to code blocks and back.
+- **Clean Paste**: Automatically sanitizes and highlights pasted code.

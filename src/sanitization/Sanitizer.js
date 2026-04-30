@@ -20,8 +20,8 @@ export class Sanitizer {
       s: [],
       strike: [],
       blockquote: [],
-      pre: ["dir", "style"],
-      code: ["dir", "style"],
+      pre: ["dir", "style", "class"],
+      code: ["dir", "style", "class", "data-language"],
       h1: ["dir"],
       h2: ["dir"],
       h3: ["dir"],
@@ -43,7 +43,7 @@ export class Sanitizer {
       td: ["rowspan", "colspan", "data-cell-id", "contenteditable"],
       caption: [],
       div: ["contenteditable", "data-penman-core"],
-      span: ["style"]
+      span: ["style", "class"]
     };
 
     // Strict allowed styles natively per tag. Global arbitrary styles are forbidden.
@@ -191,8 +191,12 @@ export class Sanitizer {
       const tag = child.tagName.toLowerCase();
 
       // Check if this node marks the start of a protected zone
+      // Code blocks (pre/code) content should be treated as protected to preserve highlighting spans
+      // IMPORTANT: pre and code themselves are NOT protected, only their content.
       const nodeIsProtected = isProtected ||
           (child.getAttribute && child.getAttribute('data-penman-core') === 'true');
+
+      const isCodeContent = tag === 'pre' || tag === 'code';
 
       // If tag is not allowed at all, unwrap it immediately
       if (!this.allowedTags[tag]) {
@@ -208,10 +212,10 @@ export class Sanitizer {
       }
 
       // First sanitize children
-      this._sanitize(child, nodeIsProtected);
+      this._sanitize(child, nodeIsProtected || isCodeContent);
 
       // Clean attributes strictly
-      this._cleanAttributesAndStyles(child, tag);
+      this._cleanAttributesAndStyles(child, tag, nodeIsProtected || (isCodeContent && (tag === 'pre' || tag === 'code')));
     }
   }
 
@@ -243,7 +247,12 @@ export class Sanitizer {
 
               if (!isNativeClassTag) {
                   const currentClasses = Array.from(el.classList);
-                  const validClasses = currentClasses.filter(c => allowedClasses.has(c));
+                  const validClasses = currentClasses.filter(c => {
+                      if (allowedClasses.has(c)) return true;
+                      // Allow highlight.js classes on spans
+                      if (tag === 'span' && c.startsWith('hljs-')) return true;
+                      return false;
+                  });
 
                   if (validClasses.length === 0) {
                       el.removeAttribute('class');
@@ -532,7 +541,18 @@ export class Sanitizer {
 
   /* Merge nested spans and remove redundant spans via style state pushdown */
   _mergeNestedSpans(root) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+            // Skip text nodes inside code blocks to preserve highlight.js spans
+            let curr = node.parentNode;
+            while(curr && curr !== root) {
+                const tag = curr.tagName ? curr.tagName.toLowerCase() : '';
+                if (tag === 'pre' || tag === 'code') return NodeFilter.FILTER_REJECT;
+                curr = curr.parentNode;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    });
     const nodes = [];
     let node;
     while(node = walker.nextNode()) {
@@ -585,9 +605,24 @@ export class Sanitizer {
         }
     });
 
-    // Unwrap ALL spans
+    // Unwrap spans (excluding those in code blocks or with hljs classes)
     const spans = Array.from(root.querySelectorAll('span'));
     spans.reverse().forEach(span => {
+        // Skip hljs spans
+        if (span.className && span.className.includes('hljs-')) return;
+
+        // Skip spans inside code blocks
+        let curr = span.parentNode;
+        let insideCode = false;
+        while(curr && curr !== root) {
+            if (curr.tagName && (curr.tagName.toLowerCase() === 'pre' || curr.tagName.toLowerCase() === 'code')) {
+                insideCode = true;
+                break;
+            }
+            curr = curr.parentNode;
+        }
+        if (insideCode) return;
+
         while(span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
         span.remove();
     });

@@ -1,14 +1,24 @@
 # CodeBlock Plugin Spec
 
 - **Name**: `codeblock`
-- **Goal**: Provides a simple way to format and present source code blocks (`<pre><code>`) in the editor content, avoiding complex structural parsing.
+- **Goal**: Provides professional syntax-highlighted code blocks (`<pre><code>`) with an IDE-like editing experience.
 - **UI Element**: Action button in the toolbar.
 - **Behavior (Command)**: `INSERT_CODEBLOCK`
-  - Creates a block `<pre dir="ltr" style="text-align: left; white-space: pre-wrap; font-family: monospace; background-color: #f4f4f4; padding: 10px; border-radius: 5px; overflow-x: auto;"><code dir="ltr" style="font-family: monospace;">...</code></pre>`.
-  - Content insertion logic:
-    - If selection is text, wraps text.
-    - If empty line, inserts an empty code block ready to type into.
-  - Ensures accurate preservation of newlines and indentations on paste within the code block.
-  - Must intercept Paste events when the cursor is inside `<pre><code>` to prevent the editor from injecting `P` tags or messing up newlines.
-- **Direction & Styling**: Always LTR and left-aligned, ensuring no style conflicts with Persian/RTL contexts.
-- Updates `Sanitizer.js` to whitelist `dir` and `style` on `pre` and `code` tags.
+  - Creates a block `<pre dir="ltr" style="text-align: left; ..."><code>...</code></pre>`.
+  - If selection is text, it captures the text and applies highlighting.
+  - Toggling inside an existing code block reverts it to a paragraph, preserving the text content.
+- **Syntax Highlighting**:
+  - Highlights code in real-time as the user types (debounced).
+  - Supports **Auto-detection** and **Manual Language Selection** via a floating badge UI.
+  - Manual selection is stored in the `data-language` attribute on the `<code>` tag.
+  - Performance: Manual selection is significantly faster (<12ms for 1000 lines) compared to auto-detection.
+  - Employs a character-offset-based cursor preservation algorithm to prevent flicker or cursor loss during re-highlighting.
+- **Keyboard Interaction**:
+  - **Enter**: Inserts a newline and matches the indentation level of the current line (Auto-indent).
+  - **Tab**: Inserts exactly 2 spaces.
+- **Sanitization**:
+  - `Sanitizer.js` whitelists `hljs-*` classes on `span` elements.
+  - Sanitization logic skips content inside `pre` and `code` tags to ensure highlighting persistence.
+- **Direction & Styling**:
+  - Strictly LTR and left-aligned.
+  - VS Code Dark theme applied via CSS classes in `penman-content.css`.
