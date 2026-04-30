@@ -30,7 +30,7 @@ describe('CodeBlockPlugin', () => {
   it('tokenizer matches keywords, strings, numbers, and comments', () => {
       const code = `function test() { const x = "hello"; // comment \n return 10; }`;
       const tokens = tokenizeJavaScript(code);
-
+      
       expect(tokens).toEqual(expect.arrayContaining([
           expect.objectContaining({ type: 'keyword', value: 'function' }),
           expect.objectContaining({ type: 'keyword', value: 'const' }),
@@ -47,17 +47,17 @@ describe('CodeBlockPlugin', () => {
           { type: 'text', value: ' x = ' },
           { type: 'number', value: '10' }
       ];
-
+      
       patchDOM(codeNode, tokens);
-
+      
       expect(codeNode.childNodes.length).toBe(3);
       expect(codeNode.childNodes[0].tagName).toBe('SPAN');
       expect(codeNode.childNodes[0].className).toBe('penman-token-keyword');
       expect(codeNode.childNodes[0].textContent).toBe('const');
-
+      
       expect(codeNode.childNodes[1].nodeType).toBe(3);
       expect(codeNode.childNodes[1].nodeValue).toBe(' x = ');
-
+      
       expect(codeNode.childNodes[2].tagName).toBe('SPAN');
       expect(codeNode.childNodes[2].className).toBe('penman-token-number');
       expect(codeNode.childNodes[2].textContent).toBe('10');
