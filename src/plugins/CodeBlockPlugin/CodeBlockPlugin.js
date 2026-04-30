@@ -113,6 +113,20 @@ function patchDOM(codeNode, tokens) {
         }
     }
 
+    // Ensure a trailing propping <br> for browser rendering of empty lines
+    if (childNode && childNode.nodeType === 1 && childNode.tagName === 'BR' && childNode.getAttribute('data-penman-ui') === 'true') {
+        // Already has it, move past it
+        childNode = childNode.nextSibling;
+    } else {
+        const br = document.createElement('br');
+        br.setAttribute('data-penman-ui', 'true');
+        if (childNode) {
+            codeNode.insertBefore(br, childNode);
+        } else {
+            codeNode.appendChild(br);
+        }
+    }
+
     // Remove any trailing nodes that are no longer needed
     while (childNode) {
         const next = childNode.nextSibling;
