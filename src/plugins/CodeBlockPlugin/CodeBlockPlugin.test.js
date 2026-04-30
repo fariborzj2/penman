@@ -3,7 +3,7 @@
  */
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { Editor } from '../../core/Editor.js';
-import { setupCodeBlockPlugin } from './CodeBlockPlugin.js';
+import { setupCodeBlockPlugin, tokenizeJavaScript, patchDOM } from './CodeBlockPlugin.js';
 
 describe('CodeBlockPlugin', () => {
   let editor;
@@ -27,6 +27,42 @@ describe('CodeBlockPlugin', () => {
     vi.restoreAllMocks();
   });
 
+  it('tokenizer matches keywords, strings, numbers, and comments', () => {
+      const code = `function test() { const x = "hello"; // comment \n return 10; }`;
+      const tokens = tokenizeJavaScript(code);
+
+      expect(tokens).toEqual(expect.arrayContaining([
+          expect.objectContaining({ type: 'keyword', value: 'function' }),
+          expect.objectContaining({ type: 'keyword', value: 'const' }),
+          expect.objectContaining({ type: 'string', value: '"hello"' }),
+          expect.objectContaining({ type: 'comment', value: '// comment ' }),
+          expect.objectContaining({ type: 'number', value: '10' })
+      ]));
+  });
+
+  it('patchDOM applies tokens correctly', () => {
+      const codeNode = document.createElement('code');
+      const tokens = [
+          { type: 'keyword', value: 'const' },
+          { type: 'text', value: ' x = ' },
+          { type: 'number', value: '10' }
+      ];
+
+      patchDOM(codeNode, tokens);
+
+      expect(codeNode.childNodes.length).toBe(3);
+      expect(codeNode.childNodes[0].tagName).toBe('SPAN');
+      expect(codeNode.childNodes[0].className).toBe('penman-token-keyword');
+      expect(codeNode.childNodes[0].textContent).toBe('const');
+
+      expect(codeNode.childNodes[1].nodeType).toBe(3);
+      expect(codeNode.childNodes[1].nodeValue).toBe(' x = ');
+
+      expect(codeNode.childNodes[2].tagName).toBe('SPAN');
+      expect(codeNode.childNodes[2].className).toBe('penman-token-number');
+      expect(codeNode.childNodes[2].textContent).toBe('10');
+  });
+
   it('should register codeblock button', () => {
     expect(editor.ui.registry.buttons['codeblock']).toBeDefined();
   });
@@ -46,11 +82,11 @@ describe('CodeBlockPlugin', () => {
     const html = editor.getContent();
     expect(html).toContain('<pre');
     expect(html).toContain('<code');
-    // The content might be wrapped in hljs spans, so we check for the presence of text parts
+    expect(html).toContain('penman-token-keyword');
+    expect(html).toContain('penman-token-number');
     expect(html).toContain('const');
     expect(html).toContain('x');
     expect(html).toContain('10');
-    expect(html).toContain('dir="ltr"');
   });
 
   it('should revert a code block to paragraph on second execute', () => {
@@ -86,7 +122,6 @@ describe('CodeBlockPlugin', () => {
     const enterEvent = new KeyboardEvent('keydown', { key: 'Enter', bubbles: true });
     editor.editableArea.dispatchEvent(enterEvent);
 
-    // It should have inserted \n and 2 spaces
     expect(code.textContent).toContain('  line1\n  ');
   });
 
@@ -106,13 +141,4 @@ describe('CodeBlockPlugin', () => {
     expect(code.textContent).toBe('  ');
   });
 
-  it('should preserve syntax highlighting classes through sanitizer', () => {
-    const dirty = '<pre><code><span class="hljs-keyword">const</span> x = <span class="hljs-number">1</span>;</code></pre>';
-    const sanitized = editor.sanitizer.sanitize(dirty);
-
-    expect(sanitized).toContain('hljs-keyword');
-    expect(sanitized).toContain('hljs-number');
-    expect(sanitized).toContain('<pre');
-    expect(sanitized).toContain('<code');
-  });
 });
