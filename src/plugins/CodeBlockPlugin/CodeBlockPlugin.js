@@ -187,6 +187,34 @@ function setCursorOffset(codeNode, offset) {
     }
 }
 
+function healAndPatch(preNode) {
+    // Heal any stray text inserted directly into <pre> (bypassing <code>)
+    const offset = getCursorOffset(preNode);
+    const rawText = preNode.textContent || '';
+    
+    let codeNode = preNode.querySelector('code');
+    if (!codeNode) {
+        codeNode = document.createElement('code');
+        codeNode.setAttribute('dir', 'ltr');
+        codeNode.style.fontFamily = 'inherit';
+        preNode.appendChild(codeNode);
+    }
+
+    // Remove everything else in the <pre> to maintain strict structure
+    Array.from(preNode.childNodes).forEach(child => {
+        if (child !== codeNode) {
+            preNode.removeChild(child);
+        }
+    });
+
+    // Re-highlight the <code> block with the full text
+    const tokens = tokenizeJavaScript(rawText);
+    patchDOM(codeNode, tokens);
+
+    // Restore absolute cursor relative to the code block now that everything is inside it
+    setCursorOffset(codeNode, offset);
+}
+
 export function setupCodeBlockPlugin(editor) {
     editor.ui.registry.addButton('codeblock', {
         iconName: 'codeblock',
@@ -265,7 +293,6 @@ export function setupCodeBlockPlugin(editor) {
                     pre.style.padding = '1em';
                     pre.style.borderRadius = '5px';
                     pre.style.overflowX = 'auto';
-                    pre.style.minHeight = '50px';
 
                     code.setAttribute('dir', 'ltr');
                     code.style.fontFamily = 'inherit';
@@ -307,31 +334,7 @@ export function setupCodeBlockPlugin(editor) {
         }
 
         if (preNode) {
-            // Heal any stray text inserted directly into <pre> (bypassing <code>)
-            const offset = getCursorOffset(preNode);
-            const rawText = preNode.textContent || '';
-            
-            let codeNode = preNode.querySelector('code');
-            if (!codeNode) {
-                codeNode = document.createElement('code');
-                codeNode.setAttribute('dir', 'ltr');
-                codeNode.style.fontFamily = 'inherit';
-                preNode.appendChild(codeNode);
-            }
-
-            // Remove everything else in the <pre> to maintain strict structure
-            Array.from(preNode.childNodes).forEach(child => {
-                if (child !== codeNode) {
-                    preNode.removeChild(child);
-                }
-            });
-
-            // Re-highlight the <code> block with the full text
-            const tokens = tokenizeJavaScript(rawText);
-            patchDOM(codeNode, tokens);
-
-            // Restore absolute cursor relative to the code block now that everything is inside it
-            setCursorOffset(codeNode, offset);
+            healAndPatch(preNode);
         }
     });
 
@@ -387,11 +390,8 @@ export function setupCodeBlockPlugin(editor) {
                 sel.removeAllRanges();
                 sel.addRange(range);
 
-                // Re-highlight immediately
-                const offset = getCursorOffset(codeNode);
-                const tokens = tokenizeJavaScript(codeNode.textContent);
-                patchDOM(codeNode, tokens);
-                setCursorOffset(codeNode, offset);
+                // Re-highlight using self-healing to catch edge-inserts
+                healAndPatch(preNode);
 
                 if (editor.history) editor.history.pushImmediate();
             } else if (e.key === 'Tab') {
@@ -407,10 +407,8 @@ export function setupCodeBlockPlugin(editor) {
                 sel.removeAllRanges();
                 sel.addRange(range);
 
-                const offset = getCursorOffset(codeNode);
-                const tokens = tokenizeJavaScript(codeNode.textContent);
-                patchDOM(codeNode, tokens);
-                setCursorOffset(codeNode, offset);
+                // Re-highlight using self-healing
+                healAndPatch(preNode);
 
                 if (editor.history) editor.history.pushImmediate();
             }
@@ -451,11 +449,8 @@ export function setupCodeBlockPlugin(editor) {
                 sel.removeAllRanges();
                 sel.addRange(range);
 
-                // Immediate highlight and patch
-                const offset = getCursorOffset(codeNode);
-                const tokens = tokenizeJavaScript(codeNode.textContent);
-                patchDOM(codeNode, tokens);
-                setCursorOffset(codeNode, offset);
+                // Use self-healing patch to catch text pasted into <pre> boundaries
+                healAndPatch(preNode);
 
                 if (editor.history) editor.history.pushImmediate();
             }
