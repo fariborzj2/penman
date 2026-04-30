@@ -878,7 +878,14 @@ export class Sanitizer {
   /* ================= CLEANUP ================= */
 
   _cleanup(root) {
+    this._removeTransientUI(root);
     this._removeEmptyNodesRecursively(root);
+  }
+
+  _removeTransientUI(root) {
+      // Remove any elements marked as transient UI (like code badges)
+      const uiElements = root.querySelectorAll('[data-penman-ui="true"]');
+      uiElements.forEach(el => el.remove());
   }
 
   _removeEmptyNodesRecursively(node) {
