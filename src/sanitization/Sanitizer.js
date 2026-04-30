@@ -543,7 +543,7 @@ export class Sanitizer {
   _mergeNestedSpans(root) {
     const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
         acceptNode: (node) => {
-            // Skip text nodes inside code blocks to preserve highlight.js spans
+            // Skip text nodes inside code blocks to preserve highlight.js spans and formatting
             let curr = node.parentNode;
             while(curr && curr !== root) {
                 const tag = curr.tagName ? curr.tagName.toLowerCase() : '';
@@ -837,7 +837,18 @@ export class Sanitizer {
 
   /* normalize whitespace */
   _normalizeText(root) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+        acceptNode: (node) => {
+            // NEVER normalize text inside code blocks
+            let curr = node.parentNode;
+            while (curr && curr !== root) {
+                const tag = curr.tagName ? curr.tagName.toLowerCase() : '';
+                if (tag === 'pre' || tag === 'code') return NodeFilter.FILTER_REJECT;
+                curr = curr.parentNode;
+            }
+            return NodeFilter.FILTER_ACCEPT;
+        }
+    });
 
     let node;
     while ((node = walker.nextNode())) {
