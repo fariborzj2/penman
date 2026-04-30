@@ -404,6 +404,23 @@ export function setupCodeBlockPlugin(editor) {
     }
 
     if (inCodeBlock && codeNode) {
+      if (e.key === 'Backspace') {
+        const offset = getCaretCharacterOffsetWithin(codeNode);
+        if (offset === 0 && sel.isCollapsed) {
+          // Prevent browser from merging code block into previous block or unwrapping it
+          e.preventDefault();
+          return;
+        }
+      } else if (e.key === 'Delete') {
+        const offset = getCaretCharacterOffsetWithin(codeNode);
+        const textLen = (codeNode.textContent || '').length;
+        if (offset === textLen && sel.isCollapsed) {
+          // Prevent browser from merging the next block into the code block
+          e.preventDefault();
+          return;
+        }
+      }
+
       if (e.key === 'Enter' && !e.ctrlKey && !e.metaKey && !e.shiftKey) {
         e.preventDefault();
         e.stopPropagation();
