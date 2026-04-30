@@ -105,6 +105,9 @@ export default {
     fontSize: {
       title: 'اندازه قلم'
     },
+    codeBlock: {
+      title: 'بلوک کد'
+    },
     sourceCode: {
       title: 'کد منبع',
       apply: 'اعمال تغییرات',

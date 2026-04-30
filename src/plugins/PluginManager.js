@@ -1,4 +1,3 @@
-import { setupCodeBlockPlugin } from './CodeBlockPlugin/index.js';
 import { setupLinkPlugin } from './LinkPlugin.js';
 import { setupFormatPlugin } from './FormatPlugin/FormatPlugin.js';
 import { setupListPlugin } from './ListPlugin.js';
@@ -30,7 +29,6 @@ export const PluginManager = {
     image: setupImagePlugin,
     color: setupColorPlugin,
     sourcecode: setupSourceCodePlugin,
-    codeblock: setupCodeBlockPlugin,
     draft: setupDraftPlugin,
     direction: setupDirectionPlugin,
     suggestedposts: setupSuggestedPostsPlugin,
