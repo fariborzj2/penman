@@ -26,6 +26,16 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
     document.head.appendChild(style);
 }
 
+function extractTextWithNewlines(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') return '\n';
+    let text = '';
+    for (let child of node.childNodes) {
+        text += extractTextWithNewlines(child);
+    }
+    return text;
+}
+
 function getCursorOffset(codeNode) {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return 0;
@@ -357,7 +367,7 @@ export function setupCodeBlockPlugin(editor) {
                     code.className = 'code-block lang-javascript'; code.setAttribute('data-language', 'javascript');
                     code.style.color = '#abb2bf';
 
-                    code.textContent = blockNode.textContent || '';
+                    code.textContent = extractTextWithNewlines(blockNode) || '';
                     blockNode.parentNode.replaceChild(pre, blockNode);
 
                     // Run initial highlight
