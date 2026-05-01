@@ -4,7 +4,7 @@
  * Native Regex-based tokenizer for JavaScript
  * Designed for extreme performance and absolute string preservation.
  */
-import { getTokens } from './syntax/index.js';
+import { getTokens, formatCode } from './syntax/index.js';
 
 // Inject syntax styles
 const styleId = 'penman-syntax-styles';
@@ -24,6 +24,16 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
         }
     `;
     document.head.appendChild(style);
+}
+
+function extractTextWithNewlines(node) {
+    if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') return '\n';
+    let text = '';
+    for (let child of node.childNodes) {
+        text += extractTextWithNewlines(child);
+    }
+    return text;
 }
 
 function getCursorOffset(codeNode) {
@@ -357,7 +367,7 @@ export function setupCodeBlockPlugin(editor) {
                     code.className = 'code-block lang-javascript'; code.setAttribute('data-language', 'javascript');
                     code.style.color = '#abb2bf';
 
-                    code.textContent = blockNode.textContent || '';
+                    code.textContent = extractTextWithNewlines(blockNode) || '';
                     blockNode.parentNode.replaceChild(pre, blockNode);
 
                     // Run initial highlight
@@ -568,6 +578,13 @@ export function setupCodeBlockPlugin(editor) {
             let text = clipboardData.getData('text/plain');
 
             if (text) {
+                // Normalize CRLF to LF to avoid issues with newlines getting squished or rendering improperly
+                text = text.replace(/\r\n/g, '\n');
+
+                // Format pasted compact code automatically
+                const lang = codeNode.getAttribute('data-language') || 'javascript';
+                text = formatCode(text, lang);
+
                 const range = sel.getRangeAt(0);
                 range.deleteContents();
                 const textNode = document.createTextNode(text);

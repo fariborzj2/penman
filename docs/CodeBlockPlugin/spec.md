@@ -20,7 +20,7 @@
 ## Keystroke & Event Hooks
 - **Enter**: Prevents default browser paragraph splitting. Inserts `\n` and replicates the leading whitespace of the current line (Auto-indent).
 - **Tab**: Prevents focus shift. Inserts exactly 2 spaces.
-- **Paste**: Intercepted to extract plain text via `clipboardData.getData('text/plain')`. The text is inserted at the cursor, and the patcher immediately updates the block.
+- **Paste**: Intercepted to extract plain text via `clipboardData.getData('text/plain')`. CRLF is normalized to LF. If the pasted code is a single line, it is automatically formatted with line breaks and indentation using syntax tokens before being inserted. The patcher immediately updates the block.
 
 ## Constraints & Sanitization
 - Performance must remain under 8-16ms per keystroke.

@@ -30,3 +30,26 @@ function helloWorld() {
 ```
 
 The plugin automatically processes this plain text to incrementally update spans representing `keyword`, `string`, `comment`, and `number` directly in the DOM, without lag.
+
+## Automatic Paste Formatting
+
+If a user copies and pastes a compact or minified block of code like:
+```javascript
+function test(a,b){for(let i=0;i<10;i++){console.log(i);if(i>5){break;}}}const x={a:1,b:2};
+```
+
+The CodeBlockPlugin intelligently parses the syntax and formats the output inside the editor automatically to:
+```javascript
+function test(a, b) {
+  for (let i = 0; i < 10; i++) {
+    console.log(i);
+    if (i > 5) {
+      break;
+    }
+  }
+}
+const x = {
+  a: 1,
+  b: 2
+};
+```

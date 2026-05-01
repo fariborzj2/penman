@@ -4,7 +4,8 @@
 1. **Insert**: Click the "Code Block" button in the Penman toolbar.
 2. **Type**: Begin typing JavaScript. The text is highlighted automatically and instantaneously.
 3. **Shortcuts**: Use `Enter` for auto-indentation and `Tab` for spaces.
-4. **Exit/Toggle**: Clicking the Code Block button while inside an existing code block will convert the content back to standard paragraphs, stripping out code styling.
+4. **Paste Code**: You can paste minified or compact code. If it's a single line, the plugin automatically formats it into human-readable multi-line statements with appropriate indentations based on the syntax block structure.
+5. **Exit/Toggle**: Clicking the Code Block button while inside an existing code block will convert the content back to standard paragraphs, stripping out code styling.
 
 ## Programmatic Execution
 You can manually invoke the block via the editor instance:

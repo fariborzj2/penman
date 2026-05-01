@@ -875,6 +875,9 @@ export class Editor extends EventEmitter {
         }
       }
     } else if (text) {
+      // Normalize CRLF to LF to avoid issues with newlines getting squished or rendering improperly
+      text = text.replace(/\r\n/g, '\n');
+
       // Escape plain text and preserve line breaks
       const escaped = this._escapeText(text);
       if (escaped.includes('\n')) {

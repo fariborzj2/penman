@@ -1,6 +1,7 @@
 import { tokenize } from './core.js';
 import { renderTokens } from './renderer.js';
 import { escapeHtml } from './escape.js';
+import { formatCode } from './formatter.js';
 
 import javascript from './languages/javascript.js';
 import html from './languages/html.js';
@@ -34,3 +35,5 @@ export function highlight(code, lang) {
   const tokens = getTokens(code, lang);
   return renderTokens(tokens);
 }
+
+export { formatCode };

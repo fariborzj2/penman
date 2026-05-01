@@ -12,5 +12,6 @@ This plugin delivers a real-time, lag-free syntax highlighting experience strict
 - **IDE Features**:
   - Auto-indentation on `Enter`.
   - Double space insertion on `Tab`.
+  - Automatic code formatting when pasting single-line compact code.
 - **Pure Text State**: The DOM is treated strictly as a rendering projection. The source of truth is always plain text.
 - **Robust Edge Cases**: Fully supports pasting raw text directly into the code block and seamlessly manages rapid mid-token edits.
