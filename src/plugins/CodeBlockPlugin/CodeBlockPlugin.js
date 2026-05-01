@@ -460,17 +460,37 @@ export function setupCodeBlockPlugin(editor) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const range = sel.getRangeAt(0);
-                range.deleteContents();
-                const textNode = document.createTextNode('  '); // 2 spaces
-                range.insertNode(textNode);
-                range.setStartAfter(textNode);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
+                const offset = getCursorOffset(codeNode);
+                const text = codeNode.textContent || '';
 
-                // Re-highlight using self-healing
-                healAndPatch(preNode);
+                if (e.shiftKey) {
+                    // Outdent: Remove up to 2 spaces from the beginning of the current line
+                    const lines = text.substring(0, offset).split('\n');
+                    const currentLineBeforeCaret = lines[lines.length - 1];
+                    const lineStartIndex = offset - currentLineBeforeCaret.length;
+
+                    const lineContent = text.substring(lineStartIndex).split('\n')[0];
+                    const match = lineContent.match(/^ {1,2}/);
+
+                    if (match) {
+                        const spacesToRemove = match[0].length;
+                        const newText = text.substring(0, lineStartIndex) + text.substring(lineStartIndex + spacesToRemove);
+                        codeNode.textContent = newText;
+                        setCursorOffset(codeNode, Math.max(lineStartIndex, offset - spacesToRemove));
+                        healAndPatch(preNode);
+                    }
+                } else {
+                    // Indent: Insert 2 spaces
+                    const range = sel.getRangeAt(0);
+                    range.deleteContents();
+                    const textNode = document.createTextNode('  '); // 2 spaces
+                    range.insertNode(textNode);
+                    range.setStartAfter(textNode);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                    healAndPatch(preNode);
+                }
 
                 if (editor.history) editor.history.pushImmediate();
             }
