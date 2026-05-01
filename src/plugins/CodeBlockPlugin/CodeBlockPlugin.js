@@ -19,8 +19,8 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
         .tok-operator { color: #56b6c2; }
         .tok-punctuation { color: #abb2bf; }
         pre {
-            background-color: #282c34;
-            overflow-x: auto;
+            background-color: #282c34 !important;
+            overflow-x: auto !important;
         }
     `;
     document.head.appendChild(style);
@@ -51,42 +51,127 @@ function setCursorOffset(codeNode, offset) {
     const sel = window.getSelection();
     const range = document.createRange();
     let charCount = 0;
-    let nodeStack = [codeNode];
+
+    // We will use a TreeWalker to find the text node because it is cleaner for sequential text accumulation
+    const walker = document.createTreeWalker(codeNode, NodeFilter.SHOW_TEXT, null, false);
     let node;
     let found = false;
     let lastTextNode = null;
 
-    while (nodeStack.length > 0 && !found) {
-        node = nodeStack.pop();
-        if (node.nodeType === 3) {
-            const nextCharCount = charCount + node.length;
-            if (offset <= nextCharCount) {
-                range.setStart(node, offset - charCount);
-                range.collapse(true);
-                found = true;
-            }
-            charCount = nextCharCount;
-            lastTextNode = node;
-        } else {
-            // Push children in reverse order so they are popped in normal document order
-            let i = node.childNodes.length;
-            while (i--) {
-                nodeStack.push(node.childNodes[i]);
-            }
+    while ((node = walker.nextNode())) {
+        lastTextNode = node;
+        const length = node.nodeValue.length;
+        if (offset <= charCount + length) {
+            // Found the node containing the offset
+            range.setStart(node, offset - charCount);
+            range.collapse(true);
+            found = true;
+            break;
         }
+        charCount += length;
     }
 
-    // Edge case: offset is at the very end of the last text node
+    // Edge case: offset is at the very end of the text content
     if (!found && lastTextNode && charCount === offset) {
-        range.setStart(lastTextNode, lastTextNode.length);
+        range.setStart(lastTextNode, lastTextNode.nodeValue.length);
         range.collapse(true);
         found = true;
     }
 
+    // Ensure cursor visibility on trailing new lines
     if (found) {
+        const textToCursor = codeNode.textContent.substring(0, offset);
+        if (textToCursor.endsWith('\n')) {
+            // Look for the trailing BR to position caret before it
+            const brs = codeNode.querySelectorAll('br[data-penman-ui="true"]');
+            const br = brs[brs.length - 1];
+            if (br && offset === codeNode.textContent.length) {
+                range.setStartBefore(br);
+                range.collapse(true);
+            }
+        }
         sel.removeAllRanges();
         sel.addRange(range);
     }
+}
+
+function getSelectionOffsets(codeNode) {
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return { start: 0, end: 0 };
+
+    const range = sel.getRangeAt(0);
+
+    const startRange = range.cloneRange();
+    startRange.selectNodeContents(codeNode);
+    startRange.setEnd(range.startContainer, range.startOffset);
+    const startDiv = document.createElement('div');
+    startDiv.appendChild(startRange.cloneContents());
+    const start = startDiv.textContent.length;
+
+    const endRange = range.cloneRange();
+    endRange.selectNodeContents(codeNode);
+    endRange.setEnd(range.endContainer, range.endOffset);
+    const endDiv = document.createElement('div');
+    endDiv.appendChild(endRange.cloneContents());
+    const end = endDiv.textContent.length;
+
+    return { start, end };
+}
+
+function setSelectionOffsets(codeNode, startOffset, endOffset) {
+    if (startOffset < 0) startOffset = 0;
+    if (endOffset < startOffset) endOffset = startOffset;
+
+    const sel = window.getSelection();
+    const range = document.createRange();
+
+    const walker = document.createTreeWalker(codeNode, NodeFilter.SHOW_TEXT, null, false);
+    let node;
+    let charCount = 0;
+    let startFound = false;
+    let endFound = false;
+    let lastTextNode = null;
+
+    while ((node = walker.nextNode())) {
+        lastTextNode = node;
+        const length = node.nodeValue.length;
+
+        if (!startFound && startOffset <= charCount + length) {
+            range.setStart(node, startOffset - charCount);
+            startFound = true;
+        }
+
+        if (!endFound && endOffset <= charCount + length) {
+            range.setEnd(node, endOffset - charCount);
+            endFound = true;
+            break;
+        }
+
+        charCount += length;
+    }
+
+    if (!startFound && lastTextNode) {
+        range.setStart(lastTextNode, lastTextNode.nodeValue.length);
+    }
+    if (!endFound && lastTextNode) {
+        range.setEnd(lastTextNode, lastTextNode.nodeValue.length);
+    }
+
+    // Ensure cursor visibility on trailing new lines if collapsed
+    if (startOffset === endOffset && startFound) {
+        const textToCursor = codeNode.textContent.substring(0, startOffset);
+        if (textToCursor.endsWith('\n')) {
+            const brs = codeNode.querySelectorAll('br[data-penman-ui="true"]');
+            const br = brs[brs.length - 1];
+            if (br && startOffset === codeNode.textContent.length) {
+                range.setStartBefore(br);
+                range.collapse(true);
+            }
+        }
+    }
+
+    sel.removeAllRanges();
+    sel.addRange(range);
 }
 
 function healAndPatch(preNode) {
@@ -319,19 +404,82 @@ export function setupCodeBlockPlugin(editor) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const range = sel.getRangeAt(0);
-                range.deleteContents();
-                const textNode = document.createTextNode('  '); // 2 spaces
-                range.insertNode(textNode);
-                range.setStartAfter(textNode);
-                range.collapse(true);
-                sel.removeAllRanges();
-                sel.addRange(range);
+                const { start, end } = getSelectionOffsets(codeNode);
+                let text = codeNode.textContent || '';
 
-                // Re-highlight using self-healing
-                healAndPatch(preNode);
+                // Find line start indices
+                let lineStart = text.lastIndexOf('\n', start - 1) + 1;
+                let lineEnd = text.indexOf('\n', end);
+                if (lineEnd === -1) lineEnd = text.length;
 
-                if (editor.history) editor.history.pushImmediate();
+                // Extract the selected lines block
+                let selectedBlock = text.substring(lineStart, lineEnd);
+                let lines = selectedBlock.split('\n');
+
+                let newStart = start;
+                let newEnd = end;
+
+                if (e.shiftKey) {
+                    // Outdent
+                    for (let i = 0; i < lines.length; i++) {
+                        let line = lines[i];
+                        let spacesToRemove = 0;
+                        if (line.startsWith('  ')) spacesToRemove = 2;
+                        else if (line.startsWith(' ')) spacesToRemove = 1;
+
+                        if (spacesToRemove > 0) {
+                            lines[i] = line.substring(spacesToRemove);
+                            if (i === 0) newStart = Math.max(lineStart, newStart - spacesToRemove);
+                            newEnd -= spacesToRemove;
+                        }
+                    }
+                } else {
+                    // Indent
+                    if (start === end && lines.length === 1 && false) {
+                        // Let normal replace behavior handle simple collapsed tabs if we wanted,
+                        // but the user wants normal indent for lines. If no text is selected, just indent the line!
+                        // Actually, many IDEs indent the whole line or just insert spaces at caret if collapsed.
+                        // For simplicity, let's insert spaces at caret if collapsed, OR indent the whole line?
+                        // Let's indent the whole line to match the multi-line behavior.
+                        // WAIT: If collapsed, users often expect Tab to insert spaces at the cursor, not at the beginning of the line.
+                    }
+
+                    if (start === end) {
+                        // Simple insertion at cursor
+                        text = text.substring(0, start) + '  ' + text.substring(start);
+                        newStart += 2;
+                        newEnd += 2;
+
+                        // We must reconstruct the full text and highlight it
+                        codeNode.innerHTML = highlight(text, codeNode.getAttribute('data-language') || 'javascript');
+                        if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
+                            codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
+                        }
+                        setSelectionOffsets(codeNode, newStart, newEnd);
+                        if (editor.history) editor.history.pushImmediate();
+                        return;
+                    } else {
+                        // Multi-line indent
+                        for (let i = 0; i < lines.length; i++) {
+                            lines[i] = '  ' + lines[i];
+                            if (i === 0) newStart += 2;
+                            newEnd += 2;
+                        }
+                    }
+                }
+
+                if (start !== end || e.shiftKey) {
+                    let newBlock = lines.join('\n');
+                    text = text.substring(0, lineStart) + newBlock + text.substring(lineEnd);
+
+                    codeNode.innerHTML = highlight(text, codeNode.getAttribute('data-language') || 'javascript');
+                    if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
+                        codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
+                    }
+
+                    setSelectionOffsets(codeNode, newStart, newEnd);
+                    if (editor.history) editor.history.pushImmediate();
+                }
             }
         }
     }, true);
