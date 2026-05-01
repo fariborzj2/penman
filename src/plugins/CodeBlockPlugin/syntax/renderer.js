@@ -10,7 +10,7 @@ export function renderTokens(tokens) {
     if (token.type === 'plain') {
       html += escapedValue;
     } else {
-      html += `<span class="tok-${token.type}">${escapedValue}</span>`;
+      html += `<span class="penman-token-${token.type}">${escapedValue}</span>`;
     }
   }
   
