@@ -20,12 +20,17 @@ const grammars = {
   sql
 };
 
-export function highlight(code, lang) {
-  if (!code) return '';
+export function getTokens(code, lang) {
+  if (!code) return [];
   const rules = grammars[lang];
   if (!rules) {
-    return escapeHtml(code);
+    return [{ type: 'plain', value: code }];
   }
-  const tokens = tokenize(code, rules);
+  return tokenize(code, rules);
+}
+
+export function highlight(code, lang) {
+  if (!code) return '';
+  const tokens = getTokens(code, lang);
   return renderTokens(tokens);
 }

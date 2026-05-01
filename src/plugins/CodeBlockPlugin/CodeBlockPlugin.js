@@ -4,7 +4,7 @@
  * Native Regex-based tokenizer for JavaScript
  * Designed for extreme performance and absolute string preservation.
  */
-import { highlight } from './syntax/index.js';
+import { getTokens } from './syntax/index.js';
 
 // Inject syntax styles
 const styleId = 'penman-syntax-styles';
@@ -12,12 +12,12 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
     const style = document.createElement('style');
     style.id = styleId;
     style.textContent = `
-        .tok-keyword { color: #c678dd; }
-        .tok-string { color: #98c379; }
-        .tok-comment { color: #5c6370; font-style: italic; }
-        .tok-number { color: #d19a66; }
-        .tok-operator { color: #56b6c2; }
-        .tok-punctuation { color: #abb2bf; }
+        .penman-token-keyword { color: #c678dd; }
+        .penman-token-string { color: #98c379; }
+        .penman-token-comment { color: #5c6370; font-style: italic; }
+        .penman-token-number { color: #d19a66; }
+        .penman-token-operator { color: #56b6c2; }
+        .penman-token-punctuation { color: #abb2bf; }
         pre {
             background-color: #282c34 !important;
             overflow-x: auto !important;
@@ -93,6 +93,73 @@ function setCursorOffset(codeNode, offset) {
         sel.removeAllRanges();
         sel.addRange(range);
     }
+}
+
+function patchDOM(codeNode, tokens) {
+    let childNodes = Array.from(codeNode.childNodes);
+    // Remove the trailing BR temporarily to make diffing simpler
+    let trailingBR = null;
+    if (childNodes.length > 0) {
+        const last = childNodes[childNodes.length - 1];
+        if (last.nodeName.toLowerCase() === 'br' && last.getAttribute('data-penman-ui') === 'true') {
+            trailingBR = last;
+            codeNode.removeChild(trailingBR);
+            childNodes.pop();
+        }
+    }
+
+    let nodeIndex = 0;
+
+    for (let i = 0; i < tokens.length; i++) {
+        const token = tokens[i];
+        let existingNode = childNodes[nodeIndex];
+
+        if (token.type === 'plain') {
+            if (existingNode && existingNode.nodeType === Node.TEXT_NODE) {
+                if (existingNode.nodeValue !== token.value) {
+                    existingNode.nodeValue = token.value;
+                }
+                nodeIndex++;
+            } else {
+                const textNode = document.createTextNode(token.value);
+                if (existingNode) {
+                    codeNode.insertBefore(textNode, existingNode);
+                } else {
+                    codeNode.appendChild(textNode);
+                }
+            }
+        } else {
+            const className = `penman-token-${token.type}`;
+            if (existingNode && existingNode.nodeType === Node.ELEMENT_NODE && existingNode.tagName.toLowerCase() === 'span' && existingNode.className === className) {
+                if (existingNode.textContent !== token.value) {
+                    existingNode.textContent = token.value;
+                }
+                nodeIndex++;
+            } else {
+                const span = document.createElement('span');
+                span.className = className;
+                span.textContent = token.value;
+                if (existingNode) {
+                    codeNode.insertBefore(span, existingNode);
+                } else {
+                    codeNode.appendChild(span);
+                }
+            }
+        }
+    }
+
+    // Remove any remaining extra nodes
+    while (nodeIndex < childNodes.length) {
+        codeNode.removeChild(childNodes[nodeIndex]);
+        nodeIndex++;
+    }
+
+    // Restore or create trailing BR
+    if (!trailingBR) {
+        trailingBR = document.createElement('br');
+        trailingBR.setAttribute('data-penman-ui', 'true');
+    }
+    codeNode.appendChild(trailingBR);
 }
 
 function getSelectionOffsets(codeNode) {
@@ -195,11 +262,9 @@ function healAndPatch(preNode) {
         }
     });
 
-    // Re-highlight the <code> block with the full text
-    codeNode.innerHTML = highlight(rawText, codeNode.getAttribute('data-language') || 'javascript');
-    if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
-        codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
-    }
+    // Re-highlight the <code> block with the full text using Incremental DOM Patching
+    const tokens = getTokens(rawText, codeNode.getAttribute('data-language') || 'javascript');
+    patchDOM(codeNode, tokens);
 
     // Restore absolute cursor relative to the code block now that everything is inside it
     setCursorOffset(codeNode, offset);
@@ -296,10 +361,8 @@ export function setupCodeBlockPlugin(editor) {
                     blockNode.parentNode.replaceChild(pre, blockNode);
 
                     // Run initial highlight
-                    code.innerHTML = highlight(code.textContent, code.getAttribute('data-language') || 'javascript');
-                    if (!code.innerHTML.endsWith('<br data-penman-ui="true">') && !code.innerHTML.endsWith('<br>')) {
-                        code.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
-                    }
+                    const tokens = getTokens(code.textContent, code.getAttribute('data-language') || 'javascript');
+                    patchDOM(code, tokens);
 
                     // Set selection to end
                     const newSel = window.getSelection();
@@ -451,10 +514,8 @@ export function setupCodeBlockPlugin(editor) {
                         newEnd += 2;
                         
                         // We must reconstruct the full text and highlight it
-                        codeNode.innerHTML = highlight(text, codeNode.getAttribute('data-language') || 'javascript');
-                        if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
-                            codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
-                        }
+                        const tokens = getTokens(text, codeNode.getAttribute('data-language') || 'javascript');
+                        patchDOM(codeNode, tokens);
                         setSelectionOffsets(codeNode, newStart, newEnd);
                         if (editor.history) editor.history.pushImmediate();
                         return;
@@ -472,10 +533,8 @@ export function setupCodeBlockPlugin(editor) {
                     let newBlock = lines.join('\n');
                     text = text.substring(0, lineStart) + newBlock + text.substring(lineEnd);
                     
-                    codeNode.innerHTML = highlight(text, codeNode.getAttribute('data-language') || 'javascript');
-                    if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
-                        codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
-                    }
+                    const tokens = getTokens(text, codeNode.getAttribute('data-language') || 'javascript');
+                    patchDOM(codeNode, tokens);
                     
                     setSelectionOffsets(codeNode, newStart, newEnd);
                     if (editor.history) editor.history.pushImmediate();
