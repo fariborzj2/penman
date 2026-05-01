@@ -4,140 +4,28 @@
  * Native Regex-based tokenizer for JavaScript
  * Designed for extreme performance and absolute string preservation.
  */
-function tokenizeJavaScript(text) {
-    if (!text) return [];
+import { highlight } from '../../syntax/index.js';
 
-    const tokens = [];
-    let lastIndex = 0;
-
-    // A single master regex to match all JS token types we care about
-    // Capture groups:
-    // 1: Block Comment (/* ... */)
-    // 2: Line Comment (// ...)
-    // 3: Template Literal (`...`)
-    // 4: Double Quote String ("...")
-    // 5: Single Quote String ('...')
-    // 6: Number (integers and floats)
-    // 7: Keyword
-    const regex = /(\/\*[\s\S]*?\*\/)|(\/\/.*)|(`[^`]*`)|("([^"\\]|\\.)*")|('([^'\\]|\\.)*')|\b(\d+(\.\d+)?)\b|\b(async|await|break|case|catch|class|const|continue|debugger|default|delete|do|else|enum|export|extends|false|finally|for|function|if|implements|import|in|instanceof|interface|let|new|null|package|private|protected|public|return|super|switch|static|this|throw|true|try|typeof|var|void|while|with|yield)\b/g;
-
-    let match;
-    while ((match = regex.exec(text)) !== null) {
-        // If there is plain text before the match, push it as a text token
-        if (match.index > lastIndex) {
-            tokens.push({ type: 'text', value: text.substring(lastIndex, match.index) });
+// Inject syntax styles
+const styleId = 'penman-syntax-styles';
+if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
+    const style = document.createElement('style');
+    style.id = styleId;
+    style.textContent = `
+        .tok-keyword { color: #c678dd; }
+        .tok-string { color: #98c379; }
+        .tok-comment { color: #5c6370; font-style: italic; }
+        .tok-number { color: #d19a66; }
+        .tok-operator { color: #56b6c2; }
+        .tok-punctuation { color: #abb2bf; }
+        pre {
+            background-color: #282c34;
+            overflow-x: auto;
         }
-
-        if (match[1]) {
-            tokens.push({ type: 'comment', value: match[1] });
-        } else if (match[2]) {
-            tokens.push({ type: 'comment', value: match[2] });
-        } else if (match[3] !== undefined || match[4] !== undefined || match[6] !== undefined) {
-            tokens.push({ type: 'string', value: match[0] });
-        } else if (match[8] !== undefined) {
-            tokens.push({ type: 'number', value: match[0] });
-        } else if (match[10] !== undefined) {
-            tokens.push({ type: 'keyword', value: match[0] });
-        }
-
-        lastIndex = regex.lastIndex;
-    }
-
-    // Push any remaining text
-    if (lastIndex < text.length) {
-        tokens.push({ type: 'text', value: text.substring(lastIndex) });
-    }
-
-    // Merge adjacent text tokens (just in case, though regex structure usually prevents this)
-    const mergedTokens = [];
-    for (let i = 0; i < tokens.length; i++) {
-        const current = tokens[i];
-        if (mergedTokens.length > 0 && mergedTokens[mergedTokens.length - 1].type === 'text' && current.type === 'text') {
-            mergedTokens[mergedTokens.length - 1].value += current.value;
-        } else {
-            mergedTokens.push(current);
-        }
-    }
-
-    return mergedTokens;
+    `;
+    document.head.appendChild(style);
 }
 
-/**
- * Incrementally patches the DOM nodes of the code element to match the tokens.
- * Limits mutations strictly to what has changed.
- */
-function patchDOM(codeNode, tokens) {
-    let childNode = codeNode.firstChild;
-
-    for (let i = 0; i < tokens.length; i++) {
-        const token = tokens[i];
-
-        if (token.type === 'text') {
-            if (childNode && childNode.nodeType === 3) {
-                // It's a text node, check content
-                if (childNode.nodeValue !== token.value) {
-                    childNode.nodeValue = token.value;
-                }
-                childNode = childNode.nextSibling;
-            } else {
-                // Either no node or wrong node type, insert new text node
-                const newTextNode = document.createTextNode(token.value);
-                if (childNode) {
-                    codeNode.insertBefore(newTextNode, childNode);
-                } else {
-                    codeNode.appendChild(newTextNode);
-                }
-            }
-        } else {
-            // It's a token that requires a span
-            const className = `penman-token-${token.type}`;
-            
-            if (childNode && childNode.nodeType === 1 && childNode.tagName === 'SPAN' && childNode.className === className) {
-                // Correct span type, check content
-                if (childNode.textContent !== token.value) {
-                    childNode.textContent = token.value;
-                }
-                childNode = childNode.nextSibling;
-            } else {
-                // Wrong node type, insert new span
-                const newSpan = document.createElement('span');
-                newSpan.className = className;
-                newSpan.textContent = token.value;
-                
-                if (childNode) {
-                    codeNode.insertBefore(newSpan, childNode);
-                } else {
-                    codeNode.appendChild(newSpan);
-                }
-            }
-        }
-    }
-
-    // Ensure a trailing propping <br> for browser rendering of empty lines
-    if (childNode && childNode.nodeType === 1 && childNode.tagName === 'BR' && childNode.getAttribute('data-penman-ui') === 'true') {
-        // Already has it, move past it
-        childNode = childNode.nextSibling;
-    } else {
-        const br = document.createElement('br');
-        br.setAttribute('data-penman-ui', 'true');
-        if (childNode) {
-            codeNode.insertBefore(br, childNode);
-        } else {
-            codeNode.appendChild(br);
-        }
-    }
-
-    // Remove any trailing nodes that are no longer needed
-    while (childNode) {
-        const next = childNode.nextSibling;
-        codeNode.removeChild(childNode);
-        childNode = next;
-    }
-}
-
-/**
- * Calculates the absolute character offset of the cursor within the given code node.
- */
 function getCursorOffset(codeNode) {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return 0;
@@ -202,6 +90,7 @@ function setCursorOffset(codeNode, offset) {
 }
 
 function healAndPatch(preNode) {
+    if (preNode.getAttribute('dir') !== 'ltr') preNode.setAttribute('dir', 'ltr');
     // Heal any stray text inserted directly into <pre> (bypassing <code>)
     const offset = getCursorOffset(preNode);
     const rawText = preNode.textContent || '';
@@ -222,8 +111,10 @@ function healAndPatch(preNode) {
     });
 
     // Re-highlight the <code> block with the full text
-    const tokens = tokenizeJavaScript(rawText);
-    patchDOM(codeNode, tokens);
+    codeNode.innerHTML = highlight(rawText, codeNode.getAttribute('data-language') || 'javascript');
+    if (!codeNode.innerHTML.endsWith('<br data-penman-ui="true">') && !codeNode.innerHTML.endsWith('<br>')) {
+        codeNode.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
+    }
 
     // Restore absolute cursor relative to the code block now that everything is inside it
     setCursorOffset(codeNode, offset);
@@ -313,14 +204,17 @@ export function setupCodeBlockPlugin(editor) {
                     code.style.display = 'block';
                     code.style.fontFamily = 'inherit';
                     code.style.minHeight = '28px';
-                    code.style.color = 'rgb(43, 162, 129)';
+                    code.className = 'code-block lang-javascript'; code.setAttribute('data-language', 'javascript');
+                    code.style.color = '#abb2bf';
 
                     code.textContent = blockNode.textContent || '';
                     blockNode.parentNode.replaceChild(pre, blockNode);
 
                     // Run initial highlight
-                    const tokens = tokenizeJavaScript(code.textContent);
-                    patchDOM(code, tokens);
+                    code.innerHTML = highlight(code.textContent, code.getAttribute('data-language') || 'javascript');
+                    if (!code.innerHTML.endsWith('<br data-penman-ui="true">') && !code.innerHTML.endsWith('<br>')) {
+                        code.insertAdjacentHTML('beforeend', '<br data-penman-ui="true">');
+                    }
 
                     // Set selection to end
                     const newSel = window.getSelection();
@@ -485,4 +379,4 @@ export function setupCodeBlockPlugin(editor) {
     }, true);
 }
 
-export { tokenizeJavaScript, patchDOM, getCursorOffset, setCursorOffset };
+export { getCursorOffset, setCursorOffset };
