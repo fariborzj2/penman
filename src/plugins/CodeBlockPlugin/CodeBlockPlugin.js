@@ -578,6 +578,9 @@ export function setupCodeBlockPlugin(editor) {
             let text = clipboardData.getData('text/plain');
 
             if (text) {
+                // Normalize CRLF to LF to avoid issues with newlines getting squished or rendering improperly
+                text = text.replace(/\r\n/g, '\n');
+                
                 const range = sel.getRangeAt(0);
                 range.deleteContents();
                 const textNode = document.createTextNode(text);
