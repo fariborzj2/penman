@@ -146,101 +146,129 @@ function patchDOM(codeNode, tokens) {
 }
 
 /**
- * Calculates the absolute character offset of the cursor within the given code node.
+ * Calculates the absolute character offsets of the selection within the given code node.
  */
-function getCursorOffset(codeNode) {
+function getSelectionOffsets(codeNode) {
     const sel = window.getSelection();
-    if (!sel || sel.rangeCount === 0) return 0;
+    if (!sel || sel.rangeCount === 0) return { start: 0, end: 0, isBackwards: false };
 
     const range = sel.getRangeAt(0);
-    const preCaretRange = range.cloneRange();
+    const isBackwards = sel.anchorNode && (sel.anchorNode === range.endContainer && sel.anchorOffset === range.endOffset);
     
-    // Select contents of the entire code node up to the caret
-    preCaretRange.selectNodeContents(codeNode);
-    preCaretRange.setEnd(range.endContainer, range.endOffset);
-    
-    // Use an invisible div to safely extract raw text content length
-    const tempDiv = document.createElement('div');
-    tempDiv.appendChild(preCaretRange.cloneContents());
-    return tempDiv.textContent.length;
+    const getOffset = (node, offset) => {
+        if (!codeNode.contains(node) && node !== codeNode) return 0;
+        const r = document.createRange();
+        r.selectNodeContents(codeNode);
+        try {
+            r.setEnd(node, offset);
+        } catch (e) {
+            return 0;
+        }
+        const tempDiv = document.createElement('div');
+        tempDiv.appendChild(r.cloneContents());
+        return tempDiv.textContent.length;
+    };
+
+    return {
+        start: getOffset(range.startContainer, range.startOffset),
+        end: getOffset(range.endContainer, range.endOffset),
+        isBackwards
+    };
 }
 
 /**
- * Restores the cursor position to a specific absolute character offset inside the code node.
+ * Calculates the absolute character offset of the cursor within the given code node.
  */
-function setCursorOffset(codeNode, offset) {
-    if (offset < 0) return;
+function getCursorOffset(codeNode) {
+    return getSelectionOffsets(codeNode).end;
+}
+
+/**
+ * Restores the selection range to specific absolute character offsets inside the code node.
+ */
+function setSelectionRange(codeNode, startOffset, endOffset, isBackwards = false) {
+    if (startOffset < 0 || endOffset < 0) return;
     const sel = window.getSelection();
     if (!sel) return;
     const range = document.createRange();
-    let charCount = 0;
-    let found = false;
 
-    // Use a TreeWalker to iterate through all nodes (text and elements) in document order
+    let charCount = 0;
+    let startFound = false;
+    let endFound = false;
+
     const walker = document.createTreeWalker(codeNode, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, null, false);
     let node;
 
     while ((node = walker.nextNode())) {
         if (node.nodeType === 3) {
             const nextCharCount = charCount + node.length;
-            if (offset >= charCount && offset <= nextCharCount) {
-                range.setStart(node, offset - charCount);
-                range.collapse(true);
-                found = true;
 
-                // Optimization for newlines: if we are at the end of a node that ends with a newline,
-                // prefer placing the cursor after this node (before the next sibling).
-                // This helps browsers correctly render the cursor on the next line.
-                if (offset === nextCharCount && node.nodeValue.endsWith('\n')) {
-                    if (node.nextSibling) {
-                        range.setStartBefore(node.nextSibling);
-                        range.collapse(true);
-                    } else {
-                        // Fallback: stay at end of text node but try to ensure it's not collapsed away
-                        range.setStart(node, node.length);
-                        range.collapse(true);
-                    }
+            if (!startFound && startOffset >= charCount && startOffset <= nextCharCount) {
+                range.setStart(node, startOffset - charCount);
+                startFound = true;
+                if (startOffset === nextCharCount && node.nodeValue.endsWith('\n') && node.nextSibling) {
+                    range.setStartBefore(node.nextSibling);
                 }
-                break;
             }
+
+            if (!endFound && endOffset >= charCount && endOffset <= nextCharCount) {
+                range.setEnd(node, endOffset - charCount);
+                endFound = true;
+                if (endOffset === nextCharCount && node.nodeValue.endsWith('\n') && node.nextSibling) {
+                    range.setEndBefore(node.nextSibling);
+                }
+            }
+
+            if (startFound && endFound) break;
             charCount = nextCharCount;
         } else if (node.tagName === 'BR' && node.getAttribute('data-penman-ui') === 'true') {
-            // Special handling for our propping BR: if the offset points exactly here,
-            // we should be placed right before it.
-            if (offset === charCount) {
+            if (!startFound && startOffset === charCount) {
                 range.setStartBefore(node);
-                range.collapse(true);
-                found = true;
-                break;
+                startFound = true;
             }
+            if (!endFound && endOffset === charCount) {
+                range.setEndBefore(node);
+                endFound = true;
+            }
+            if (startFound && endFound) break;
         }
     }
 
-    // Fallback for empty blocks or offset at the very end
-    if (!found && offset === charCount) {
-        range.selectNodeContents(codeNode);
-        range.collapse(false);
-
-        // If the last child is a propping BR, prefer being before it
+    if (!startFound && startOffset === charCount) {
         const last = codeNode.lastChild;
         if (last && last.tagName === 'BR' && last.getAttribute('data-penman-ui') === 'true') {
             range.setStartBefore(last);
-            range.collapse(true);
+        } else {
+            range.setStart(codeNode, codeNode.childNodes.length);
         }
-        found = true;
+        startFound = true;
+    }
+    if (!endFound && endOffset === charCount) {
+        const last = codeNode.lastChild;
+        if (last && last.tagName === 'BR' && last.getAttribute('data-penman-ui') === 'true') {
+            range.setEndBefore(last);
+        } else {
+            range.setEnd(codeNode, codeNode.childNodes.length);
+        }
+        endFound = true;
     }
 
-    if (found) {
-        sel.removeAllRanges();
+    sel.removeAllRanges();
+    if (isBackwards && sel.setBaseAndExtent) {
+        sel.setBaseAndExtent(range.endContainer, range.endOffset, range.startContainer, range.startOffset);
+    } else {
         sel.addRange(range);
     }
 }
 
+/**
+ * Restores the cursor position to a specific absolute character offset inside the code node.
+ */
+function setCursorOffset(codeNode, offset) {
+    setSelectionRange(codeNode, offset, offset);
+}
+
 function healAndPatch(preNode) {
-    // Heal any stray text inserted directly into <pre> (bypassing <code>)
-    const offset = getCursorOffset(preNode);
-    const rawText = preNode.textContent || '';
-    
     let codeNode = preNode.querySelector('code');
     if (!codeNode) {
         codeNode = document.createElement('code');
@@ -248,6 +276,10 @@ function healAndPatch(preNode) {
         codeNode.style.fontFamily = 'inherit';
         preNode.appendChild(codeNode);
     }
+
+    // Heal any stray text inserted directly into <pre> (bypassing <code>)
+    const offsets = getSelectionOffsets(codeNode);
+    const rawText = preNode.textContent || '';
 
     // Remove everything else in the <pre> to maintain strict structure
     Array.from(preNode.childNodes).forEach(child => {
@@ -260,8 +292,8 @@ function healAndPatch(preNode) {
     const tokens = tokenizeJavaScript(rawText);
     patchDOM(codeNode, tokens);
 
-    // Restore absolute cursor relative to the code block now that everything is inside it
-    setCursorOffset(codeNode, offset);
+    // Restore absolute selection relative to the code block now that everything is inside it
+    setSelectionRange(codeNode, offsets.start, offsets.end, offsets.isBackwards);
 }
 
 export function setupCodeBlockPlugin(editor) {
@@ -460,35 +492,78 @@ export function setupCodeBlockPlugin(editor) {
                 e.preventDefault();
                 e.stopPropagation();
 
-                const offset = getCursorOffset(codeNode);
+                const { start, end, isBackwards } = getSelectionOffsets(codeNode);
                 const text = codeNode.textContent || '';
 
-                if (e.shiftKey) {
-                    // Outdent: Remove up to 2 spaces from the beginning of the current line
-                    const lines = text.substring(0, offset).split('\n');
-                    const currentLineBeforeCaret = lines[lines.length - 1];
-                    const lineStartIndex = offset - currentLineBeforeCaret.length;
-
-                    const lineContent = text.substring(lineStartIndex).split('\n')[0];
-                    const match = lineContent.match(/^ {1,2}/);
-
-                    if (match) {
-                        const spacesToRemove = match[0].length;
-                        const newText = text.substring(0, lineStartIndex) + text.substring(lineStartIndex + spacesToRemove);
-                        codeNode.textContent = newText;
-                        setCursorOffset(codeNode, Math.max(lineStartIndex, offset - spacesToRemove));
-                        healAndPatch(preNode);
-                    }
-                } else {
-                    // Indent: Insert 2 spaces
+                if (!e.shiftKey && start === end) {
+                    // Single-line Indent: Insert 2 spaces at cursor
                     const range = sel.getRangeAt(0);
                     range.deleteContents();
-                    const textNode = document.createTextNode('  '); // 2 spaces
+                    const textNode = document.createTextNode('  ');
                     range.insertNode(textNode);
                     range.setStartAfter(textNode);
                     range.collapse(true);
                     sel.removeAllRanges();
                     sel.addRange(range);
+                    healAndPatch(preNode);
+                } else {
+                    // Multi-line Indent or Outdent (or single-line outdent)
+                    const lines = text.split('\n');
+                    let currentPos = 0;
+                    let newTextArr = [];
+                    let adjustedStart = start;
+                    let adjustedEnd = end;
+
+                    for (let i = 0; i < lines.length; i++) {
+                        const line = lines[i];
+                        const lineStart = currentPos;
+                        const lineEnd = currentPos + line.length;
+                        // Selection touches this line if it overlaps with [lineStart, lineEnd]
+                        const isSelected = (lineStart <= end && lineEnd >= start);
+
+                        if (isSelected) {
+                            if (e.shiftKey) {
+                                const match = line.match(/^ {1,2}/);
+                                if (match) {
+                                    const removed = match[0].length;
+                                    newTextArr.push(line.substring(removed));
+
+                                    // Adjust offsets: if start/end are after the removed spaces, shift them back
+                                    // If they are within the removed spaces, snap them to line start
+                                    if (start >= lineStart) {
+                                        adjustedStart -= Math.min(start - lineStart, removed);
+                                    }
+                                    if (end >= lineStart) {
+                                        adjustedEnd -= Math.min(end - lineStart, removed);
+                                    }
+                                } else {
+                                    newTextArr.push(line);
+                                }
+                            } else {
+                                newTextArr.push('  ' + line);
+                                // Adjust offsets: everything after the insertion shifts forward
+                                if (start > lineStart || (start === lineStart && start === end)) {
+                                     // For collapsed cursor at start of line, we usually want it to stay at start (moving with line)
+                                     // but our logic above for start===end already handled collapsed cursor mid-line.
+                                     // Actually if we are here, it's either not collapsed or we want line indent.
+                                     adjustedStart += 2;
+                                } else if (start === lineStart) {
+                                     // Selection starts at beginning of line, keep it there
+                                }
+
+                                if (end >= lineStart) {
+                                    adjustedEnd += 2;
+                                }
+                            }
+                        } else {
+                            newTextArr.push(line);
+                        }
+
+                        currentPos = lineEnd + 1; // +1 for \n
+                    }
+
+                    codeNode.textContent = newTextArr.join('\n');
+                    setSelectionRange(codeNode, adjustedStart, adjustedEnd, isBackwards);
                     healAndPatch(preNode);
                 }
 
