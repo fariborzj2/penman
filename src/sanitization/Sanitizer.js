@@ -731,6 +731,11 @@ export class Sanitizer {
       const nodes = Array.from(root.querySelectorAll(tag));
 
       for (const el of nodes) {
+        // Do not remove spans that are purely formatting a newline character
+        if (el.textContent === '\n' && el.classList.length > 0 && el.classList[0].startsWith('penman-token-')) {
+            continue;
+        }
+
         const hasContent =
           el.textContent.trim().length > 0 ||
           el.querySelector("img, br, hr");
@@ -919,6 +924,17 @@ export class Sanitizer {
   _removeEmptyNodesRecursively(node) {
     const children = Array.from(node.childNodes);
     for (const child of children) {
+        // Do not remove spans or text nodes representing explicit newlines within codeblocks
+        let isInsideCode = false;
+        let curr = child.parentNode;
+        while (curr) {
+            if (curr.tagName && (curr.tagName.toLowerCase() === 'pre' || curr.tagName.toLowerCase() === 'code')) {
+                isInsideCode = true;
+                break;
+            }
+            curr = curr.parentNode;
+        }
+
         if (child.nodeType === Node.ELEMENT_NODE) {
             // Protected blocks should not be removed even if they appear empty
             if (this._isConfiguredBlock(child) || child.getAttribute('data-penman-core') === 'true') {
@@ -926,6 +942,10 @@ export class Sanitizer {
             }
 
             if (this._isProtected(child)) {
+                continue;
+            }
+
+            if (isInsideCode && child.textContent === '\n') {
                 continue;
             }
 
@@ -943,6 +963,9 @@ export class Sanitizer {
                 child.remove();
             }
         } else if (child.nodeType === Node.TEXT_NODE) {
+            if (isInsideCode && child.nodeValue === '\n') {
+                continue;
+            }
             if (!child.nodeValue.trim() && child.nodeValue !== " ") {
                 child.remove();
             }
