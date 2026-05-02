@@ -895,8 +895,25 @@ export class Sanitizer {
 
   _removeTransientUI(root) {
       // Remove any elements marked as transient UI (like code badges)
-      const uiElements = root.querySelectorAll('[data-penman-ui="true"]');
-      uiElements.forEach(el => el.remove());
+      // EXCEPT for <br> elements inside <pre> blocks which represent actual newlines
+      const uiElements = Array.from(root.querySelectorAll('[data-penman-ui="true"]'));
+      uiElements.forEach(el => {
+          let isInsidePre = false;
+          let curr = el.parentNode;
+          while (curr && curr !== root) {
+              if (curr.tagName && curr.tagName.toLowerCase() === 'pre') {
+                  isInsidePre = true;
+                  break;
+              }
+              curr = curr.parentNode;
+          }
+          if (!isInsidePre || el.tagName.toLowerCase() !== 'br') {
+              el.remove();
+          } else {
+              // Convert them to normal BRs so they don't get messed up or stripped out later
+              el.removeAttribute('data-penman-ui');
+          }
+      });
   }
 
   _removeEmptyNodesRecursively(node) {

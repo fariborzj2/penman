@@ -86,4 +86,12 @@ describe('Sanitizer Production Grade Output', () => {
     expect(clean).toMatch(/<thead><tr><th data-cell-id="c-[a-z0-9]+"><p>Inner Header<\/p><\/th><\/tr><\/thead>/);
     expect(clean).toMatch(/<tbody><tr><td data-cell-id="c-[a-z0-9]+"><p>Inner Data<\/p><\/td><\/tr><\/tbody>/);
   });
+
+  it('should not strip data-penman-ui br nodes inside pre blocks', () => {
+    const html = `<pre dir="ltr"><code dir="ltr" data-language="javascript"><span class="penman-token-keyword">let</span> <span class="penman-token-plain">x = 1;</span><br data-penman-ui="true"><span class="penman-token-comment">// comment</span><br data-penman-ui="true"><span class="penman-token-keyword">let</span> <span class="penman-token-plain">y = 2;</span></code></pre>`;
+    const clean = sanitizer.sanitize(html);
+    expect(clean).toContain('<br>');
+    expect(clean).not.toContain('data-penman-ui');
+    expect(clean).toContain('// comment</span><br>');
+  });
 });
