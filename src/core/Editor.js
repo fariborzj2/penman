@@ -568,6 +568,34 @@ export class Editor extends EventEmitter {
            node.parentNode.childNodes.length === 1;
   }
 
+  /**
+   * Helper to extract plain text while preserving structural line breaks
+   * @private
+   */
+  _extractTextWithNewlines(node) {
+      if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
+      if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') {
+          // Exclude trailing propping BRs in UI to avoid extra newlines
+          if (node.getAttribute('data-penman-ui') === 'true' && node === node.parentNode.lastChild) {
+              return '';
+          }
+          return '\n';
+      }
+      
+      let text = '';
+      const isBlock = node.nodeType === Node.ELEMENT_NODE && 
+          ['p', 'div', 'li', 'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'tr', 'pre'].includes(node.tagName.toLowerCase());
+
+      for (let child of node.childNodes) {
+          text += this._extractTextWithNewlines(child);
+      }
+      
+      if (isBlock && node.nextSibling) {
+          text += '\n';
+      }
+      return text;
+  }
+
   _syncToTextarea() {
     this.textarea.value = this.editableArea.innerHTML;
   }
@@ -660,7 +688,7 @@ export class Editor extends EventEmitter {
         const clone = selectedNode.cloneNode(true);
         clone.setAttribute('data-penman-core', 'true');
         html = clone.outerHTML;
-        text = selectedNode.textContent || '';
+        text = this._extractTextWithNewlines(selectedNode) || '';
     } else {
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
@@ -670,7 +698,7 @@ export class Editor extends EventEmitter {
         container.appendChild(range.cloneContents());
 
         html = container.innerHTML;
-        text = container.textContent || '';
+        text = this._extractTextWithNewlines(container) || '';
     }
 
     event.preventDefault();

@@ -28,7 +28,13 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 
 function extractTextWithNewlines(node) {
     if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
-    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') return '\n';
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') {
+        // Exclude trailing propping BRs in UI to avoid extra newlines at the end of block
+        if (node.getAttribute('data-penman-ui') === 'true' && node === node.parentNode.lastChild) {
+            return '';
+        }
+        return '\n';
+    }
     let text = '';
     for (let child of node.childNodes) {
         text += extractTextWithNewlines(child);
@@ -124,6 +130,16 @@ function patchDOM(codeNode, tokens) {
         const token = tokens[i];
         let existingNode = childNodes[nodeIndex];
 
+        // If we expect plain text, and we run into a BR that isn't the trailing BR,
+        // it means we pasted/copied something that had BRs instead of newlines.
+        // We should replace that BR with a text node before comparing.
+        if (existingNode && existingNode.nodeType === Node.ELEMENT_NODE && existingNode.tagName.toLowerCase() === 'br') {
+            const textNode = document.createTextNode('\n');
+            codeNode.replaceChild(textNode, existingNode);
+            existingNode = textNode;
+            childNodes[nodeIndex] = textNode;
+        }
+
         if (token.type === 'plain') {
             if (existingNode && existingNode.nodeType === Node.TEXT_NODE) {
                 if (existingNode.nodeValue !== token.value) {
@@ -134,9 +150,12 @@ function patchDOM(codeNode, tokens) {
                 const textNode = document.createTextNode(token.value);
                 if (existingNode) {
                     codeNode.insertBefore(textNode, existingNode);
+                    childNodes.splice(nodeIndex, 0, textNode);
                 } else {
                     codeNode.appendChild(textNode);
+                    childNodes.push(textNode);
                 }
+                nodeIndex++;
             }
         } else {
             const className = `penman-token-${token.type}`;
@@ -151,9 +170,12 @@ function patchDOM(codeNode, tokens) {
                 span.textContent = token.value;
                 if (existingNode) {
                     codeNode.insertBefore(span, existingNode);
+                    childNodes.splice(nodeIndex, 0, span);
                 } else {
                     codeNode.appendChild(span);
+                    childNodes.push(span);
                 }
+                nodeIndex++;
             }
         }
     }
@@ -255,7 +277,7 @@ function healAndPatch(preNode) {
     if (preNode.getAttribute('dir') !== 'ltr') preNode.setAttribute('dir', 'ltr');
     // Heal any stray text inserted directly into <pre> (bypassing <code>)
     const offset = getCursorOffset(preNode);
-    const rawText = preNode.textContent || '';
+    const rawText = extractTextWithNewlines(preNode) || '';
     
     let codeNode = preNode.querySelector('code');
     if (!codeNode) {
