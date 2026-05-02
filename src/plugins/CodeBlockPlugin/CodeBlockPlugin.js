@@ -28,7 +28,13 @@ if (typeof document !== 'undefined' && !document.getElementById(styleId)) {
 
 function extractTextWithNewlines(node) {
     if (node.nodeType === Node.TEXT_NODE) return node.nodeValue;
-    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') return '\n';
+    if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'br') {
+        // Exclude trailing propping BRs in UI to avoid extra newlines at the end of block
+        if (node.getAttribute('data-penman-ui') === 'true' && node === node.parentNode.lastChild) {
+            return '';
+        }
+        return '\n';
+    }
     let text = '';
     for (let child of node.childNodes) {
         text += extractTextWithNewlines(child);
@@ -255,7 +261,7 @@ function healAndPatch(preNode) {
     if (preNode.getAttribute('dir') !== 'ltr') preNode.setAttribute('dir', 'ltr');
     // Heal any stray text inserted directly into <pre> (bypassing <code>)
     const offset = getCursorOffset(preNode);
-    const rawText = preNode.textContent || '';
+    const rawText = extractTextWithNewlines(preNode) || '';
     
     let codeNode = preNode.querySelector('code');
     if (!codeNode) {
