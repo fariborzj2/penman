@@ -787,6 +787,15 @@ export class Editor extends EventEmitter {
     let html = clipboardData.getData('text/html');
     let text = clipboardData.getData('text/plain');
 
+    const pasteEvent = {
+      html,
+      text,
+      defaultPrevented: false,
+      preventDefault: function() { this.defaultPrevented = true; }
+    };
+    this.emit('beforePaste', pasteEvent);
+    if (pasteEvent.defaultPrevented) return;
+
     // MAGIC PASTE: If selection exists and clipboard is a URL, wrap selection in link
     const sel = window.getSelection();
     const selectedNode = this.selection.getSelectedNode();

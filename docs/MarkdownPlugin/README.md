@@ -8,7 +8,8 @@ It listens to the editor's `keyup` event to detect Markdown patterns and transfo
 
 ## Clear boundary of what it DOES NOT do
 - Does not convert existing HTML content to Markdown.
-- Does not act as a full Markdown parser; it only supports inline expansions on typing.
+- Automatically intercepts plain-text pastes that contain Markdown syntax, converting them directly to rich HTML elements.
+- Does not act as a full Markdown parser; it only supports inline expansions on typing and on plain-text paste events.
 
 ## Dependencies
 - `editor.commands` (CommandManager)
