@@ -18,3 +18,8 @@
   - `*text*` or `_text_` -> Italic (inline)
   - `~~text~~` -> Strikethrough (inline)
   - `\`text\`` -> Inline Code (if SourceCodePlugin is used/supported or inline code supported). Let's skip inline code if not explicitly supported.
+
+## Paste Support
+- Hooks into `beforePaste` event in `Editor.js`.
+- If the pasted content is plain-text (`text/plain`) and lacks HTML, it scans for Markdown patterns.
+- Converts Markdown strings to rich HTML (Headings, Lists, Blockquotes, Tables, Horizontal Rules, and inline styles) and inserts them natively via `editor.insertContent`.

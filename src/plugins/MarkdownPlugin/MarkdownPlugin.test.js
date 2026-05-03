@@ -82,4 +82,29 @@ describe('MarkdownPlugin', () => {
     expect(editor.history.takeSnapshot).toHaveBeenCalled();
     expect(editor.editableArea.innerHTML).toContain('<strong>bold</strong>');
   });
+
+  it('should format markdown correctly on paste', () => {
+    const pasteEvent = {
+      text: '# Heading 1\n\nSome **bold** text and *italic* text.\n\n* Item 1\n* Item 2\n\n| Col 1 | Col 2 |\n',
+      html: '',
+      defaultPrevented: false,
+      preventDefault: function() { this.defaultPrevented = true; }
+    };
+
+    editor.insertContent = vi.fn();
+
+    editor.emit('beforePaste', pasteEvent);
+
+    expect(pasteEvent.defaultPrevented).toBe(true);
+    expect(editor.insertContent).toHaveBeenCalled();
+
+    const insertedHtml = editor.insertContent.mock.calls[0][0];
+
+    // Check conversions
+    expect(insertedHtml).toContain('<h1>Heading 1</h1>');
+    expect(insertedHtml).toContain('<strong>bold</strong>');
+    expect(insertedHtml).toContain('<em>italic</em>');
+    expect(insertedHtml).toContain('<ul><li>Item 1</li><li>Item 2</li></ul>');
+    expect(insertedHtml).toContain('<table');
+  });
 });
