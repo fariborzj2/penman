@@ -168,4 +168,19 @@ describe('MarkdownPlugin', () => {
     expect(insertedHtml).toContain('<sup class="penman-footnote-ref"><a href="#fn-1">[1]</a></sup>');
     expect(insertedHtml).toContain('<div class="penman-footnote" id="fn-1"><sup>1</sup> Footnote text</div>');
   });
+
+  it('should collapse multiple newlines', () => {
+    const pasteEvent = {
+      text: 'Line 1 **bold**\n\n\n\nLine 2',
+      html: '',
+      defaultPrevented: false,
+      preventDefault: function() { this.defaultPrevented = true; }
+    };
+    editor.insertContent = vi.fn();
+    editor.emit('beforePaste', pasteEvent);
+
+    const insertedHtml = editor.insertContent.mock.calls[0][0];
+    expect(insertedHtml).toContain('<p>Line 1 <strong>bold</strong></p><p><br></p><p>Line 2</p>');
+    expect(insertedHtml).not.toContain('<p><br></p><p><br></p>');
+  });
 });

@@ -286,7 +286,11 @@ function parseMarkdownToHTML(text) {
          resultHtml += `<p>${parseInlineMarkdown(line)}</p>`;
       }
     } else {
-      resultHtml += `<p><br></p>`;
+      // Multiple consecutive newlines handling
+      // We skip empty lines if the previous line was also empty to prevent excessive `<p><br></p>`
+      if (i > 0 && lines[i-1].trim() !== '') {
+        resultHtml += `<p><br></p>`;
+      }
     }
   }
 
