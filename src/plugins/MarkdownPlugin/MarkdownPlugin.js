@@ -50,6 +50,28 @@ function tryBlockMatch(editor, textNode, textBeforeCursor, offset) {
     { regex: /^---$/, cmd: 'INSERT_HORIZONTAL_RULE' }
   ];
 
+  // Dynamic check for GFM table syntax: `| Cell 1 | Cell 2 |` -> space -> table
+  // This looks for at least 2 pipes separated by characters, indicating a table row
+  const tableRegex = /^\|.*\|.*\| $/;
+  const tableMatch = textBeforeCursor.match(tableRegex);
+
+  if (tableMatch) {
+      editor.history.takeSnapshot();
+      textNode.textContent = textNode.textContent.slice(offset);
+
+      const selection = window.getSelection();
+      const newRange = document.createRange();
+      newRange.setStart(textNode, 0);
+      newRange.setEnd(textNode, 0);
+      selection.removeAllRanges();
+      selection.addRange(newRange);
+
+      const cols = (tableMatch[0].match(/\|/g) || []).length - 1;
+      editor.execCommand('INSERT_TABLE', { rows: 2, cols: cols > 0 ? cols : 2 });
+
+      return true;
+  }
+
   for (let pattern of blockPatterns) {
     if (pattern.regex.test(textBeforeCursor)) {
       editor.history.takeSnapshot();
