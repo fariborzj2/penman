@@ -76,6 +76,12 @@ export default {
       typeEmbed: 'جاسازی',
       livePreview: 'پیش‌نمایش زنده'
     },
+    embed: {
+      title: 'جاسازی HTML/Iframe',
+      label: 'کد جاسازی (HTML/Iframe)',
+      emptyError: 'لطفا کد جاسازی را وارد کنید.',
+      invalidError: 'کد باید شامل یک تگ قابل جاسازی (مثل iframe, embed) باشد.'
+    },
     draft: {
       recoveryBannerMsg: 'یک نسخه ذخیره‌ شده جدیدتر از این سند یافت شد.',
       lastAutoSaved: 'آخرین ذخیره خودکار: ',

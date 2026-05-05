@@ -76,6 +76,12 @@ export default {
       typeEmbed: 'Embed',
       livePreview: 'Live Preview'
     },
+    embed: {
+      title: 'Embed HTML/Iframe',
+      label: 'Embed Code (HTML/Iframe)',
+      emptyError: 'Please enter embed code.',
+      invalidError: 'Code must contain an embeddable HTML tag (like iframe, embed).'
+    },
     draft: {
       recoveryBannerMsg: 'A newer unsaved version of this document was found.',
       lastAutoSaved: 'Last auto-saved: ',
