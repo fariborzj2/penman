@@ -13,8 +13,9 @@ export class EmbedModal {
     const modal = this.editor.ui.createModal({
       title: this.editor.i18n.t('plugins.embed.title') || 'Insert Embed Code',
       width: '500px',
+      hideFooter: true,
       body: `
-        <div class="penman-modal-body">
+        <div style="padding: 15px;">
           <label style="display:block; font-weight: 500; margin-bottom: 8px;">
             ${this.editor.i18n.t('plugins.embed.label') || 'Embed Code (HTML/Iframe)'}
           </label>
