@@ -10,7 +10,7 @@ export class EmbedModal {
       this.editor.selection.save();
     }
 
-    const modal = this.editor.ui.registry.createModal({
+    const modal = this.editor.ui.createModal({
       title: this.editor.i18n.t('plugins.embed.title') || 'Insert Embed Code',
       width: '500px',
       content: `

@@ -14,12 +14,12 @@ describe('EmbedPlugin', () => {
       ui: {
         registry: {
           addButton: vi.fn(),
-          createModal: vi.fn().mockReturnValue({
-            open: vi.fn(),
-            close: vi.fn(),
-            element: document.createElement('div')
-          })
-        }
+        },
+        createModal: vi.fn().mockReturnValue({
+          open: vi.fn(),
+          close: vi.fn(),
+          element: document.createElement('div')
+        })
       },
       i18n: {
         t: vi.fn((key) => key)
