@@ -281,6 +281,10 @@ export default {
     delete: 'حذف',
     edit: 'ویرایش',
     ok: 'تایید',
+    confirm: 'تأیید',
+    discard: 'دور انداختن تغییرات',
+    error: 'خطا',
+    info: 'اطلاعات',
     dialog: 'پنجره',
     stats: 'تعداد کلمات: {words} | تعداد کاراکترها: {chars}'
   }

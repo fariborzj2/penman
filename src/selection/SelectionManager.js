@@ -3,6 +3,8 @@ export class SelectionManager {
     this.editor = editor;
     this.MARKER_ID = 'penman-selection-marker';
     this.selectedNode = null;
+    // Stores character offsets for save/restore
+    this._savedOffsets = null;
   }
 
   /**
@@ -14,79 +16,101 @@ export class SelectionManager {
   }
 
   /**
-   * Saves the current selection range using reliable DOM markers
-   * This ensures normalization or DOM manipulation doesn't lose the cursor.
+   * Returns the character offset of a boundary point (container + offset)
+   * relative to a root element, counting only text node characters.
+   * @private
+   */
+  _getCharOffset(root, container, offset) {
+    let charCount = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      if (node === container) {
+        return charCount + offset;
+      }
+      charCount += node.textContent.length;
+    }
+    return charCount;
+  }
+
+  /**
+   * Resolves a character offset back to a {node, offset} boundary point
+   * relative to a root element.
+   * @private
+   */
+  _resolveCharOffset(root, charOffset) {
+    let charCount = 0;
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node;
+    while ((node = walker.nextNode())) {
+      const len = node.textContent.length;
+      if (charCount + len >= charOffset) {
+        return { node, offset: charOffset - charCount };
+      }
+      charCount += len;
+    }
+    // Fallback: end of last text node
+    return node ? { node, offset: node.textContent.length } : null;
+  }
+
+  /**
+   * Saves the current selection range using character offsets relative to
+   * the editable area. This is immune to DOM mutations that split/move nodes.
    */
   save() {
     this.clearNodeSelection();
+    this._savedOffsets = null;
+
     const sel = this.getSelection();
     if (!sel || sel.rangeCount === 0) return;
 
     const range = sel.getRangeAt(0);
+    const root = this.editor.editableArea;
 
-    // Ensure the selection is actually inside our editable area
-    if (!this.editor.editableArea.contains(range.commonAncestorContainer)) {
-      return;
-    }
+    if (!root.contains(range.commonAncestorContainer)) return;
 
-    // Remove any existing markers first
-    this._removeMarkers();
+    const startOffset = this._getCharOffset(root, range.startContainer, range.startOffset);
+    const endOffset = this._getCharOffset(root, range.endContainer, range.endOffset);
 
-    // Create markers
-    const startMarker = document.createElement('span');
-    startMarker.id = `${this.MARKER_ID}-start`;
-    startMarker.style.display = 'none';
-
-    const endMarker = document.createElement('span');
-    endMarker.id = `${this.MARKER_ID}-end`;
-    endMarker.style.display = 'none';
-
-    // Clone the range so we don't instantly break the user's active selection while mutating
-    const cloneRange = range.cloneRange();
-
-    // Insert end marker
-    cloneRange.collapse(false);
-    cloneRange.insertNode(endMarker);
-
-    // Reset range and insert start marker
-    cloneRange.setStart(range.startContainer, range.startOffset);
-    cloneRange.collapse(true);
-    cloneRange.insertNode(startMarker);
+    this._savedOffsets = { startOffset, endOffset };
   }
 
   /**
-   * Cleans up markers from the DOM without changing focus or selection.
-   * Useful when a saved selection is no longer needed.
+   * Cleans up saved state without changing focus or selection.
    */
   clearSaved() {
+    this._savedOffsets = null;
+    // Also clean up any legacy markers that may exist
     this._removeMarkers();
   }
 
   /**
-   * Restores the selection from the DOM markers
+   * Restores the selection from the saved character offsets.
    */
   restore() {
     this.clearNodeSelection();
     this.editor.focus();
 
-    const startMarker = this.editor.editableArea.querySelector(`#${this.MARKER_ID}-start`);
-    const endMarker = this.editor.editableArea.querySelector(`#${this.MARKER_ID}-end`);
+    if (!this._savedOffsets) return;
 
-    if (startMarker && endMarker) {
+    const { startOffset, endOffset } = this._savedOffsets;
+    this._savedOffsets = null;
+
+    const root = this.editor.editableArea;
+    const startPoint = this._resolveCharOffset(root, startOffset);
+    const endPoint = this._resolveCharOffset(root, endOffset);
+
+    if (!startPoint || !endPoint) return;
+
+    try {
       const sel = this.getSelection();
       const range = document.createRange();
-
-      range.setStartAfter(startMarker);
-      range.setEndBefore(endMarker);
-
+      range.setStart(startPoint.node, startPoint.offset);
+      range.setEnd(endPoint.node, endPoint.offset);
       sel.removeAllRanges();
       sel.addRange(range);
-
-      // Clean up markers
-      this._removeMarkers();
-    } else {
-      // Fallback if markers are lost
-      this._removeMarkers();
+    } catch (_) {
+      // Ignore — selection is best-effort after complex DOM mutations
     }
   }
 
@@ -135,11 +159,16 @@ export class SelectionManager {
   }
 
   /**
-   * Internal helper to clean up marker elements
+   * Internal helper to clean up legacy marker elements (kept for compatibility)
+   * @private
    */
   _removeMarkers() {
-    const startMarker = this.editor.editableArea.querySelector(`#${this.MARKER_ID}-start`);
-    const endMarker = this.editor.editableArea.querySelector(`#${this.MARKER_ID}-end`);
+    const startMarker = this.editor.editableArea
+      ? this.editor.editableArea.querySelector(`#${this.MARKER_ID}-start`)
+      : null;
+    const endMarker = this.editor.editableArea
+      ? this.editor.editableArea.querySelector(`#${this.MARKER_ID}-end`)
+      : null;
 
     if (startMarker && startMarker.parentNode) {
       startMarker.parentNode.removeChild(startMarker);

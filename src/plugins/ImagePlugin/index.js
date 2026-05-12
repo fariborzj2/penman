@@ -588,7 +588,14 @@ export function setupImagePlugin(editor) {
                 editor.selection.save();
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
-              } catch (err) { alert(editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', translateError(editor, err))); }
+              } catch (err) {
+                editor.ui.createModal({
+                  title: editor.i18n.t('ui.error'),
+                  body: `<p style="padding: 20px;">${editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', translateError(editor, err))}</p>`,
+                  submitText: editor.i18n.t('ui.ok'),
+                  onSubmit: () => {}
+                }).open();
+              }
             }
           });
         }
@@ -914,7 +921,12 @@ export function setupImagePlugin(editor) {
                  renderQueue();
                  modal.close();
              } else {
-                 alert(editor.i18n.t('plugins.image.noItemsToInsert'));
+                 editor.ui.createModal({
+                   title: editor.i18n.t('ui.info'),
+                   body: `<p style="padding: 20px;">${editor.i18n.t('plugins.image.noItemsToInsert')}</p>`,
+                   submitText: editor.i18n.t('ui.ok'),
+                   onSubmit: () => {}
+                 }).open();
              }
           });
         }

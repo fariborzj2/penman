@@ -96,9 +96,25 @@ function openSourceCodeModal(editor) {
     if (cmView && !isSaved) {
       const currentHtml = cmView.state.doc.toString();
       if (currentHtml !== initialHtml) {
-        if (!window.confirm(editor.i18n.t('plugins.sourceCode.unsavedChanges'))) {
-           return;
-        }
+        // Use internal confirmation modal instead of window.confirm
+        const confirmModal = editor.ui.createModal({
+          title: editor.i18n.t('ui.confirm'),
+          body: `<p style="padding: 20px;">${editor.i18n.t('plugins.sourceCode.unsavedChanges')}</p>`,
+          submitText: editor.i18n.t('ui.discard'),
+          cancelText: editor.i18n.t('ui.cancel'),
+          onSubmit: () => {
+            originalClose();
+            if (cmView) {
+              cmView.destroy();
+            }
+            activeModal = null;
+          },
+          onCancel: () => {
+            // Do nothing, keep the source code modal open
+          }
+        });
+        confirmModal.open();
+        return;
       }
     }
     originalClose();

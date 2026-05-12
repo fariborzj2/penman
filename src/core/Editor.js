@@ -174,64 +174,77 @@ export class Editor extends EventEmitter {
   }
 
   _bindEvents() {
-    // Monitor selection changes (cursor movement, clicking)
-    this.editableArea.addEventListener('mouseup', () => {
+    // Store bound handlers so they can be removed in destroy()
+    this._boundHandlers = {};
+
+    this._boundHandlers.mouseup = () => { this.emit('selectionChange'); };
+    this._boundHandlers.click = (e) => {
+      if (e.target.closest('a')) { e.preventDefault(); }
+    };
+    this._boundHandlers.mousedown = (e) => {
+      const widget = e.target.closest('table, figure.penman-image, figure.penman-media-block, .penman-suggested-posts-wrapper');
+      if (widget) {
+        const isInteractive = e.target.closest('figcaption, td, th');
+        if (!isInteractive) {
+          e.preventDefault();
+          this.editableArea.focus();
+          this.selection.selectNode(widget);
+          return;
+        }
+      }
+      if (this.selection.getSelectedNode() && !this.selection.getSelectedNode().contains(e.target)) {
+        this.selection.clearNodeSelection();
+      }
+    };
+    this._boundHandlers.keyup = (e) => {
+      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
       this.emit('selectionChange');
-    });
+    };
+    this._boundHandlers.input = () => {
+      this._syncToTextarea();
+      this.emit('change', this.editableArea.innerHTML);
+    };
+    this._boundHandlers.focus = () => {
+      document.execCommand('defaultParagraphSeparator', false, 'p');
+    };
+    this._boundHandlers.beforeinput = (e) => {
+      if (e.inputType === 'historyUndo') {
+        e.preventDefault();
+        this.history.undo();
+      } else if (e.inputType === 'historyRedo') {
+        e.preventDefault();
+        this.history.redo();
+      }
+    };
+    this._boundHandlers.copy = (e) => this._handleCopy(e);
+    this._boundHandlers.cut = (e) => this._handleCopy(e);
+    this._boundHandlers.paste = (e) => this._handlePaste(e);
+
+    // Monitor selection changes (cursor movement, clicking)
+    this.editableArea.addEventListener('mouseup', this._boundHandlers.mouseup);
 
     this.on('selectionChange', () => {
       this._updateFooter();
     });
 
     // Prevent default navigation for all links in the editor
-    this.editableArea.addEventListener('click', (e) => {
-      if (e.target.closest('a')) {
-        e.preventDefault();
-      }
-    });
+    this.editableArea.addEventListener('click', this._boundHandlers.click);
 
-    this.editableArea.addEventListener('mousedown', (e) => {
-      const widget = e.target.closest('table, figure.penman-image, figure.penman-media-block, .penman-suggested-posts-wrapper');
-      if (widget) {
-        // If clicking inside an editable/interactive part, don't select the whole node
-        const isInteractive = e.target.closest('figcaption, td, th');
-        if (!isInteractive) {
-          e.preventDefault();
-          this.editableArea.focus(); // Ensure focus for keyboard events
-          this.selection.selectNode(widget);
-          return;
-        }
-      }
+    this.editableArea.addEventListener('mousedown', this._boundHandlers.mousedown);
 
-      // If clicking elsewhere, we might want to clear node selection,
-      // but only if we are not clicking inside the current selected node.
-      if (this.selection.getSelectedNode() && !this.selection.getSelectedNode().contains(e.target)) {
-        this.selection.clearNodeSelection();
-      }
-    });
-
-    this.editableArea.addEventListener('keyup', (e) => {
-      // Ignore modifier keys to reduce noise
-      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(e.key)) return;
-      this.emit('selectionChange');
-    });
+    this.editableArea.addEventListener('keyup', this._boundHandlers.keyup);
 
     // Sync to textarea on input
-    this.editableArea.addEventListener('input', () => {
-      this._syncToTextarea();
-      this.emit('change', this.editableArea.innerHTML);
-    });
+    this.editableArea.addEventListener('input', this._boundHandlers.input);
 
     this.on('change', () => this._updateFooter());
     // EVENT INTERCEPTION: Prevent native history pollution
     // Ensure document default block is p instead of div when empty
-    this.editableArea.addEventListener('focus', () => {
-      document.execCommand('defaultParagraphSeparator', false, 'p');
-    });
+    this.editableArea.addEventListener('focus', this._boundHandlers.focus);
 
     // 1. Intercept keyboard shortcuts (Ctrl+Z, Cmd+Z, Ctrl+Y, Cmd+Shift+Z) and Enter
-    this.editableArea.addEventListener('keydown', (e) => {
-      const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+    this._boundHandlers.keydown = (e) => {
+      const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent);
       const isUndo = (isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.shiftKey;
       const isRedo = (isMac ? e.metaKey && e.shiftKey && e.key.toLowerCase() === 'z' : (e.ctrlKey && e.key.toLowerCase() === 'y'));
       const isBreakout = (isMac ? e.metaKey : e.ctrlKey) && e.key === 'Enter';
@@ -533,25 +546,18 @@ export class Editor extends EventEmitter {
           }
         }
       }
-    });
+    };
+    this.editableArea.addEventListener('keydown', this._boundHandlers.keydown);
 
     // 2. Intercept beforeinput to block history-altering types
-    this.editableArea.addEventListener('beforeinput', (e) => {
-      if (e.inputType === 'historyUndo') {
-        e.preventDefault();
-        this.history.undo();
-      } else if (e.inputType === 'historyRedo') {
-        e.preventDefault();
-        this.history.redo();
-      }
-    });
+    this.editableArea.addEventListener('beforeinput', this._boundHandlers.beforeinput);
 
     // 3. Intercept copy/cut to normalize HTML/plain text payloads for same-editor copy/paste
-    this.editableArea.addEventListener('copy', (e) => this._handleCopy(e));
-    this.editableArea.addEventListener('cut', (e) => this._handleCopy(e));
+    this.editableArea.addEventListener('copy', this._boundHandlers.copy);
+    this.editableArea.addEventListener('cut', this._boundHandlers.cut);
 
     // 4. Intercept paste to prevent un-sanitized and history-polluting native pastes
-    this.editableArea.addEventListener('paste', (e) => this._handlePaste(e));
+    this.editableArea.addEventListener('paste', this._boundHandlers.paste);
   }
 
   /**
@@ -601,19 +607,42 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Returns the current HTML content of the editor
-   * @returns {string} The HTML content
+   * Returns the current HTML content of the editor, stripped of internal editor attributes.
+   * @returns {string} The clean HTML content
    */
   getContent() {
-    return this.editableArea.innerHTML;
+    const clone = this.editableArea.cloneNode(true);
+
+    // Remove internal editor-only attributes from all elements
+    const internalAttrs = [
+      'contenteditable',
+      'data-penman-core',
+      'data-placeholder',
+    ];
+    const internalClasses = [
+      'penman-selected-node',
+      'penman-cell-selected',
+    ];
+
+    clone.querySelectorAll('*').forEach(el => {
+      internalAttrs.forEach(attr => el.removeAttribute(attr));
+      internalClasses.forEach(cls => el.classList.remove(cls));
+      // Remove empty class attributes left behind
+      if (el.hasAttribute('class') && el.className.trim() === '') {
+        el.removeAttribute('class');
+      }
+    });
+
+    return clone.innerHTML;
   }
 
   /**
-   * Sets the HTML content of the editor and syncs with the textarea
+   * Sets the HTML content of the editor, running it through the sanitizer first.
    * @param {string} html - The HTML content to set
    */
   setContent(html) {
-    this.editableArea.innerHTML = html;
+    const sanitized = this.sanitizer ? this.sanitizer.sanitize(html) : html;
+    this.editableArea.innerHTML = sanitized;
     this._syncToTextarea();
     this.emit('selectionChange');
   }
@@ -957,9 +986,28 @@ export class Editor extends EventEmitter {
   }
 
   /**
-   * Destroys the editor instance, removing UI and restoring the original textarea
+   * Destroys the editor instance, removing UI, event listeners, and restoring the original textarea
    */
   destroy() {
+    // Remove all event listeners registered in _bindEvents()
+    if (this._boundHandlers && this.editableArea) {
+      this.editableArea.removeEventListener('mouseup', this._boundHandlers.mouseup);
+      this.editableArea.removeEventListener('click', this._boundHandlers.click);
+      this.editableArea.removeEventListener('mousedown', this._boundHandlers.mousedown);
+      this.editableArea.removeEventListener('keyup', this._boundHandlers.keyup);
+      this.editableArea.removeEventListener('input', this._boundHandlers.input);
+      this.editableArea.removeEventListener('focus', this._boundHandlers.focus);
+      this.editableArea.removeEventListener('beforeinput', this._boundHandlers.beforeinput);
+      this.editableArea.removeEventListener('copy', this._boundHandlers.copy);
+      this.editableArea.removeEventListener('cut', this._boundHandlers.cut);
+      this.editableArea.removeEventListener('paste', this._boundHandlers.paste);
+      // keydown is registered inline in _bindEvents — find and remove via stored ref
+      if (this._boundHandlers.keydown) {
+        this.editableArea.removeEventListener('keydown', this._boundHandlers.keydown);
+      }
+    }
+    this._boundHandlers = null;
+
     if (this.ui) {
       this.ui.destroy();
     }
@@ -977,9 +1025,15 @@ export class Editor extends EventEmitter {
     // Remove from index registry if possible (handled in index.js usually, but we emit)
     this.emit('destroy', this);
 
-    // Clear references
+    // Clear all references to prevent memory leaks
     this.container = null;
     this.editableArea = null;
+    this.selection = null;
+    this.commands = null;
+    this.history = null;
+    this.ui = null;
+    this.sanitizer = null;
+    this.i18n = null;
 
     // Clear events
     this.events = {};

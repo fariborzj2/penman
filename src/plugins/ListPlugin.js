@@ -21,6 +21,7 @@ export function setupListPlugin(editor) {
       return [];
     }
 
+    // Collapsed selection: walk up to find the containing LI
     if (sel.isCollapsed) {
       let node = range.startContainer;
       while (node && node !== editor.editableArea) {
@@ -30,14 +31,37 @@ export function setupListPlugin(editor) {
       return [];
     }
 
-    const lis = [];
-    const allLIs = editor.editableArea.querySelectorAll('li');
-    allLIs.forEach(li => {
-      if (sel.containsNode(li, true)) {
-        lis.push(li);
+    // Non-collapsed: find the LI that contains the startContainer
+    // and collect all LIs from there to the one containing endContainer
+    const startLI = (() => {
+      let n = range.startContainer;
+      while (n && n !== editor.editableArea) {
+        if (n.nodeName === 'LI') return n;
+        n = n.parentNode;
       }
-    });
-    return lis;
+      return null;
+    })();
+
+    const endLI = (() => {
+      let n = range.endContainer;
+      while (n && n !== editor.editableArea) {
+        if (n.nodeName === 'LI') return n;
+        n = n.parentNode;
+      }
+      return null;
+    })();
+
+    if (!startLI) return [];
+    if (startLI === endLI || !endLI) return [startLI];
+
+    // Collect all LIs between startLI and endLI (inclusive) in document order
+    const allLIs = Array.from(editor.editableArea.querySelectorAll('li'));
+    const startIdx = allLIs.indexOf(startLI);
+    const endIdx = allLIs.indexOf(endLI);
+    if (startIdx === -1) return [startLI];
+    const from = Math.min(startIdx, endIdx);
+    const to = Math.max(startIdx, endIdx);
+    return allLIs.slice(from, to + 1);
   };
 
   editor.commands.register('insertUnorderedList', {
@@ -53,13 +77,24 @@ export function setupListPlugin(editor) {
       const lis = getSelectedLIs();
       if (lis.length === 0) return;
 
+      // Filter out first-item LIs that have no previous sibling — they cannot be indented
+      const indentable = lis.filter(li => {
+        const prev = li.previousElementSibling;
+        return prev && prev.nodeName === 'LI';
+      });
+
+      if (indentable.length === 0) return;
+
       editor.selection.save();
 
-      lis.forEach(li => {
+      indentable.forEach(li => {
         const prev = li.previousElementSibling;
         if (prev && prev.nodeName === 'LI') {
           const parentList = li.parentNode;
-          let nestedList = prev.querySelector('ul, ol');
+          // Look only at direct children of prev for an existing nested list
+          let nestedList = Array.from(prev.childNodes).find(
+            n => n.nodeName === 'UL' || n.nodeName === 'OL'
+          );
           if (!nestedList) {
             nestedList = document.createElement(parentList.tagName);
             prev.appendChild(nestedList);
@@ -87,17 +122,22 @@ export function setupListPlugin(editor) {
         if (!editor.editableArea.contains(li)) return;
 
         const grandparent = parentList.parentNode;
-        const nextSiblings = [];
-        let next = li.nextElementSibling;
-        while (next) {
-          nextSiblings.push(next);
-          next = next.nextElementSibling;
-        }
 
         if (grandparent && grandparent.nodeName === 'LI') {
+          // Nested case: move li up to be a sibling after grandparent LI
+          const nextSiblings = [];
+          let next = li.nextElementSibling;
+          while (next) {
+            nextSiblings.push(next);
+            next = next.nextElementSibling;
+          }
+
           grandparent.parentNode.insertBefore(li, grandparent.nextSibling);
+
           if (nextSiblings.length > 0) {
-            let nested = li.querySelector('ul, ol');
+            let nested = Array.from(li.childNodes).find(
+              n => n.nodeName === 'UL' || n.nodeName === 'OL'
+            );
             if (!nested) {
               nested = document.createElement(parentList.tagName);
               li.appendChild(nested);
@@ -105,29 +145,42 @@ export function setupListPlugin(editor) {
             nextSiblings.forEach(sib => nested.appendChild(sib));
           }
         } else {
+          // Top-level case: convert LI to a <p> and place it before the list
+          const nextSiblings = [];
+          let next = li.nextElementSibling;
+          while (next) {
+            nextSiblings.push(next);
+            next = next.nextElementSibling;
+          }
+
           const p = document.createElement('p');
-          const children = Array.from(li.childNodes);
-          children.forEach(child => {
+          // Move only inline/text children (not nested lists) into the <p>
+          const liChildren = Array.from(li.childNodes);
+          liChildren.forEach(child => {
             if (child.nodeName !== 'UL' && child.nodeName !== 'OL') {
               p.appendChild(child);
             }
           });
 
-          parentList.parentNode.insertBefore(p, parentList.nextSibling);
+          // Insert <p> before the parent list
+          parentList.parentNode.insertBefore(p, parentList);
           let lastInserted = p;
 
-          children.forEach(child => {
-            if (child.nodeName === 'UL' || child.nodeName === 'OL') {
+          // Re-attach any nested lists that were inside the LI
+          liChildren.forEach(child => {
+            if ((child.nodeName === 'UL' || child.nodeName === 'OL') && child.parentNode) {
               lastInserted.parentNode.insertBefore(child, lastInserted.nextSibling);
               lastInserted = child;
             }
           });
 
+          // If there were siblings after the outdented LI, put them in a new list after
           if (nextSiblings.length > 0) {
             const newList = document.createElement(parentList.tagName);
             nextSiblings.forEach(sib => newList.appendChild(sib));
             lastInserted.parentNode.insertBefore(newList, lastInserted.nextSibling);
           }
+
           li.remove();
         }
 

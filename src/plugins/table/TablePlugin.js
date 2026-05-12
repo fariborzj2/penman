@@ -134,7 +134,18 @@ export function setupTablePlugin(editor) {
                selectionManager.clearSelection();
            } else {
                tx.rollback();
-               alert(editor.i18n.t('plugins.table.mergeError'));
+               editor.ui.createModal({
+                 title: editor.i18n.t('plugins.table.mergeError'),
+                 body: `<p style="padding: 15px 15px 5px;">${editor.i18n.t('plugins.table.mergeError')}</p>`,
+                 hideFooter: false,
+                 submitText: editor.i18n.t('ui.ok') || 'OK',
+                 cancelText: null,
+                 buttons: [{
+                   text: editor.i18n.t('ui.ok') || 'OK',
+                   classNames: 'penman-btn-primary',
+                   onClick: (_e, modal) => modal.close()
+                 }]
+               }).open();
            }
        }
     }

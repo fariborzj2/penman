@@ -281,6 +281,10 @@ export default {
     delete: 'Delete',
     edit: 'Edit',
     ok: 'OK',
+    confirm: 'Confirm',
+    discard: 'Discard Changes',
+    error: 'Error',
+    info: 'Info',
     dialog: 'Dialog',
     stats: 'Words: {words} | Characters: {chars}'
   }
