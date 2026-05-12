@@ -96,7 +96,7 @@ function openSourceCodeModal(editor) {
     if (cmView && !isSaved) {
       const currentHtml = cmView.state.doc.toString();
       if (currentHtml !== initialHtml) {
-        if (!window.confirm("You have unsaved changes. Are you sure you want to close?")) {
+        if (!window.confirm(editor.i18n.t('plugins.sourceCode.unsavedChanges'))) {
            return;
         }
       }
@@ -145,10 +145,6 @@ function openSourceCodeModal(editor) {
     },
     ".cm-textfield": {
       height: "28px",
-    },
-    ".cm-search": {
-      display: "flex",
-      flexWrap: "wrap",
     },
     ".cm-button": {
       height: "28px",

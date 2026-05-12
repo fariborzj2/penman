@@ -14,14 +14,53 @@ export default {
       upload: 'آپلود',
       uploadPlaceholder: 'تصاویر را اینجا رها کنید یا برای انتخاب کلیک کنید',
       insertSelected: 'درج انتخاب‌شده‌ها',
-      clearQueue: 'پاک‌کردن صف',
+      clearQueue: 'حذف انتخاب‌شده‌ها',
       urlLabel: 'لینک تصویر',
       altLabel: 'متن جایگزین (اختیاری)',
       urlPlaceholder: 'https://...',
       altPlaceholder: 'متن جایگزین (اختیاری)',
       insertUrl: 'درج از لینک',
       galleryEmpty: 'تصویری در گالری یافت نشد.',
-      galleryError: 'خطا در بارگذاری گالری: {error}'
+      galleryError: 'خطا در بارگذاری گالری: {error}',
+      // Upload queue
+      loading: 'در حال بارگذاری...',
+      noSources: 'هیچ منبع گالری‌ای ثبت نشده است.',
+      success: 'آپلود شد',
+      error: 'خطا',
+      failed: 'آپلود ناموفق بود',
+      retry: 'تلاش مجدد',
+      format: 'فرمت: ',
+      size: 'حجم: ',
+      copyLink: 'کپی لینک',
+      loadMore: 'بارگذاری بیشتر',
+      errorInit: 'خطا در راه‌اندازی گالری: {error}',
+      invalidImageUrl: 'لینک تصویر نامعتبر است: {error}',
+      noItemsToInsert: 'هیچ تصویر آپلودشده‌ای انتخاب نشده. لطفاً منتظر اتمام آپلود بمانید.',
+      captionPlaceholder: 'توضیح تصویر را بنویسید...',
+      uploading: 'در حال آپلود...',
+      validationFailed: 'اعتبارسنجی فایل ناموفق بود',
+      gallery: {
+        errorNoId:          'منبع گالری نیاز به یک شناسه منحصربه‌فرد دارد.',
+        errorNoList:        'منبع گالری نیاز به متد list() دارد.',
+        errorNoGet:         'منبع گالری نیاز به متد get() دارد.',
+        authFailed:         'احراز هویت گالری ناموفق بود.',
+        notReady:           'منبع گالری هنوز آماده نیست.',
+        invalidFormat:      'فرمت آیتم گالری نامعتبر است.',
+        alreadyRegistered:  'یک منبع گالری با این شناسه قبلاً ثبت شده است.',
+        notFound:           'منبع گالری یافت نشد.',
+        invalidType:        'نوع فایل پشتیبانی نمی‌شود. لطفاً از PNG، JPEG یا WebP استفاده کنید.',
+        fileTooLarge:       'حجم فایل بیش از حد مجاز است. حداکثر ۵ مگابایت.'
+      },
+      errors: {
+        networkError:    'خطای شبکه. لطفاً اتصال اینترنت خود را بررسی کرده و دوباره تلاش کنید.',
+        httpClientError: 'درخواست ناموفق بود. لطفاً آدرس را بررسی کرده و دوباره تلاش کنید.',
+        httpServerError: 'خطای سرور. لطفاً کمی بعد دوباره تلاش کنید.',
+        corsError:       'دسترسی توسط سرور رد شد (سیاست CORS).',
+        timeout:         'زمان درخواست به پایان رسید. لطفاً دوباره تلاش کنید.',
+        aborted:         'درخواست لغو شد.',
+        parseError:      'پاسخ نامعتبر از سرور دریافت شد.',
+        unauthorized:    'دسترسی رد شد. لطفاً مجوزهای خود را بررسی کنید.'
+      }
     },
     blockType: {
       paragraph: 'پاراگراف',
@@ -36,7 +75,8 @@ export default {
       success: 'موفقیت',
       info: 'اطلاع',
       warning: 'هشدار',
-      danger: 'خطر'
+      danger: 'خطر',
+      searchPlaceholder: 'جستجو...'
     },
     media: {
       title: 'درج رسانه',
@@ -117,9 +157,9 @@ export default {
     sourceCode: {
       title: 'کد منبع',
       apply: 'اعمال تغییرات',
-      cancel: 'انصراف'
-    ,
-      searchPlaceholder: 'جستجو...'
+      cancel: 'انصراف',
+      searchPlaceholder: 'جستجو...',
+      unsavedChanges: 'تغییرات ذخیره‌نشده دارید. آیا مطمئن هستید که می‌خواهید ببندید؟'
     },
     direction: {
       rtl: 'راست‌چین (RTL)',

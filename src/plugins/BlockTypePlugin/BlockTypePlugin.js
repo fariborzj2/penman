@@ -302,7 +302,7 @@ export function setupBlockTypePlugin(editor) {
     // Search input
     const searchInput = document.createElement('input');
     searchInput.type = 'text';
-    searchInput.placeholder = 'Search...';
+    searchInput.placeholder = editor.i18n.t('plugins.blockType.searchPlaceholder');
     searchInput.className = 'penman-blocktype-search';
     searchInput.style.margin = '5px';
     searchInput.style.padding = '5px';

@@ -43,10 +43,10 @@ export function setupSuggestedPostsPlugin(editor) {
         <div class="penman-floating-tail-inner" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
         <div class="penman-floating-tail-outer" style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
 
-        <button type="button" class="penman-btn penman-btn-edit-sp" title="Edit" style="padding: 4px; display:flex; align-items:center; color: #111827; background:none; border:none; cursor:pointer;">
+        <button type="button" class="penman-btn penman-btn-edit-sp" title="${editor.i18n.t('ui.edit')}" style="padding: 4px; display:flex; align-items:center; color: #111827; background:none; border:none; cursor:pointer;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"></path><path d="m15 5 4 4"></path></svg>
         </button>
-        <button type="button" class="penman-btn penman-btn-del-sp" title="Delete" style="padding: 4px; display:flex; align-items:center; color: #dc3545; background:none; border:none; cursor:pointer;">
+        <button type="button" class="penman-btn penman-btn-del-sp" title="${editor.i18n.t('ui.delete')}" style="padding: 4px; display:flex; align-items:center; color: #dc3545; background:none; border:none; cursor:pointer;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" ><path d="M3 6h18"></path><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
         </button>
       </div>

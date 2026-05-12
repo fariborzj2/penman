@@ -22,13 +22,13 @@ export const GalleryState = {
 export class GallerySource {
   constructor(config) {
     if (!config.id || typeof config.id !== 'string') {
-      throw new Error('GallerySource requires a unique string ID.');
+      throw new Error('GALLERY_ERROR_NO_ID');
     }
     if (typeof config.list !== 'function') {
-      throw new Error('GallerySource requires a list() method.');
+      throw new Error('GALLERY_ERROR_NO_LIST');
     }
     if (typeof config.get !== 'function') {
-      throw new Error('GallerySource requires a get() method.');
+      throw new Error('GALLERY_ERROR_NO_GET');
     }
 
     this.id = config.id;
@@ -61,7 +61,7 @@ export class GallerySource {
           this.state = GalleryState.READY;
         } else {
           this.state = GalleryState.ERROR;
-          throw new Error('Gallery authentication failed');
+          throw new Error('GALLERY_AUTH_FAILED');
         }
       } else {
         this.state = GalleryState.READY;
@@ -79,7 +79,7 @@ export class GallerySource {
    */
   async list(cursor = null, limit = 20) {
     if (this.state !== GalleryState.READY) {
-      throw new Error(`GallerySource ${this.id} is not in READY state.`);
+      throw new Error('GALLERY_NOT_READY');
     }
 
     const response = await this._listFn(cursor, limit);
@@ -137,7 +137,7 @@ export class GallerySource {
    */
   async get(id) {
     if (this.state !== GalleryState.READY) {
-      throw new Error(`GallerySource ${this.id} is not in READY state.`);
+      throw new Error('GALLERY_NOT_READY');
     }
 
     const item = await this._getFn(id);
@@ -150,7 +150,7 @@ export class GallerySource {
    */
   _enforceSchema(item) {
     if (!item || !item.url) {
-      throw new Error('Invalid Gallery Item format');
+      throw new Error('GALLERY_INVALID_FORMAT');
     }
 
     return {

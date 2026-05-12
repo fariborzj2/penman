@@ -14,14 +14,53 @@ export default {
       upload: 'Upload',
       uploadPlaceholder: 'Drop images here or click to select',
       insertSelected: 'Insert Selected',
-      clearQueue: 'Clear Queue',
+      clearQueue: 'Remove Selected',
       urlLabel: 'Image URL',
       altLabel: 'Alternative Text (Optional)',
       urlPlaceholder: 'https://...',
       altPlaceholder: 'Alternative text (optional)',
       insertUrl: 'Insert from URL',
       galleryEmpty: 'No images found in gallery.',
-      galleryError: 'Error loading gallery: {error}'
+      galleryError: 'Error loading gallery: {error}',
+      // Upload queue
+      loading: 'Loading...',
+      noSources: 'No gallery sources have been registered.',
+      success: 'Uploaded',
+      error: 'Error',
+      failed: 'Upload failed',
+      retry: 'Retry',
+      format: 'Format: ',
+      size: 'Size: ',
+      copyLink: 'Copy link',
+      loadMore: 'Load more',
+      errorInit: 'Failed to initialize gallery: {error}',
+      invalidImageUrl: 'Invalid image URL: {error}',
+      noItemsToInsert: 'No uploaded images selected. Please wait for uploads to finish.',
+      captionPlaceholder: 'Add a caption...',
+      uploading: 'Uploading...',
+      validationFailed: 'File validation failed',
+      gallery: {
+        errorNoId:          'Gallery source requires a unique string ID.',
+        errorNoList:        'Gallery source requires a list() method.',
+        errorNoGet:         'Gallery source requires a get() method.',
+        authFailed:         'Gallery authentication failed.',
+        notReady:           'Gallery source is not ready yet.',
+        invalidFormat:      'Invalid gallery item format.',
+        alreadyRegistered:  'A gallery source with this ID is already registered.',
+        notFound:           'Gallery source not found.',
+        invalidType:        'File type not supported. Please use PNG, JPEG or WebP.',
+        fileTooLarge:       'File is too large. Maximum size is 5MB.'
+      },
+      errors: {
+        networkError:    'Network error. Please check your internet connection and try again.',
+        httpClientError: 'Request failed. Please check the URL and try again.',
+        httpServerError: 'Server error. Please try again later.',
+        corsError:       'Access denied by server (CORS policy).',
+        timeout:         'Request timed out. Please try again.',
+        aborted:         'Request was cancelled.',
+        parseError:      'Invalid response received from server.',
+        unauthorized:    'Access denied. Please check your permissions.'
+      }
     },
     blockType: {
       paragraph: 'Paragraph',
@@ -36,7 +75,8 @@ export default {
       success: 'Success',
       info: 'Info',
       warning: 'Warning',
-      danger: 'Danger'
+      danger: 'Danger',
+      searchPlaceholder: 'Search...'
     },
     media: {
       title: 'Insert Media',
@@ -117,9 +157,9 @@ export default {
     sourceCode: {
       title: 'Source Code',
       apply: 'Apply Changes',
-      cancel: 'Cancel'
-    ,
-      searchPlaceholder: 'Search...'
+      cancel: 'Cancel',
+      searchPlaceholder: 'Search...',
+      unsavedChanges: 'You have unsaved changes. Are you sure you want to close?'
     },
     direction: {
       rtl: 'RTL',

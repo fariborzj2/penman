@@ -61,7 +61,7 @@ export async function executeUploadPipeline(editor, files, uploadFn, options = {
       // We can use createObjectURL temporarily.
       const tempUrl = URL.createObjectURL(file);
 
-      const figureNode = createFigureNode(editor, tempUrl, 'Uploading...', dataId);
+      const figureNode = createFigureNode(editor, tempUrl, editor.i18n.t('plugins.image.uploading'), dataId);
       figureNode.classList.add('penman-image-uploading');
 
       // Synchronous insertion
@@ -76,7 +76,7 @@ export async function executeUploadPipeline(editor, files, uploadFn, options = {
       // "validateFile" throws, we catch it per file.
       emitImageEvent(editor, 'image:uploadError', {
         code: error.message,
-        message: 'File validation failed',
+        message: editor.i18n.t('plugins.image.validationFailed'),
         context: { fileName: file.name },
         retryable: false
       });
@@ -141,7 +141,7 @@ async function handleSingleUploadJob(editor, job, uploadFn) {
       // Emit lifecycle event
       emitImageEvent(editor, 'image:uploadError', {
         code: 'UPLOAD_FAILED',
-        message: error.message || 'Upload failed',
+        message: error.message || editor.i18n.t('plugins.image.failed'),
         context: { dataId },
         retryable: true
       });

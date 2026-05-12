@@ -14,7 +14,7 @@ export class GallerySystem {
    */
   registerSource(config) {
     if (this._sources.has(config.id)) {
-      throw new Error(`Gallery source with id '${config.id}' is already registered.`);
+      throw new Error('GALLERY_ALREADY_REGISTERED');
     }
 
     const source = new GallerySource(config);
@@ -29,7 +29,7 @@ export class GallerySystem {
   async getSource(id) {
     const source = this._sources.get(id);
     if (!source) {
-      throw new Error(`Gallery source '${id}' not found.`);
+      throw new Error('GALLERY_NOT_FOUND');
     }
 
     if (source.state === 'REGISTERED') {

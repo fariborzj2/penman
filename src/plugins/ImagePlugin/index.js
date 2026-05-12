@@ -5,6 +5,85 @@ import { handleCaptionKeyDown, handleCaptionPaste, handleCaptionBlur, setupAlign
 import { TrustLevel } from './security/index.js';
 import { FloatingUI } from '../../ui/FloatingUI.js';
 
+/**
+ * Translates internal gallery/upload error codes — and browser-native network
+ * error messages — to i18n strings.
+ *
+ * Browser network errors are NOT standardised: different browsers produce
+ * different message strings for the same underlying failure.  We detect them
+ * with a set of case-insensitive patterns and map them all to a single
+ * translated key so the user always sees a localised message.
+ */
+function translateError(editor, err) {
+  const raw = err && err.message ? err.message : String(err);
+
+  // ── 1. Exact-match map for our own internal error codes ──────────────────
+  const codeMap = {
+    'GALLERY_ERROR_NO_ID':        'plugins.image.gallery.errorNoId',
+    'GALLERY_ERROR_NO_LIST':      'plugins.image.gallery.errorNoList',
+    'GALLERY_ERROR_NO_GET':       'plugins.image.gallery.errorNoGet',
+    'GALLERY_AUTH_FAILED':        'plugins.image.gallery.authFailed',
+    'GALLERY_NOT_READY':          'plugins.image.gallery.notReady',
+    'GALLERY_INVALID_FORMAT':     'plugins.image.gallery.invalidFormat',
+    'GALLERY_ALREADY_REGISTERED': 'plugins.image.gallery.alreadyRegistered',
+    'GALLERY_NOT_FOUND':          'plugins.image.gallery.notFound',
+    'INVALID_TYPE':               'plugins.image.gallery.invalidType',
+    'FILE_TOO_LARGE':             'plugins.image.gallery.fileTooLarge',
+  };
+
+  const exactKey = codeMap[raw];
+  if (exactKey) {
+    const translated = editor.i18n.t(exactKey);
+    if (translated !== exactKey) return translated;
+  }
+
+  // ── 2. Pattern-match map for browser-native / OS-level error messages ────
+  //
+  // Each entry is [regex, i18nKey].  Patterns are tested in order; the first
+  // match wins.  All patterns are case-insensitive.
+  const patternMap = [
+    // Network / fetch failures (Firefox, Chrome, Safari all differ)
+    [/networkerror|failed to fetch|network request failed|load failed|the internet connection appears to be offline|could not connect|err_internet_disconnected|err_network_changed|err_name_not_resolved|err_connection_refused|err_connection_timed_out/i,
+      'plugins.image.errors.networkError'],
+
+    // HTTP 4xx / 5xx surfaced as text
+    [/\b(40[0-9]|41[0-8]|422|429|4[3-9][0-9])\b/,
+      'plugins.image.errors.httpClientError'],
+    [/\b(5[0-9]{2})\b/,
+      'plugins.image.errors.httpServerError'],
+
+    // CORS
+    [/cors|cross.?origin|access.?control/i,
+      'plugins.image.errors.corsError'],
+
+    // Timeout
+    [/timeout|timed.?out|request timed/i,
+      'plugins.image.errors.timeout'],
+
+    // Abort
+    [/abort|aborted|the operation was aborted/i,
+      'plugins.image.errors.aborted'],
+
+    // JSON / parse errors
+    [/json|parse error|unexpected token|invalid json/i,
+      'plugins.image.errors.parseError'],
+
+    // Auth
+    [/unauthorized|403|forbidden|authentication/i,
+      'plugins.image.errors.unauthorized'],
+  ];
+
+  for (const [pattern, i18nKey] of patternMap) {
+    if (pattern.test(raw)) {
+      const translated = editor.i18n.t(i18nKey);
+      if (translated !== i18nKey) return translated;
+    }
+  }
+
+  // ── 3. Fallback: return the raw message as-is ────────────────────────────
+  return raw;
+}
+
 export function setupImagePlugin(editor) {
   const root = editor.editableArea;
 
@@ -13,7 +92,6 @@ export function setupImagePlugin(editor) {
 
   // Floating UI for Images
   let floatingUI = null;
-
   function createFloatingUI() {
     floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
     const html = `
@@ -468,10 +546,10 @@ export function setupImagePlugin(editor) {
                          galleryContainer.dataset.loaded = 'true';
                     }
                 }).catch(err => {
-                    galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.galleryError').replace('{error}', err.message)}</p></div>`;
+                    galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.galleryError').replace('{error}', translateError(editor, err))}</p></div>`;
                 });
             }).catch(err => {
-                galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.errorInit').replace('{error}', err.message)}</p></div>`;
+                galleryContainer.innerHTML = `<div style="text-align: center; color: red; padding: 20px; grid-column: 1 / -1;"><p>${editor.i18n.t('plugins.image.errorInit').replace('{error}', translateError(editor, err))}</p></div>`;
             });
           }
           });
@@ -510,7 +588,7 @@ export function setupImagePlugin(editor) {
                 editor.selection.save();
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
-              } catch (err) { alert(editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', err.message)); }
+              } catch (err) { alert(editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', translateError(editor, err))); }
             }
           });
         }
@@ -836,7 +914,7 @@ export function setupImagePlugin(editor) {
                  renderQueue();
                  modal.close();
              } else {
-                 alert('No items to insert.');
+                 alert(editor.i18n.t('plugins.image.noItemsToInsert'));
              }
           });
         }
