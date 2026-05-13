@@ -1,4 +1,13 @@
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+
 export function setupFontSizePlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.fontSize', { fa: __faStrings, en: __enStrings });
+  }
+
   const fontSizes = editor.options.fontSizes || ['12px', '14px', '16px', '18px', '24px', '32px'];
 
   // Register command to apply font size

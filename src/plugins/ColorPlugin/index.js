@@ -1,6 +1,18 @@
 import { ColorPicker } from '../../ui/ColorPicker.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 
 export function setupColorPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.color', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   // --- Text Color ---
   editor.commands.register('SET_TEXT_COLOR', {
     queryState: (editor) => {

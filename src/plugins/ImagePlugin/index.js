@@ -6,6 +6,9 @@ import { TrustLevel } from './security/index.js';
 import { FloatingUI } from '../../ui/FloatingUI.js';
 import { uniqueId } from '../../utils/uniqueId.js';
 import { logger } from '../../utils/logger.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 
 /**
  * Translates internal gallery/upload error codes — and browser-native network
@@ -87,6 +90,15 @@ function translateError(editor, err) {
 }
 
 export function setupImagePlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.image', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   const root = editor.editableArea;
 
   // 1. Setup DOM Observers

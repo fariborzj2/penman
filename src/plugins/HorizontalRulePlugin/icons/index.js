@@ -1,0 +1,5 @@
+// src/plugins/HorizontalRulePlugin/icons/index.js
+// Icons owned by HorizontalRulePlugin. Registered into editor.ui.iconProvider at setup().
+export default {
+  hr: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M8 12h8"/></svg>'
+};

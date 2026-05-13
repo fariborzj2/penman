@@ -6,8 +6,20 @@ import { createCustomProvider } from './providers/CustomProvider.js';
 import { DirectVideoProvider, DirectAudioProvider } from './providers/DirectMediaProvider.js';
 import { MediaRenderer } from './rendering/MediaRenderer.js';
 import { MediaModal } from './ui/MediaModal.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 
 export function setupMediaPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.media', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   const root = editor.editableArea;
 
   // Initialize Security and Registry

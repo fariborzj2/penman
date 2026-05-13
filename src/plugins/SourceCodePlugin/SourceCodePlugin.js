@@ -3,8 +3,20 @@ import { html } from '@codemirror/lang-html';
 import { EditorState } from '@codemirror/state';
 import { SearchQuery, setSearchQuery, openSearchPanel, closeSearchPanel, findNext, findPrevious } from '@codemirror/search';
 import { formatHTML } from './formatHTML.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 
 export function setupSourceCodePlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.sourceCode', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   // 1. Register Button in Toolbar
   editor.ui.registry.addButton('sourcecode', {
     iconName: 'sourcecode',

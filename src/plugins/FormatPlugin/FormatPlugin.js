@@ -1,4 +1,12 @@
+import __icons from './icons/index.js';
+
 export function setupFormatPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   const formats = ['bold', 'italic', 'underline', 'strikethrough', 'superscript', 'subscript'];
 
   const tagMap = {

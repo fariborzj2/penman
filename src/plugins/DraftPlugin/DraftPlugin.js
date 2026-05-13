@@ -31,6 +31,8 @@ import { logger } from '../../utils/logger.js';
 
 import { DraftStorage } from './DraftStorage.js';
 import { DraftManager } from './DraftManager.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
 
 const STYLE_ID = 'penman-draft-styles';
 
@@ -74,6 +76,12 @@ function formatDateTime(ts, lang) {
 // ─── Plugin setup ─────────────────────────────────────────────────────────────
 
 export function setupDraftPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.draft', { fa: __faStrings, en: __enStrings });
+  }
+
   // ── Guard: verify editor API ──────────────────────────────────────────────
   if (
     !editor ||

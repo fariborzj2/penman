@@ -16,6 +16,8 @@ import { AuditEngine } from './AuditEngine.js';
 import { defaultRules } from './rules.js';
 import { AuditModal, AUDIT_ICONS } from './AuditModal.js';
 import './audit.css';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
 
 let _styleInjected = false;
 
@@ -29,6 +31,12 @@ let _styleInjected = false;
 const H1_RULE_IDS = ['seo-no-h1', 'seo-multiple-h1', 'seo-h1-too-long'];
 
 export function setupContentAuditPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.audit', { fa: __faStrings, en: __enStrings });
+  }
+
   const opts = editor.options || {};
   const ignoreH1 = !!opts.auditIgnoreH1;
   const explicitDisabled = Array.isArray(opts.auditDisabledRules) ? opts.auditDisabledRules : [];

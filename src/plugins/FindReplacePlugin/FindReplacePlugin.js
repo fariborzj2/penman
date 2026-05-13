@@ -1,5 +1,17 @@
 import { logger } from '../../utils/logger.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 export function setupFindReplacePlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.findReplace', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
   let activeModal = null;
 
   class TextMapper {

@@ -1,4 +1,13 @@
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+
 export function setupBlockTypePlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.blockType', { fa: __faStrings, en: __enStrings });
+  }
+
   // Define default block types if none provided in options
   const defaultBlockTypes = [
     { name: 'Paragraph', cmd: 'p', i18nKey: 'plugins.blockType.paragraph' },

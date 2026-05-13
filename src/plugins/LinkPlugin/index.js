@@ -1,3 +1,7 @@
+import faStrings from './lang/fa.js';
+import enStrings from './lang/en.js';
+import icons from './icons/index.js';
+
 /**
  * Simple HTML attribute escaper to prevent quotes from breaking HTML structure
  */
@@ -7,6 +11,15 @@ function escapeHtmlAttr(str) {
 }
 
 export function setupLinkPlugin(editor) {
+  // Register plugin-owned i18n strings and icons. After this call the editor
+  // resolves "plugins.link.*" keys and the "link"/"unlink" icons normally.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.link', { fa: faStrings, en: enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(icons);
+  }
+
   editor.commands.register('REMOVE_LINK', {
     queryState: (editor) => {
       const sel = window.getSelection();

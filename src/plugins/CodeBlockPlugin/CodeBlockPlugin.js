@@ -5,6 +5,9 @@
  * Designed for extreme performance and absolute string preservation.
  */
 import { getTokens, formatCode } from './syntax/index.js';
+import __faStrings from './lang/fa.js';
+import __enStrings from './lang/en.js';
+import __icons from './icons/index.js';
 
 // Inject syntax styles
 const styleId = 'penman-syntax-styles';
@@ -303,6 +306,15 @@ function healAndPatch(preNode) {
 }
 
 export function setupCodeBlockPlugin(editor) {
+  // Register plugin-owned data (lang + icons). Self-contained: removing
+  // this plugin removes its strings and icons cleanly.
+  if (editor.i18n && typeof editor.i18n.register === 'function') {
+    editor.i18n.register('plugins.codeBlock', { fa: __faStrings, en: __enStrings });
+  }
+  if (editor.ui && editor.ui.iconProvider && typeof editor.ui.iconProvider.register === 'function') {
+    editor.ui.iconProvider.register(__icons);
+  }
+
     editor.ui.registry.addButton('codeblock', {
         iconName: 'codeblock',
         text: editor.i18n.t('plugins.codeBlock.title') || 'Code Block',
