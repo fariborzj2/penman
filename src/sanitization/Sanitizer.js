@@ -1,3 +1,5 @@
+import { uniqueId } from '../utils/uniqueId.js';
+
 export class Sanitizer {
   constructor(editor = null) {
     this.editor = editor;
@@ -219,10 +221,105 @@ export class Sanitizer {
     }
   }
 
+  /**
+   * Validates a URL against an allowlist of schemes. Relative URLs and
+   * fragment identifiers (#...) are always considered safe.
+   *
+   * @param {string} url - The URL value to validate.
+   * @param {string[]} allowedSchemes - Lowercase schemes including the trailing
+   *   colon (e.g. ['http:', 'https:', 'mailto:', 'tel:']).
+   * @returns {boolean} True if the URL is permitted, false otherwise.
+   */
+  _isSafeURL(url, allowedSchemes) {
+    if (url == null) return false;
+    // Strip ALL whitespace (including newlines and tabs) to defeat tricks like
+    // "java\nscript:" or "  javascript:" that the browser would still execute.
+    const trimmed = String(url).replace(/[\s\x00-\x1F\x7F]/g, '').toLowerCase();
+    if (trimmed === '') return false;
+
+    // Fragment-only URLs (e.g. "#section") are safe.
+    if (trimmed.startsWith('#')) return true;
+
+    // Detect whether the URL has an explicit scheme. A scheme is a sequence of
+    // ASCII letters/digits/+/-/. terminated by a colon BEFORE any '/' '?' '#'.
+    const schemeMatch = trimmed.match(/^([a-z][a-z0-9+.\-]*):/);
+    if (!schemeMatch) {
+      // No scheme — this is a relative URL. Allow it.
+      return true;
+    }
+
+    const scheme = schemeMatch[1] + ':';
+    return allowedSchemes.includes(scheme);
+  }
+
   _cleanAttributesAndStyles(el, tag, isProtected = false) {
-    // If node is protected, we allow ALL its current attributes.
-    // This ensures full identical structure for internal copy-paste.
+    // Defense-in-depth: even when a node is marked "protected" (an internal
+    // widget that we want to preserve verbatim for copy-paste), strip
+    // dangerous attributes that can execute scripts. An attacker who can
+    // inject `data-penman-core="true"` into pasted content must NOT thereby
+    // also be able to smuggle `onclick`, `onerror`, `javascript:` hrefs, etc.
+    // Non-dangerous attributes (data-*, class, style, contenteditable) are
+    // still kept on protected nodes so widgets survive intact.
     if (isProtected) {
+        for (const attr of Array.from(el.attributes)) {
+            const attrName = attr.name.toLowerCase();
+
+            // 1. Remove every inline event handler.
+            if (attrName.startsWith('on')) {
+                el.removeAttribute(attr.name);
+                continue;
+            }
+
+            // 2. Enforce URL allowlist on href/src even inside protected nodes.
+            if (attrName === 'href') {
+                if (!this._isSafeURL(attr.value, ['http:', 'https:', 'mailto:', 'tel:'])) {
+                    el.removeAttribute(attr.name);
+                }
+                continue;
+            }
+            if (attrName === 'src') {
+                // iframe and embed-like tags are limited to http(s) only.
+                const httpOnly = ['iframe', 'embed', 'object', 'frame'].includes(tag);
+                const allowed = httpOnly
+                    ? ['http:', 'https:']
+                    : ['http:', 'https:', 'data:', 'blob:'];
+                if (!this._isSafeURL(attr.value, allowed)) {
+                    el.removeAttribute(attr.name);
+                }
+                continue;
+            }
+
+            // 3. srcdoc embeds inline HTML inside an iframe — a notorious
+            //    XSS vector. Always strip it on protected nodes; widgets never
+            //    need it.
+            if (attrName === 'srcdoc') {
+                el.removeAttribute(attr.name);
+                continue;
+            }
+
+            // 4. xlink:href, formaction, and action accept URLs but rarely
+            //    appear in editor content. Validate against the safe scheme
+            //    allowlist; non-URL values are treated as unsafe.
+            if (attrName === 'xlink:href' || attrName === 'formaction' || attrName === 'action') {
+                const val = String(attr.value || '').replace(/[\s\x00-\x1F\x7F]/g, '').toLowerCase();
+                // Reject if value has no scheme at all (e.g. inline HTML in
+                // srcdoc-like attributes), or if scheme is not in the allowlist.
+                const schemeMatch = val.match(/^([a-z][a-z0-9+.\-]*):/);
+                if (!schemeMatch || !['http:', 'https:', 'mailto:', 'tel:'].includes(schemeMatch[1] + ':')) {
+                    el.removeAttribute(attr.name);
+                }
+                continue;
+            }
+
+            // 5. Block javascript-bearing style values like `background:url(javascript:...)`.
+            if (attrName === 'style') {
+                const styleVal = attr.value.toLowerCase().replace(/[\s\x00-\x1F\x7F]/g, '');
+                if (/(javascript|vbscript|expression\()/.test(styleVal)) {
+                    el.removeAttribute(attr.name);
+                }
+                continue;
+            }
+        }
         return;
     }
 
@@ -235,8 +332,14 @@ export class Sanitizer {
       if (!allowedAttrs.includes(attrName)) {
         el.removeAttribute(attrName);
       } else if (attrName === 'href') {
-        const val = attr.value.replace(/\s/g, '').toLowerCase();
-        if (val.startsWith('javascript:')) {
+        // Strict allowlist for href schemes: only http, https, mailto, tel,
+        // fragment identifiers (#...), and relative URLs are permitted.
+        if (!this._isSafeURL(attr.value, ['http:', 'https:', 'mailto:', 'tel:'])) {
+          el.removeAttribute(attrName);
+        }
+      } else if (attrName === 'src' && tag === 'iframe') {
+        // Strict allowlist for iframe src: only http and https URLs are permitted.
+        if (!this._isSafeURL(attr.value, ['http:', 'https:'])) {
           el.removeAttribute(attrName);
         }
       } else if (attrName === 'class') {
@@ -442,7 +545,7 @@ export class Sanitizer {
     tables.forEach(table => {
       // Ensure data-table-id exists
       if (!table.getAttribute('data-table-id')) {
-        table.setAttribute('data-table-id', 't-' + Math.random().toString(36).substr(2, 9));
+        table.setAttribute('data-table-id', uniqueId('t-'));
       }
 
       // Ensure thead exists using non-recursive checks to avoid nested table issues
@@ -493,7 +596,7 @@ export class Sanitizer {
     const cells = Array.from(root.querySelectorAll('th, td'));
     cells.forEach(cell => {
       if (!cell.getAttribute('data-cell-id')) {
-        cell.setAttribute('data-cell-id', 'c-' + Math.random().toString(36).substr(2, 9));
+        cell.setAttribute('data-cell-id', uniqueId('c-'));
       }
 
       // Enforce <p> structure within cells

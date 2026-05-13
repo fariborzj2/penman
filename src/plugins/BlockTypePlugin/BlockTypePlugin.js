@@ -1,3 +1,5 @@
+import { formatBlockNative } from '../../utils/domCommands.js';
+
 export function setupBlockTypePlugin(editor) {
   // Define default block types if none provided in options
   const defaultBlockTypes = [
@@ -192,7 +194,7 @@ export function setupBlockTypePlugin(editor) {
              node = node.parentNode;
           }
           if (!changed) {
-              document.execCommand('formatBlock', false, blockDef.cmd);
+              formatBlockNative(blockDef.cmd, editor.editableArea);
           }
       } else if (isWrapper && unwrappedBlocks.length > 0) {
         let wrapper = null;
@@ -239,7 +241,7 @@ export function setupBlockTypePlugin(editor) {
         }
 
         if (!(sel.isCollapsed && unwrappedBlocks.length === 0 && !isWrapper)) {
-            document.execCommand('formatBlock', false, blockDef.cmd);
+            formatBlockNative(blockDef.cmd, editor.editableArea);
         }
 
         // Re-calculate blocks after execCommand

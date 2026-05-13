@@ -12,11 +12,12 @@ import { setupColorPlugin } from './ColorPlugin/index.js';
 import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 import { setupDraftPlugin } from './DraftPlugin/index.js';
 import { setupDirectionPlugin } from './DirectionPlugin/index.js';
-import { setupSuggestedPostsPlugin } from './Suggestedpostsplugin.js';
+import { setupSuggestedPostsPlugin } from './SuggestedPostsPlugin.js';
 import { setupMediaPlugin } from './MediaPlugin/index.js';
 import { setupCodeBlockPlugin } from './CodeBlockPlugin/CodeBlockPlugin.js';
 import { setupMarkdownPlugin } from './MarkdownPlugin/MarkdownPlugin.js';
 import { setupEmbedPlugin } from './EmbedPlugin/EmbedPlugin.js';
+import { logger } from '../utils/logger.js';
 
 export const PluginManager = {
   plugins: {
@@ -47,7 +48,7 @@ export const PluginManager = {
 
   init(editor) {
     if (!editor) {
-      console.warn('Penman PluginManager: editor is undefined');
+      logger.warn('Penman PluginManager: editor is undefined');
       return;
     }
 
@@ -77,7 +78,7 @@ export const PluginManager = {
       if (typeof setup === 'function') {
         setup(editor);
       } else {
-        console.warn(`Penman Editor: Plugin "${name}" is not registered.`);
+        logger.warn(`Penman Editor: Plugin "${name}" is not registered.`);
       }
     });
   }

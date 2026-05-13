@@ -22,6 +22,12 @@ export class ToolbarRenderer {
   render(config) {
     this.toolbarElement = document.createElement('div');
     this.toolbarElement.className = 'penman-toolbar-wrapper';
+    // Accessibility: a toolbar wrapper hosts grouped controls.
+    this.toolbarElement.setAttribute('role', 'toolbar');
+    const toolbarLabel = (this.editor.i18n && this.editor.i18n.t('core.toolbar') !== 'core.toolbar')
+      ? this.editor.i18n.t('core.toolbar')
+      : 'Editor toolbar';
+    this.toolbarElement.setAttribute('aria-label', toolbarLabel);
 
     const rowsConfig = this._parseConfig(config);
 
@@ -31,6 +37,7 @@ export class ToolbarRenderer {
 
        const rowElement = document.createElement('div');
        rowElement.className = 'penman-toolbar-row penman-toolbar'; // keep legacy class for styling compatibility
+       rowElement.setAttribute('role', 'group');
        this.toolbarElement.appendChild(rowElement);
 
        const rowManager = new RowLayoutManager(

@@ -128,8 +128,14 @@ export function setupColorPlugin(editor) {
       onChange: (hex, final) => {
         editor.execCommand(command, hex);
         if (final) {
-          // Close the dropdown when color is picked
-          document.body.click();
+          // Close the containing dropdown by walking up to the dropdown root
+          // and calling its instance method, instead of synthesizing a body
+          // click which could fire unrelated handlers across the page.
+          const dropdownRoot = container.closest('.penman-dropdown');
+          if (dropdownRoot && dropdownRoot.__dropdownInstance
+              && typeof dropdownRoot.__dropdownInstance.close === 'function') {
+            dropdownRoot.__dropdownInstance.close();
+          }
         }
       }
     });

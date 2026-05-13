@@ -1,4 +1,5 @@
 import { TableGrid } from './TableGrid.js';
+import { logger } from '../../utils/logger.js';
 
 export class TableTransaction {
   constructor(editor, tableId) {
@@ -38,7 +39,7 @@ export class TableTransaction {
     if (this.table.tagName === 'TABLE') {
       const finalGrid = new TableGrid(this.table);
       if (!this._isGridValid(finalGrid)) {
-        console.warn('Penman Editor: TableTransaction rolled back due to Grid Integrity Failure.');
+        logger.warn('Penman Editor: TableTransaction rolled back due to Grid Integrity Failure.');
         return this.rollback();
       }
     }

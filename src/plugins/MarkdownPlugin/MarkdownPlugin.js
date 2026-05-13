@@ -1,3 +1,5 @@
+import { uniqueId } from '../../utils/uniqueId.js';
+
 export function setupMarkdownPlugin(editor) {
   editor.on('keyup', (e) => {
     if (e.key === ' ' || e.key === 'Enter') {
@@ -50,12 +52,12 @@ function parseMarkdownToHTML(text) {
 
   const flushTable = () => {
     if (inTable && tableRows.length > 0) {
-      const tableId = 't-' + Math.random().toString(36).substr(2, 9);
+      const tableId = uniqueId('t-');
       resultHtml += `<table data-table-id="${tableId}" border="1" bordercolor="#ccc" style="width: 100%; border-collapse: collapse; border-style: solid;"><tbody>`;
       tableRows.forEach(row => {
         resultHtml += '<tr>';
         row.forEach((cell, idx) => {
-          const cellId = 'c-' + Math.random().toString(36).substr(2, 9);
+          const cellId = uniqueId('c-');
           const align = tableAlignments[idx] ? `text-align: ${tableAlignments[idx]}; ` : '';
           resultHtml += `<td data-cell-id="${cellId}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px; ${align}"><p>${parseInlineMarkdown(cell.trim())}</p></td>`;
         });

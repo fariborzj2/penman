@@ -40,6 +40,56 @@ describe('Sanitizer', () => {
     expect(cleanObfuscated).toBe('<p><a>Click</a></p>');
   });
 
+  it('should strip non-allowlisted href schemes (data:, vbscript:, blob:, file:)', () => {
+    const cases = [
+      '<a href="data:text/html,&lt;script&gt;alert(1)&lt;/script&gt;">x</a>',
+      '<a href="vbscript:msgbox(1)">x</a>',
+      '<a href="blob:https://example.com/abc">x</a>',
+      '<a href="file:///etc/passwd">x</a>',
+      '<a href="  javascript:alert(1)">x</a>',
+      '<a href="JavaScript:alert(1)">x</a>',
+    ];
+    for (const html of cases) {
+      const clean = sanitizer.sanitize(html);
+      expect(clean).not.toContain('href=');
+    }
+  });
+
+  it('should preserve safe href schemes (http, https, mailto, tel, #, relative)', () => {
+    const cases = [
+      ['<a href="http://example.com">x</a>', 'http://example.com'],
+      ['<a href="https://example.com/path?q=1">x</a>', 'https://example.com/path?q=1'],
+      ['<a href="mailto:a@b.com">x</a>', 'mailto:a@b.com'],
+      ['<a href="tel:+1234">x</a>', 'tel:+1234'],
+      ['<a href="#section">x</a>', '#section'],
+      ['<a href="/relative/path">x</a>', '/relative/path'],
+      ['<a href="./foo.html">x</a>', './foo.html'],
+    ];
+    for (const [html, expectedHref] of cases) {
+      const clean = sanitizer.sanitize(html);
+      expect(clean).toContain(`href="${expectedHref}"`);
+    }
+  });
+
+  it('should strip non-http(s) iframe src', () => {
+    const cases = [
+      '<iframe src="javascript:alert(1)"></iframe>',
+      '<iframe src="data:text/html,x"></iframe>',
+      '<iframe src="mailto:a@b.com"></iframe>',
+      '<iframe src="vbscript:msgbox(1)"></iframe>',
+    ];
+    for (const html of cases) {
+      const clean = sanitizer.sanitize(html);
+      expect(clean).not.toContain('src=');
+    }
+  });
+
+  it('should preserve http(s) iframe src', () => {
+    const html = '<iframe src="https://www.youtube.com/embed/abc"></iframe>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).toContain('src="https://www.youtube.com/embed/abc"');
+  });
+
   it('should preserve table and heading structure when rendering sanitized HTML', () => {
     const html = '<h2>Title</h2><table border="1"><tbody><tr><td data-cell-id="1">A</td></tr></tbody></table>';
     const clean = sanitizer.sanitize(html);
@@ -205,6 +255,43 @@ describe('Sanitizer Ultimate Strictness', () => {
     // Exact match: div + warning-block
     const html3 = '<div class="warning-block" style="color: red"><p>Text</p></div>';
     expect(sanitizer.sanitize(html3)).toBe('<div class="warning-block" style="color: red"><p>Text</p></div>');
+  });
+
+  it('should strip event handlers even on protected (data-penman-core) nodes', () => {
+    // Attempt to smuggle XSS by claiming protected status.
+    const html = '<div data-penman-core="true" onclick="alert(1)" onmouseover="alert(2)"><p>Trusted widget</p></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).not.toContain('onclick');
+    expect(clean).not.toContain('onmouseover');
+    expect(clean).not.toContain('alert');
+    // The data-penman-core marker itself can stay — the dangerous attrs are gone.
+    expect(clean).toContain('Trusted widget');
+  });
+
+  it('should strip javascript: hrefs on protected nodes', () => {
+    const html = '<div data-penman-core="true"><a href="javascript:alert(1)">click</a></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).not.toContain('href=');
+    expect(clean).not.toContain('javascript');
+  });
+
+  it('should reject dangerous iframe src on protected nodes', () => {
+    const html = '<div data-penman-core="true"><iframe src="javascript:alert(1)"></iframe></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).not.toContain('src=');
+  });
+
+  it('should strip javascript: in style values on protected nodes', () => {
+    const html = '<div data-penman-core="true" style="background: url(javascript:alert(1))"><p>x</p></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).not.toContain('javascript');
+  });
+
+  it('should strip srcdoc and formaction even on protected nodes', () => {
+    const html = '<div data-penman-core="true"><iframe srcdoc="<script>alert(1)</script>"></iframe></div>';
+    const clean = sanitizer.sanitize(html);
+    expect(clean).not.toContain('srcdoc');
+    expect(clean).not.toContain('<script');
   });
 });
 

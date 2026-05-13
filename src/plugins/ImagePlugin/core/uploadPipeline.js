@@ -2,6 +2,7 @@ import { emitImageEvent } from './eventEmitter.js';
 import { captureCompletionSnapshot } from '../history/snapshotController.js';
 import { createFigureNode } from '../rendering/figureRenderer.js';
 import { insertFigureAtResolvedPoint } from './selectionModel.js';
+import { uniqueId } from '../../../utils/uniqueId.js';
 
 /**
  * 2. Upload Pipeline (STATE MACHINE LOCKED)
@@ -16,7 +17,7 @@ const UPLOAD_STATES = {
 };
 
 function generateUniqueId() {
-  return 'img-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+  return uniqueId(`img-${Date.now()}-`);
 }
 
 /**

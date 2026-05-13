@@ -5,6 +5,7 @@ import { TableGrid } from './TableGrid.js';
 
 import { TableMenu } from './TableMenu.js';
 import { ColorPicker } from '../../ui/ColorPicker.js';
+import { uniqueId } from '../../utils/uniqueId.js';
 
 export function setupTablePlugin(editor) {
 
@@ -90,15 +91,27 @@ export function setupTablePlugin(editor) {
   editor.tableSelectionManager = selectionManager;
   let floatingUI = null;
 
+  // Tear down plugin-owned state on editor destroy.
+  editor.on('destroy', () => {
+    if (floatingUI && typeof floatingUI.destroy === 'function') {
+      floatingUI.destroy();
+      floatingUI = null;
+    }
+    if (selectionManager && typeof selectionManager.destroy === 'function') {
+      selectionManager.destroy();
+    }
+    editor.tableSelectionManager = null;
+  });
+
   // 2. Setup Commands
   editor.commands.register('INSERT_TABLE', {
     execute: (editor, { rows = 2, cols = 2 } = {}) => {
-      const tableId = 't-' + Math.random().toString(36).substr(2, 9);
+      const tableId = uniqueId('t-');
       let html = `<table data-table-id="${tableId}" border="1" bordercolor="#ccc" style="width: 100%; border-collapse: collapse; border-style: solid;"><tbody>`;
       for(let r=0; r<rows; r++) {
          html += `<tr>`;
          for(let c=0; c<cols; c++) {
-             html += `<td data-cell-id="c-${Math.random().toString(36).substr(2, 9)}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><p><br></p></td>`;
+             html += `<td data-cell-id="${uniqueId('c-')}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><p><br></p></td>`;
          }
          html += `</tr>`;
       }

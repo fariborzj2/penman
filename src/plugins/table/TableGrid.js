@@ -1,3 +1,5 @@
+import { uniqueId } from '../../utils/uniqueId.js';
+
 /**
  * TableGrid - On-the-fly computational layer for table structure
  * Parses an HTML table into a 2D mathematical grid and allows querying structural layout.
@@ -12,7 +14,7 @@ export class TableGrid {
   }
 
   static generateCellId() {
-    return 'c-' + Math.random().toString(36).substr(2, 9);
+    return uniqueId('c-');
   }
 
   _buildGrid() {
@@ -22,7 +24,7 @@ export class TableGrid {
     const rows = Array.from(this.table.querySelectorAll('tr'));
 
     if (!this.table.getAttribute('data-table-id')) {
-      this.table.setAttribute('data-table-id', 't-' + Math.random().toString(36).substr(2, 9));
+      this.table.setAttribute('data-table-id', uniqueId('t-'));
     }
 
     rows.forEach((tr, rIndex) => {

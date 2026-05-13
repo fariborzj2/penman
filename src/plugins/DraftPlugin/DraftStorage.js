@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger.js';
 /**
  * DraftStorage
  * Storage adapter for the DraftPlugin.
@@ -140,7 +141,7 @@ export class DraftStorage {
       return true;
     } catch (err) {
       // QuotaExceededError is the most common failure
-      console.warn('[DraftStorage] localStorage write failed:', err && err.name);
+      logger.warn('[DraftStorage] localStorage write failed:', err && err.name);
       return false;
     }
   }

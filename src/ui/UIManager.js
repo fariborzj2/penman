@@ -79,7 +79,31 @@ export class UIManager {
       } else {
         btn.classList.remove('penman-btn-active');
       }
+
+      // Keep aria-pressed in sync for toggle-style buttons so assistive tech
+      // can announce the active/inactive state. Native <button> elements
+      // already have an implicit `button` role, so we only check for the
+      // presence of `aria-pressed` (set in _createButton for toggle commands).
+      if (btn.hasAttribute('aria-pressed')) {
+        btn.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+      }
     });
+  }
+
+  /**
+   * Returns true for commands that behave as toggles (bold, italic, etc.) and
+   * therefore deserve an `aria-pressed` state. The list intentionally tracks
+   * built-in toggle commands; plugin-supplied buttons can opt in via the
+   * `ariaToggle: true` flag on their registry config.
+   */
+  _isToggleCommand(cmd) {
+    return [
+      'bold', 'italic', 'underline', 'strikethrough',
+      'subscript', 'superscript',
+      'justifyleft', 'justifycenter', 'justifyright', 'justifyfull',
+      'insertorderedlist', 'insertunorderedlist',
+      'ul', 'ol'
+    ].includes(cmd);
   }
 
   _createButton(cmd) {
@@ -129,6 +153,14 @@ export class UIManager {
       // You could use icon from config if provided, but fallback to our iconProvider if not
       btn.innerHTML = registryConfig.icon ? registryConfig.icon : (this.iconProvider.getIcon(cmd) || registryConfig.text || cmd);
 
+      // Accessibility: icon-only buttons need an explicit label for screen readers.
+      btn.setAttribute('aria-label', registryConfig.ariaLabel || registryConfig.text || cmd);
+
+      // Plugins can opt-in to toggle semantics with `ariaToggle: true`.
+      if (registryConfig.ariaToggle) {
+        btn.setAttribute('aria-pressed', 'false');
+      }
+
       btn.addEventListener('mousedown', (e) => e.preventDefault());
 
       btn.addEventListener('click', (e) => {
@@ -141,6 +173,15 @@ export class UIManager {
       // Normal built-in or fall-back command
       btn.title = this.editor.i18n.t(`core.${cmd}`) !== `core.${cmd}` ? this.editor.i18n.t(`core.${cmd}`) : cmd;
       btn.innerHTML = this.iconProvider.getIcon(cmd) || (btn.title.charAt(0).toUpperCase() + btn.title.slice(1));
+
+      // Accessibility: announce the same label that `title` shows in the tooltip.
+      btn.setAttribute('aria-label', btn.title);
+
+      // Mark built-in toggle commands with aria-pressed so AT users perceive
+      // the active state.
+      if (this._isToggleCommand(cmd)) {
+        btn.setAttribute('aria-pressed', 'false');
+      }
 
       btn.addEventListener('mousedown', (e) => {
         e.preventDefault();

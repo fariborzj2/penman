@@ -4,6 +4,8 @@ import { insertFigureAtResolvedPoint } from './core/selectionModel.js';
 import { handleCaptionKeyDown, handleCaptionPaste, handleCaptionBlur, setupAlignmentObserver, setFigureAlignment } from './rendering/index.js';
 import { TrustLevel } from './security/index.js';
 import { FloatingUI } from '../../ui/FloatingUI.js';
+import { uniqueId } from '../../utils/uniqueId.js';
+import { logger } from '../../utils/logger.js';
 
 /**
  * Translates internal gallery/upload error codes — and browser-native network
@@ -88,10 +90,22 @@ export function setupImagePlugin(editor) {
   const root = editor.editableArea;
 
   // 1. Setup DOM Observers
-  setupAlignmentObserver(root);
+  const alignmentObserver = setupAlignmentObserver(root);
 
   // Floating UI for Images
   let floatingUI = null;
+
+  // Register teardown hook so destroying the editor releases this plugin's
+  // observers, floating UI, and modal state.
+  editor.on('destroy', () => {
+    if (alignmentObserver && typeof alignmentObserver.disconnect === 'function') {
+      alignmentObserver.disconnect();
+    }
+    if (floatingUI && typeof floatingUI.destroy === 'function') {
+      floatingUI.destroy();
+      floatingUI = null;
+    }
+  });
   function createFloatingUI() {
     floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
     const html = `
@@ -389,8 +403,16 @@ export function setupImagePlugin(editor) {
                 imgDiv.style.position = 'relative';
                 imgDiv.style.backgroundColor = '#f0f0f0';
                 
-                // Native Lazy Loading
-                imgDiv.innerHTML = `<img src="${item.thumbnailUrl || item.url}" loading="lazy" style="width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;" title="${item.title || ''}" onload="this.style.opacity=1" onerror="this.style.opacity=0">`;
+                // Native Lazy Loading — built via DOM API so untrusted gallery
+                // payload values (title/url) cannot inject attributes or scripts.
+                const galleryImg = document.createElement('img');
+                galleryImg.src = item.thumbnailUrl || item.url || '';
+                galleryImg.loading = 'lazy';
+                galleryImg.style.cssText = 'width:100%; height:100%; object-fit:cover; transition: opacity 0.3s;';
+                if (item.title) galleryImg.title = String(item.title);
+                galleryImg.addEventListener('load', () => { galleryImg.style.opacity = '1'; });
+                galleryImg.addEventListener('error', () => { galleryImg.style.opacity = '0'; });
+                imgDiv.appendChild(galleryImg);
 
                 // Add "Copy Link" overlay
                 const copyBtn = document.createElement('button');
@@ -421,9 +443,9 @@ export function setupImagePlugin(editor) {
 
                 imgDiv.appendChild(copyBtn);
 
-                const img = imgDiv.querySelector('img');
-                img.style.opacity = '0';
-                img.onload = () => img.style.opacity = '1';
+                // Initialise opacity for the fade-in transition. Listener
+                // already attached above when the image was created.
+                galleryImg.style.opacity = '0';
                 
                 imgDiv.addEventListener('mouseover', () => {
                     imgDiv.style.borderColor = '#007bff';
@@ -479,7 +501,7 @@ export function setupImagePlugin(editor) {
                         }).catch(err => {
                             loadMoreBtn.textContent = originalText;
                             loadMoreBtn.disabled = false;
-                            console.error('Failed to load more items:', err);
+                            logger.error('Failed to load more items:', err);
                         });
                     });
                     galleryContainer.appendChild(loadMoreBtn);
@@ -814,7 +836,7 @@ export function setupImagePlugin(editor) {
                              editor.image.gallery.getSource(sources[0].id).then(source => {
                                  if (source._cachedItems) {
                                      source._cachedItems.unshift({
-                                         id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
+                                         id: uniqueId(Date.now().toString() + '-'),
                                          url: item.url,
                                          thumbnailUrl: item.url,
                                          filename: item.file.name,
@@ -846,7 +868,7 @@ export function setupImagePlugin(editor) {
                     thumbnailUrl = URL.createObjectURL(file);
                 }
                 return {
-                    id: Math.random().toString(36).substr(2, 9),
+                    id: uniqueId(),
                     file,
                     thumbnailUrl,
                     status: 'PENDING', // PENDING, UPLOADING, SUCCESS, ERROR

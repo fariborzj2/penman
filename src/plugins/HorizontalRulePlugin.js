@@ -26,10 +26,34 @@ export function setupHorizontalRulePlugin(editor) {
       }
 
       if (blockNode) {
-          // If we are inside a block, we can split it or just insert after
-          // For simplicity in Vanilla JS, execCommand insertHorizontalRule does a decent job splitting blocks
-          // Let's use it, then normalize
-          document.execCommand('insertHorizontalRule', false, null);
+          // Split the current block at the caret and insert <hr> between the
+          // halves. This replaces the deprecated
+          // document.execCommand('insertHorizontalRule', ...) with explicit
+          // DOM operations that produce the same result deterministically.
+          const range = sel.getRangeAt(0);
+
+          // 1. Move everything AFTER the caret into a fresh clone of the block
+          //    so we can place the <hr> between the two halves.
+          const afterFragment = range.cloneRange();
+          afterFragment.setEnd(blockNode, blockNode.childNodes.length);
+          afterFragment.setStart(range.endContainer, range.endOffset);
+          const trailingFragment = afterFragment.extractContents();
+
+          const trailingBlock = document.createElement(blockNode.tagName);
+          trailingBlock.appendChild(trailingFragment);
+          if (!trailingBlock.firstChild) {
+            trailingBlock.appendChild(document.createElement('br'));
+          }
+
+          blockNode.parentNode.insertBefore(hr, blockNode.nextSibling);
+          blockNode.parentNode.insertBefore(trailingBlock, hr.nextSibling);
+
+          // 2. Move caret into the trailing block.
+          const newRange = document.createRange();
+          newRange.setStart(trailingBlock, 0);
+          newRange.collapse(true);
+          sel.removeAllRanges();
+          sel.addRange(newRange);
       } else {
           // Fallback if not in block
           const range = sel.getRangeAt(0);

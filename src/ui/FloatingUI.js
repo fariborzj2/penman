@@ -30,6 +30,13 @@ export class FloatingUI {
     this.element.style.display = 'none'; // Hidden initially
     this.element.style.zIndex = '1000';
     this.element.innerHTML = contentHtml;
+    // Accessibility: announce floating toolbars as ARIA toolbars and make the
+    // panel reachable as one focus stop. Buttons inside are reached with the
+    // arrow keys / Tab as normal once the user focuses the toolbar.
+    this.element.setAttribute('role', 'toolbar');
+    if (!this.element.hasAttribute('aria-label')) {
+      this.element.setAttribute('aria-label', this.options.ariaLabel || 'Floating toolbar');
+    }
 
     // Append to the editor's main container to keep styling scoped
     // and correctly contain overflow within the component's boundaries.
@@ -38,6 +45,16 @@ export class FloatingUI {
     // Listen to resize/scroll to update position
     window.addEventListener('resize', this._handleScrollOrResize);
     window.addEventListener('scroll', this._handleScrollOrResize, true); // true for capturing all scrolls
+
+    // Escape dismisses the floating toolbar; useful for keyboard users who
+    // can't easily click outside to dismiss.
+    this._escapeHandler = (e) => {
+      if (e.key === 'Escape' && this.isVisible) {
+        e.preventDefault();
+        this.hide();
+      }
+    };
+    document.addEventListener('keydown', this._escapeHandler);
 
     this.isVisible = true;
   }
@@ -202,6 +219,11 @@ export class FloatingUI {
 
     window.removeEventListener('resize', this._handleScrollOrResize);
     window.removeEventListener('scroll', this._handleScrollOrResize, true);
+
+    if (this._escapeHandler) {
+      document.removeEventListener('keydown', this._escapeHandler);
+      this._escapeHandler = null;
+    }
   }
 
   _handleScrollOrResize() {

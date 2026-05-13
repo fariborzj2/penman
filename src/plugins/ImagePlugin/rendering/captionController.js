@@ -5,6 +5,7 @@
  * - Enter Key: Pressing ENTER inside caption prevents default (no new lines).
  *   It triggers blur() on the caption and moves the cursor to a new <p><br></p> block appended immediately after the figure.
  */
+import { insertTextAtSelection } from '../../../utils/domCommands.js';
 
 export function handleCaptionKeyDown(event, editor) {
   if (event.key === 'Enter') {
@@ -112,7 +113,11 @@ export function handleCaptionPaste(event) {
       }
     }
   } else if (text) {
-    document.execCommand('insertText', false, text);
+    // Native selection-based text insertion. Replaces the deprecated
+    // document.execCommand('insertText'). The helper writes the text at the
+    // current selection (replacing any selected content) and collapses the
+    // caret after it.
+    insertTextAtSelection(text);
   }
 }
 

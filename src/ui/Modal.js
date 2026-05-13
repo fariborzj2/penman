@@ -1,3 +1,5 @@
+import { uniqueId } from '../utils/uniqueId.js';
+
 export class Modal {
   /**
    * @param {Object} options
@@ -24,6 +26,9 @@ export class Modal {
     this.editor = this.options.editor;
     this.overlay = null;
     this.modalElement = null;
+    this._previousFocus = null;
+    this._keydownHandler = null;
+    this._titleId = uniqueId('penman-modal-title-');
 
     this._createDOM();
     this._bindEvents();
@@ -37,10 +42,18 @@ export class Modal {
     this.modalElement = document.createElement('div');
     this.modalElement.className = 'penman-modal';
     this.modalElement.setAttribute('dir', this.options.dir);
+    // Accessibility: announce the modal as a labelled dialog.
+    this.modalElement.setAttribute('role', 'dialog');
+    this.modalElement.setAttribute('aria-modal', 'true');
+    this.modalElement.setAttribute('aria-labelledby', this._titleId);
+    // Allow programmatic focus when the focused trigger element gets removed.
+    this.modalElement.setAttribute('tabindex', '-1');
 
     const header = document.createElement('div');
     header.className = 'penman-modal-header';
-    header.innerHTML = `<h3>${this.options.title || this.editor.i18n.t('ui.dialog')}</h3><button class="penman-modal-close" type="button">&times;</button>`;
+    const titleText = this.options.title || (this.editor && this.editor.i18n ? this.editor.i18n.t('ui.dialog') : 'Dialog');
+    const closeLabel = (this.editor && this.editor.i18n) ? this.editor.i18n.t('ui.close') : 'Close';
+    header.innerHTML = `<h3 id="${this._titleId}">${titleText}</h3><button class="penman-modal-close" type="button" aria-label="${closeLabel}">&times;</button>`;
 
     const body = document.createElement('div');
     body.className = 'penman-modal-body';
@@ -161,19 +174,107 @@ export class Modal {
     // This method is kept for backward compatibility but does nothing.
   }
 
-  open() {
-    document.body.appendChild(this.overlay);
+  /**
+   * Returns every focusable descendant of the modal in DOM order. Used by the
+   * focus trap to compute the loop endpoints.
+   */
+  _getFocusableElements() {
+    const selector = [
+      'a[href]',
+      'area[href]',
+      'input:not([disabled]):not([type="hidden"])',
+      'select:not([disabled])',
+      'textarea:not([disabled])',
+      'button:not([disabled])',
+      'iframe',
+      'object',
+      'embed',
+      '[contenteditable="true"]',
+      '[tabindex]:not([tabindex="-1"])'
+    ].join(',');
+    return Array.from(this.modalElement.querySelectorAll(selector))
+      .filter(el => el.offsetParent !== null || el === document.activeElement);
+  }
 
-    // Focus first input if available
-    const firstInput = this.modalElement.querySelector('input, select, textarea');
-    if (firstInput) {
-      setTimeout(() => firstInput.focus(), 10);
+  /**
+   * Keydown handler that implements the focus trap and Escape-to-close.
+   */
+  _handleKeydown(e) {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      if (typeof this.options.onCancel === 'function') {
+        this.options.onCancel();
+      }
+      this.close();
+      return;
+    }
+
+    if (e.key !== 'Tab') return;
+
+    const focusable = this._getFocusableElements();
+    if (focusable.length === 0) {
+      // Nothing focusable — keep focus on the dialog container itself.
+      e.preventDefault();
+      this.modalElement.focus();
+      return;
+    }
+
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    const active = document.activeElement;
+
+    if (e.shiftKey) {
+      if (active === first || !this.modalElement.contains(active)) {
+        e.preventDefault();
+        last.focus();
+      }
+    } else {
+      if (active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     }
   }
 
+  open() {
+    // Remember whatever was focused so we can restore it on close.
+    this._previousFocus = document.activeElement;
+
+    document.body.appendChild(this.overlay);
+
+    // Install the focus trap. Bound here so we can detach the same reference.
+    // Use bubble phase (not capture) so other handlers on inner elements still
+    // run first; the trap only intervenes for Tab navigation when no inner
+    // handler stopped propagation.
+    this._keydownHandler = (e) => this._handleKeydown(e);
+    document.addEventListener('keydown', this._keydownHandler);
+
+    // Focus first input/control inside the modal. If nothing focusable exists,
+    // focus the dialog container itself so the trap has somewhere to start.
+    const focusable = this._getFocusableElements();
+    const initialTarget = focusable[0] || this.modalElement;
+    setTimeout(() => {
+      try { initialTarget.focus(); } catch (_) { /* noop */ }
+    }, 10);
+  }
+
   close() {
+    if (this._keydownHandler) {
+      document.removeEventListener('keydown', this._keydownHandler);
+      this._keydownHandler = null;
+    }
+
     if (this.overlay && this.overlay.parentNode) {
       this.overlay.parentNode.removeChild(this.overlay);
     }
+
+    // Restore focus to whatever opened the modal — but only if it still
+    // exists in the document. Avoid stealing focus from a different element
+    // that the user has since clicked.
+    if (this._previousFocus && document.contains(this._previousFocus) &&
+        typeof this._previousFocus.focus === 'function') {
+      try { this._previousFocus.focus(); } catch (_) { /* noop */ }
+    }
+    this._previousFocus = null;
   }
 }

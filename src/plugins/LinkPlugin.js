@@ -27,32 +27,49 @@ export function setupLinkPlugin(editor) {
 
       const range = sel.getRangeAt(0);
 
-      // Simple implementation: Use execCommand 'unlink' which works reasonably well across browsers
-      // for selections that contain links.
-      document.execCommand('unlink', false, null);
+      // Native unlink: walk every <a> ancestor or descendant inside the
+      // selection and unwrap it. Replaces document.execCommand('unlink')
+      // and handles both collapsed-inside-link and non-collapsed cases
+      // uniformly.
+      const linksToRemove = new Set();
 
-      // We also need to check if we are collapsed inside a link. If so, execCommand('unlink') might not work
-      // depending on the browser.
-      if (range.collapsed) {
-         let node = range.startContainer;
-         let linkNode = null;
-         while (node && node !== editor.editableArea) {
-            if (node.nodeType === Node.ELEMENT_NODE && node.tagName.toLowerCase() === 'a') {
-               linkNode = node;
-               break;
-            }
-            node = node.parentNode;
-         }
+      // Case A: ancestors of either endpoint.
+      const collectAncestorLinks = (node) => {
+        let curr = node;
+        while (curr && curr !== editor.editableArea) {
+          if (curr.nodeType === Node.ELEMENT_NODE && curr.tagName.toLowerCase() === 'a') {
+            linksToRemove.add(curr);
+          }
+          curr = curr.parentNode;
+        }
+      };
+      collectAncestorLinks(range.startContainer);
+      collectAncestorLinks(range.endContainer);
 
-         if (linkNode) {
-            // Unwrap the link node
-            const parent = linkNode.parentNode;
-            while(linkNode.firstChild) {
-                parent.insertBefore(linkNode.firstChild, linkNode);
+      // Case B: descendants of the common ancestor that intersect the range.
+      if (!range.collapsed) {
+        const common = range.commonAncestorContainer;
+        const container = common.nodeType === Node.TEXT_NODE ? common.parentNode : common;
+        const walker = document.createTreeWalker(container, NodeFilter.SHOW_ELEMENT, {
+          acceptNode: (node) => {
+            if (node.tagName && node.tagName.toLowerCase() === 'a') {
+              return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
             }
-            parent.removeChild(linkNode);
-         }
+            return NodeFilter.FILTER_SKIP;
+          }
+        });
+        let n;
+        while ((n = walker.nextNode())) linksToRemove.add(n);
       }
+
+      linksToRemove.forEach(linkNode => {
+        const parent = linkNode.parentNode;
+        if (!parent) return;
+        while (linkNode.firstChild) {
+          parent.insertBefore(linkNode.firstChild, linkNode);
+        }
+        parent.removeChild(linkNode);
+      });
     }
   });
 

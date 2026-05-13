@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger.js';
 /**
  * DraftManager
  * Business logic layer for draft persistence.
@@ -74,7 +75,7 @@ export class DraftManager {
 
       return data;
     } catch (err) {
-      console.warn('[DraftManager] load failed:', err);
+      logger.warn('[DraftManager] load failed:', err);
       return null;
     }
   }
@@ -108,7 +109,7 @@ export class DraftManager {
       if (ok) this._lastSavedContent = content;
       return ok;
     } catch (err) {
-      console.warn('[DraftManager] save failed:', err);
+      logger.warn('[DraftManager] save failed:', err);
       return false;
     }
   }
@@ -138,7 +139,7 @@ export class DraftManager {
     try {
       return await this._storage.delete(this._storageKey);
     } catch (err) {
-      console.warn('[DraftManager] remove failed:', err);
+      logger.warn('[DraftManager] remove failed:', err);
       return false;
     }
   }

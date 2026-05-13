@@ -6,6 +6,8 @@ import { UIManager } from '../ui/UIManager.js';
 import { PluginManager } from '../plugins/PluginManager.js';
 import { Sanitizer } from '../sanitization/Sanitizer.js';
 import { I18nManager } from '../i18n/I18nManager.js';
+import { setLoggerEnabled } from '../utils/logger.js';
+import { insertHTMLAtSelection, alignBlocks, isAlignmentActive } from '../utils/domCommands.js';
 
 export class Editor extends EventEmitter {
   constructor(options) {
@@ -14,8 +16,15 @@ export class Editor extends EventEmitter {
       lang: 'en',
       direction: 'auto',
       height: 300,
+      debug: false,
       ...options
     };
+
+    // Wire up the debug-gated logger. Passing `debug: true` enables
+    // diagnostic console output across the editor.
+    if (this.options.debug) {
+      setLoggerEnabled(true);
+    }
 
     if (this.options.element) {
       this.textarea = this.options.element;
@@ -65,6 +74,22 @@ export class Editor extends EventEmitter {
       queryState: () => false
     });
 
+    // Native alignment commands. Replace the deprecated
+    // document.execCommand('justifyLeft'|'justifyCenter'|'justifyRight'|
+    // 'justifyFull') with CSS-based text-align on the enclosing block.
+    const alignMap = {
+      justifyleft: 'left',
+      justifycenter: 'center',
+      justifyright: 'right',
+      justifyfull: 'justify',
+    };
+    Object.entries(alignMap).forEach(([cmd, value]) => {
+      this.commands.register(cmd, {
+        execute: (editor) => alignBlocks(value, editor.editableArea),
+        queryState: (editor) => isAlignmentActive(value, editor.editableArea),
+      });
+    });
+
     // Initialize plugins first so they can register their buttons to the UI registry
     PluginManager.init(this);
 
@@ -101,6 +126,21 @@ export class Editor extends EventEmitter {
     this.editableArea = document.createElement('div');
     this.editableArea.className = 'penman-editor-area';
     this.editableArea.contentEditable = true;
+    // Accessibility: expose this as a rich, multi-line textbox so screen
+    // readers describe it correctly. Label comes from the host textarea's
+    // aria-label/title, its associated <label>, or a sensible default.
+    this.editableArea.setAttribute('role', 'textbox');
+    this.editableArea.setAttribute('aria-multiline', 'true');
+    const ariaLabel = this.options.ariaLabel
+      || this.textarea.getAttribute('aria-label')
+      || this.textarea.getAttribute('title')
+      || (this.textarea.labels && this.textarea.labels[0] && this.textarea.labels[0].textContent.trim())
+      || 'Rich text editor';
+    this.editableArea.setAttribute('aria-label', ariaLabel);
+    if (this.textarea.id) {
+      // Maintain the textarea ↔ editor relationship for assistive tech.
+      this.editableArea.setAttribute('aria-controls', this.textarea.id);
+    }
 
     // Defaulting to empty <p></p> if empty, ensures typing creates P instead of DIV
     const initialVal = this.textarea.value.trim();
@@ -691,9 +731,12 @@ export class Editor extends EventEmitter {
         }
     }
 
-    // Using execCommand 'insertHTML' is the standard way to insert content at cursor
-    // while maintaining undo history and selection in a contentEditable element.
-    document.execCommand('insertHTML', false, html);
+    // Native DOM insertion via the selection API. Replaces the deprecated
+    // document.execCommand('insertHTML', false, html). The helper deletes any
+    // currently-selected range, parses the new HTML safely (scripts removed),
+    // inserts it as a DocumentFragment, and collapses the caret after the
+    // inserted content. Undo history is captured below via pushImmediate.
+    insertHTMLAtSelection(html);
 
     if (this.history) {
       this.history.pushImmediate();

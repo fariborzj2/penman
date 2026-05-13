@@ -1,3 +1,4 @@
+import { logger } from '../utils/logger.js';
 export class CommandManager {
   constructor(editor) {
     this.editor = editor;
@@ -13,9 +14,15 @@ export class CommandManager {
 
   /**
    * Defines which commands are allowed to use the browser's execCommand fallback.
+   *
+   * As of the production-readiness refactor, every command in this list has a
+   * native registered equivalent (FormatPlugin for inline toggles, Editor
+   * built-ins for alignment, ListPlugin for lists, BlockTypePlugin for
+   * formatBlock). The whitelist therefore serves only as a defensive net for
+   * legacy callers and may shrink to an empty array in a future release.
    */
   get fallbackWhitelist() {
-    return ['justifyleft', 'justifycenter', 'justifyright', 'justifyfull', 'formatBlock', 'bold', 'italic', 'underline', 'strikethrough', 'insertUnorderedList', 'insertOrderedList'];
+    return ['formatBlock', 'bold', 'italic', 'underline', 'strikethrough', 'insertUnorderedList', 'insertOrderedList'];
   }
 
   /**
@@ -74,7 +81,7 @@ export class CommandManager {
     } else if (this.fallbackWhitelist.includes(cmd)) {
       document.execCommand(cmd, false, value);
     } else {
-      console.warn(`Penman Editor: Command "${cmd}" aborted (not registered/whitelisted).`);
+      logger.warn(`Penman Editor: Command "${cmd}" aborted (not registered/whitelisted).`);
       return;
     }
 

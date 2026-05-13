@@ -1,3 +1,5 @@
+import { removeInlineFormatting } from '../utils/domCommands.js';
+
 export function setupRemoveFormatPlugin(editor) {
   const inlineTags = ['strong', 'em', 'b', 'i', 'u', 'span', 'a', 'mark', 's', 'strike'];
 
@@ -32,12 +34,14 @@ export function setupRemoveFormatPlugin(editor) {
           currentNode = walker.nextNode();
       }
 
-      // execCommand('removeFormat') does a lot of this, but it might not remove custom spans.
-      // So we use it as a base.
-      document.execCommand('removeFormat', false, null);
+      // Native selection-based inline-format removal. Walks every inline
+      // wrapper that overlaps the selection (STRONG/EM/U/S/SUB/SUP/MARK/
+      // FONT/SPAN) and unwraps it, then restores the selection over the
+      // same character range. Replaces document.execCommand('removeFormat').
+      removeInlineFormatting(editor.editableArea);
 
       nodesToUnwrap.forEach(node => {
-          if (node.parentNode) { // Check if it still exists after execCommand
+          if (node.parentNode) { // Check if it still exists after the unwrap pass
               const parent = node.parentNode;
               while(node.firstChild) {
                   parent.insertBefore(node.firstChild, node);

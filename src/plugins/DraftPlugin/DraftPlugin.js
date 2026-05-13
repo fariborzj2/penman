@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger.js';
 /**
  * DraftPlugin
  * Auto-saves editor content to browser storage and shows a recovery
@@ -80,7 +81,7 @@ export function setupDraftPlugin(editor) {
     typeof editor.getContent !== 'function' ||
     typeof editor.setContent !== 'function'
   ) {
-    console.warn('[DraftPlugin] Incompatible editor instance. Plugin not loaded.');
+    logger.warn('[DraftPlugin] Incompatible editor instance. Plugin not loaded.');
     return;
   }
 
@@ -92,7 +93,7 @@ export function setupDraftPlugin(editor) {
     (editor.textarea && editor.textarea.name ? editor.textarea.name : null);
 
   if (!documentId) {
-    console.warn(
+    logger.warn(
       '[DraftPlugin] No documentId could be determined. ' +
       'Pass one via editor.options.draftDocumentId.'
     );

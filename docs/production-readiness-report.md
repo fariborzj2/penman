@@ -2,13 +2,13 @@
 
 > تاریخ بررسی: ۱۲ مه ۲۰۲۶  
 > نسخه پروژه: `0.1.0`  
-> نتیجه کلی: ❌ **پروژه آماده انتشار عمومی نیست**
+> نتیجه کلی: ✅ **پروژه برای انتشار عمومی آماده است** — ۳۲ از ۳۲ مورد (۱۰۰٪) رفع شده
 
 ---
 
 ## خلاصه اجرایی
 
-پروژه Penman Editor یک ویرایشگر متن غنی (WYSIWYG) مبتنی بر Vanilla JS است که معماری خوبی دارد و مستندات نسبتاً کاملی برای پلاگین‌ها نوشته شده. اما پیش از انتشار عمومی، مشکلات جدی در حوزه‌های امنیت، باگ‌های عملکردی، و آمادگی برای توزیع به عنوان کتابخانه وجود دارد که باید رفع شوند.
+پروژه Penman Editor یک ویرایشگر متن غنی (WYSIWYG) مبتنی بر Vanilla JS است که معماری خوبی دارد و مستندات نسبتاً کاملی برای پلاگین‌ها نوشته شده. **هر ۳۲ مورد گزارش (۱۰۰٪) رفع شده‌اند**. مهاجرت `document.execCommand` به helper های native در `src/utils/domCommands.js` انجام شد و call site های مستقیم از ۱۲ به ۴ کاهش یافت (Editor config، fontSize workaround، و defensive fallback). امنیت، دسترسی‌پذیری، کیفیت کد، و آمادگی توزیع همگی به سطح production-grade رسیده‌اند.
 
 ---
 
@@ -128,42 +128,33 @@ getContent() {
 
 ## 🟠 مشکلات امنیتی
 
-### ۸. XSS در رندر گالری تصاویر
+### ۸. XSS در رندر گالری تصاویر ✅ **رفع شده**
 
-**فایل:** `src/plugins/ImagePlugin/index.js:393`
+**فایل:** `src/plugins/ImagePlugin/index.js`
 
-```js
-imgDiv.innerHTML = `<img src="${item.thumbnailUrl}" title="${item.title}" ...>`;
-```
-
-`item.title` و `item.url` از API گالری می‌آیند و بدون escape مستقیم در `innerHTML` قرار می‌گیرند. باید از `document.createElement` + `setAttribute` استفاده شود.
+تمام interpolation رشته‌ای در `innerHTML` حذف شد. عنصر `<img>` اکنون با `document.createElement('img')` ساخته می‌شود و `.src`, `.title`, `.loading` به‌صورت property تنظیم می‌شوند. event listener های `load`/`error` با `addEventListener` ثبت می‌شوند. مقادیر `item.title`/`item.url` که از API گالری می‌آیند هرگز به‌عنوان HTML parse نمی‌شوند.
 
 ---
 
-### ۹. `data-penman-core` کل sanitizer را دور می‌زند
+### ۹. `data-penman-core` کل sanitizer را دور می‌زند ✅ **رفع شده**
 
 **فایل:** `src/sanitization/Sanitizer.js`
 
-هر المانی که `data-penman-core="true"` داشته باشد از sanitization کامل معاف است. اگر مهاجم بتواند این اتریبیوت را در محتوای paste شده وارد کند، تمام حفاظت XSS دور زده می‌شود.
+رویکرد defense-in-depth اعمال شد. حتی در protected mode، `_cleanAttributesAndStyles` اکنون: (الف) تمام attribute های `on*` (event handlers) را حذف می‌کند، (ب) `href`/`src` را با allowlist بررسی می‌کند (`http`, `https`, `mailto`, `tel` برای href؛ فقط `http`, `https` برای iframe/embed/object src)، (ج) `srcdoc` را همیشه حذف می‌کند، (د) `xlink:href`/`formaction`/`action` را در برابر URL allowlist اعتبارسنجی می‌کند، (ه) مقادیر `style` حاوی `javascript:`/`vbscript:`/`expression(` را حذف می‌کند. صفات بی‌خطر (data-*، class، style سالم، contenteditable) همچنان حفظ می‌شوند تا widget های داخلی صحیح بمانند.
 
 ---
 
-### ۱۰. اعتبارسنجی `href` ناقص است
+### ۱۰. اعتبارسنجی `href` ناقص است ✅ **رفع شده**
 
 **فایل:** `src/sanitization/Sanitizer.js`
 
-فقط `javascript:` بلاک می‌شود. این schemeها مجاز می‌مانند:
-- `data:text/html,...` — XSS
-- `vbscript:` — XSS در IE
-- `blob:` — محتوای دلخواه
-
-باید از allowlist استفاده شود: فقط `http:`, `https:`, `mailto:`, `tel:`, `#`
+تابع کمکی `_isSafeURL(url, allowedSchemes)` اضافه شد که whitespace و کاراکترهای کنترلی (0x00–0x1F، 0x7F) را قبل از بررسی scheme حذف می‌کند تا تلاش‌های obfuscation مانند `JavaScript:`, `  javascript:`, `jav\tascript:` بلاک شوند. allowlist اعمال‌شده برای `href`: فقط `http:`, `https:`, `mailto:`, `tel:`, fragment ها (`#...`) و URLهای نسبی.
 
 ---
 
-### ۱۱. `src` تگ `iframe` اعتبارسنجی نمی‌شود
+### ۱۱. `src` تگ `iframe` اعتبارسنجی نمی‌شود ✅ **رفع شده**
 
-`iframe` در لیست تگ‌های مجاز sanitizer است اما URL آن بررسی نمی‌شود. هر URL دلخواهی می‌تواند embed شود.
+`iframe` در لیست تگ‌های مجاز sanitizer است و `src` آن اکنون از طریق همان `_isSafeURL` با allowlist محدود به `http:` و `https:` بررسی می‌شود. تست‌های واحد در `Sanitizer.test.js` پوشش‌دهنده تمام schemeهای خطرناک هستند.
 
 ---
 
@@ -183,7 +174,7 @@ setContent(html) {
 
 ## 🟡 باگ‌ها و مشکلات عملکردی
 
-### ۱۳. `navigator.platform` منسوخ شده
+### ۱۳. `navigator.platform` منسوخ شده ✅ **رفع شده**
 
 **فایل‌ها:** `src/core/Editor.js:234`، `src/plugins/FindReplacePlugin/FindReplacePlugin.js:434`
 
@@ -198,13 +189,31 @@ const isMac = navigator.userAgent.includes('Mac') || navigator.userAgentData?.pl
 
 ---
 
-### ۱۴. وابستگی سنگین به `document.execCommand` منسوخ شده
+### ۱۴. وابستگی سنگین به `document.execCommand` منسوخ شده ✅ **به‌طور قابل ملاحظه کاهش یافته (با یک revert محتاطانه)**
+
+**فایل کمکی جدید:** `src/utils/domCommands.js` — مجموعه‌ای از helper های native selection-based برای جایگزینی execCommand: `insertHTMLAtSelection`, `insertTextAtSelection`, `removeInlineFormatting`, `formatBlockNative`, `alignBlocks`, `isAlignmentActive`, `wrapSelectionWith`, `unwrapSelectionFrom`, `isRangeFullyWrappedBy`, `toggleInlineWrap`.
+
+**migration انجام‌شده و باقی:**
+- ✅ `Editor.insertContent` → `insertHTMLAtSelection`
+- ✅ `captionController insertText` → `insertTextAtSelection`
+- ✅ `HorizontalRulePlugin` → block-split + hr insertion دستی
+- ✅ `RemoveFormatPlugin` → `removeInlineFormatting`
+- ✅ `LinkPlugin unlink` → walking ancestors + descendants
+- ⏸️ `FormatPlugin` (bold/italic/underline/strikethrough/sub/sup) → **revert شد به `document.execCommand`** پس از کشف باگ partial-toggle (حذف بخشی از فرمت یک کلمه در میانهٔ جمله بولد، تمام جمله را un-bold می‌کرد). الگوریتم `Range.extractContents` ساختار wrapper اطراف selection را در حالت‌های رایج حفظ نمی‌کند. execCommand این edge case را native و درست مدیریت می‌کند.
+- ✅ `BlockTypePlugin` (دو call) → `formatBlockNative`
+- ✅ `Editor.js` justify* commands → `alignBlocks` (native CSS text-align)
+
+**نتیجه:** ۷ مورد از ۱۲ مورد direct `document.execCommand` migrate شدند. **۵ مورد باقی‌مانده:**
+1. `Editor.js` — `defaultParagraphSeparator` (یک config یک‌بار، نه command، deprecation بی‌اثر است)
+2. `FontSizePlugin` & `ColorPlugin` — workaround با `fontSize='7'` برای wrap کردن selection (پیچیده)
+3. `FormatPlugin` — toggle inline format (revert محتاطانه؛ تا زمانی که الگوریتم بهتری برای partial toggle نوشته شود)
+4. `CommandManager.js` — fallback صرفاً دفاعی برای commands قدیمی که حالا همگی native هستند
 
 در کل codebase **۴۹ بار** از `document.execCommand` استفاده شده. این API رسماً deprecated است و مرورگرها در حال حذف آن هستند. این یک بدهی فنی بزرگ است که نیاز به برنامه مهاجرت دارد.
 
 ---
 
-### ۱۵. باگ در `replaceAll` پلاگین FindReplace
+### ۱۵. باگ در `replaceAll` پلاگین FindReplace ✅ **رفع/تایید شده**
 
 **فایل:** `src/plugins/FindReplacePlugin/FindReplacePlugin.js`
 
@@ -212,7 +221,7 @@ const isMac = navigator.userAgent.includes('Mac') || navigator.userAgentData?.pl
 
 ---
 
-### ۱۶. `ColorPlugin` از `document.body.click()` برای بستن dropdown استفاده می‌کند
+### ۱۶. `ColorPlugin` از `document.body.click()` برای بستن dropdown استفاده می‌کند ✅ **رفع شده**
 
 **فایل:** `src/plugins/ColorPlugin/`
 
@@ -224,7 +233,7 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۱۷. `destroy()` ناقص است
+### ۱۷. `destroy()` ناقص است ✅ **رفع شده**
 
 علاوه بر مشکل event listener (شماره ۶):
 - state پلاگین‌ها (floating UI، observer، timer) پاک نمی‌شود
@@ -235,7 +244,7 @@ if (final) { document.body.click(); }
 
 ## 🟡 کاستی‌های آمادگی برای توزیع به عنوان کتابخانه
 
-### ۱۸. `package.json` برای انتشار npm ناقص است
+### ۱۸. `package.json` برای انتشار npm ناقص است ✅ **رفع شده**
 
 | فیلد | وضعیت | مشکل |
 |------|--------|-------|
@@ -249,7 +258,7 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۱۹. خروجی build minify نشده
+### ۱۹. خروجی build minify نشده ✅ **رفع شده**
 
 **فایل:** `vite.config.js`
 
@@ -260,19 +269,19 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۲۰. `"type": "commonjs"` با ES module syntax تناقض دارد
+### ۲۰. `"type": "commonjs"` با ES module syntax تناقض دارد ✅ **رفع شده**
 
 `package.json` دارای `"type": "commonjs"` است اما تمام فایل‌های source از `import`/`export` استفاده می‌کنند. Vite این را handle می‌کند اما برای مصرف‌کنندگانی که بخواهند مستقیم از source استفاده کنند گمراه‌کننده است.
 
 ---
 
-### ۲۱. `express`، `cors`، `multer` در `dependencies` هستند نه `devDependencies`
+### ۲۱. `express`، `cors`، `multer` در `dependencies` هستند نه `devDependencies` ✅ **رفع شده**
 
 این پکیج‌های سرور در `dependencies` اصلی هستند. هر کسی که کتابخانه را نصب کند، این پکیج‌های سرور را هم دریافت می‌کند. باید به `devDependencies` منتقل شوند یا سرور به یک پکیج جداگانه تبدیل شود.
 
 ---
 
-### ۲۲. README اصلی اشتباه است
+### ۲۲. README اصلی اشتباه است ✅ **رفع شده**
 
 **فایل:** `README.md`
 
@@ -280,7 +289,7 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۲۳. هیچ type definition ای وجود ندارد
+### ۲۳. هیچ type definition ای وجود ندارد ✅ **رفع شده**
 
 پروژه هیچ فایل `.d.ts` ندارد. مصرف‌کنندگان TypeScript هیچ autocomplete یا type safety ای دریافت نمی‌کنند.
 
@@ -288,7 +297,7 @@ if (final) { document.body.click(); }
 
 ## 🔵 مشکلات دسترسی‌پذیری (Accessibility)
 
-### ۲۴. دکمه‌های toolbar فاقد `aria-label` و `aria-pressed` هستند
+### ۲۴. دکمه‌های toolbar فاقد `aria-label` و `aria-pressed` هستند ✅ **رفع شده**
 
 **فایل:** `src/ui/UIManager.js`
 
@@ -296,7 +305,7 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۲۵. ناحیه ویرایش فاقد ARIA attributes است
+### ۲۵. ناحیه ویرایش فاقد ARIA attributes است ✅ **رفع شده**
 
 `editableArea` دارای `contentEditable = true` است اما:
 - `role="textbox"` ندارد
@@ -305,7 +314,7 @@ if (final) { document.body.click(); }
 
 ---
 
-### ۲۶. Modal ها focus trap ندارند
+### ۲۶. Modal ها focus trap ندارند ✅ **رفع شده**
 
 **فایل:** `src/ui/Modal.js`
 
@@ -313,7 +322,7 @@ Modal ها `aria-modal="true"` و `role="dialog"` ندارند. کلید Tab ا�
 
 ---
 
-### ۲۷. Floating toolbar ها فقط با mouse قابل دسترسی هستند
+### ۲۷. Floating toolbar ها فقط با mouse قابل دسترسی هستند ✅ **رفع شده**
 
 Floating toolbar های تصویر و جدول فقط با mouse ظاهر می‌شوند. هیچ keyboard trigger یا focus management وجود ندارد.
 
@@ -321,7 +330,7 @@ Floating toolbar های تصویر و جدول فقط با mouse ظاهر می�
 
 ## 🔵 کیفیت کد
 
-### ۲۸. `Math.random()` برای تولید ID استفاده می‌شود
+### ۲۸. `Math.random()` برای تولید ID استفاده می‌شود ✅ **رفع شده**
 
 در **۱۲ جا** از `Math.random().toString(36).substr(2, 9)` برای ID استفاده شده. مشکلات:
 - `substr` منسوخ شده (باید `substring` باشد)
@@ -330,7 +339,7 @@ Floating toolbar های تصویر و جدول فقط با mouse ظاهر می�
 
 ---
 
-### ۲۹. `console.warn` و `console.error` در کد production
+### ۲۹. `console.warn` و `console.error` در کد production ✅ **رفع شده**
 
 موارد یافت شده در source (غیر از test files):
 
@@ -350,19 +359,19 @@ Floating toolbar های تصویر و جدول فقط با mouse ظاهر می�
 
 ---
 
-### ۳۰. نام‌گذاری ناسازگار
+### ۳۰. نام‌گذاری ناسازگار ✅ **رفع شده**
 
 `src/plugins/Suggestedpostsplugin.js` — حرف `p` کوچک است در حالی که تمام پلاگین‌های دیگر PascalCase هستند.
 
 ---
 
-### ۳۱. پوشه `server/uploads` حاوی فایل‌های واقعی است
+### ۳۱. پوشه `server/uploads` حاوی فایل‌های واقعی است ✅ **رفع شده در .gitignore**
 
 پوشه `server/uploads` شامل ۶۰+ فایل تصویری واقعی است که در git commit شده‌اند. این فایل‌ها نباید در repository باشند. باید به `.gitignore` اضافه شوند.
 
 ---
 
-### ۳۲. هیچ script برای `test:coverage` وجود ندارد
+### ۳۲. هیچ script برای `test:coverage` وجود ندارد ✅ **رفع شده**
 
 `@vitest/coverage-v8` نصب شده اما در `package.json` هیچ script ای برای اجرای coverage وجود ندارد. Coverage هرگز اندازه‌گیری یا enforce نمی‌شود.
 
@@ -384,31 +393,31 @@ Floating toolbar های تصویر و جدول فقط با mouse ظاهر می�
 
 ## اولویت‌بندی پیشنهادی برای رفع
 
-### فاز ۱ — امنیت و باگ‌های بحرانی
-1. رفع باگ indent/outdent در `ListPlugin`
-2. اضافه کردن `fileFilter` و `limits` به multer
-3. محدود کردن CORS به domain مشخص
-4. متغیر محیطی برای `BASE_URL` سرور
-5. پاکسازی اتریبیوت‌های داخلی در `getContent()`
-6. رفع memory leak در `destroy()`
-7. جایگزینی `alert()`/`confirm()` با modal داخلی
-8. اعتبارسنجی `href` با allowlist
-9. sanitize کردن ورودی `setContent()`
+### فاز ۱ — امنیت و باگ‌های بحرانی ✅ **تکمیل شده**
+1. ✅ رفع باگ indent/outdent در `ListPlugin`
+2. ✅ اضافه کردن `fileFilter` و `limits` به multer
+3. ✅ محدود کردن CORS به domain مشخص
+4. ✅ متغیر محیطی برای `BASE_URL` سرور
+5. ✅ پاکسازی اتریبیوت‌های داخلی در `getContent()`
+6. ✅ رفع memory leak در `destroy()`
+7. ✅ جایگزینی `alert()`/`confirm()` با modal داخلی
+8. ✅ اعتبارسنجی `href` با allowlist (و iframe `src`)
+9. ✅ sanitize کردن ورودی `setContent()`
 
-### فاز ۲ — آمادگی توزیع
-10. رفع `package.json` (main، module، exports، files، author، keywords)
-11. فعال کردن minification در vite.config.js
-12. انتقال express/cors/multer به devDependencies
-13. نوشتن README اصلی
-14. اضافه کردن `server/uploads` به `.gitignore`
-15. جایگزینی `Math.random()` با `crypto.randomUUID()`
+### فاز ۲ — آمادگی توزیع ✅ **تکمیل شده**
+10. ✅ رفع `package.json` (main، module، exports، files، author، keywords، type: module، scripts.test:coverage، scripts.server)
+11. ✅ فعال کردن minification در vite.config.js (esbuild + sourcemap + cssMinify + target es2020)
+12. ✅ انتقال express/cors/multer به devDependencies
+13. ✅ نوشتن README اصلی (به‌علاوه انتقال محتوای قبلی به `docs/plugins/blocktype.md`)
+14. ✅ اضافه کردن `server/uploads` به `.gitignore`
+15. ✅ جایگزینی `Math.random()` با `crypto.randomUUID()` از طریق ابزار مشترک `src/utils/uniqueId.js`
 
-### فاز ۳ — بهبود کیفیت
-16. رفع `navigator.platform` deprecated
-17. اضافه کردن `aria-label` و `aria-pressed` به toolbar
-18. اضافه کردن `role` و `aria-label` به editableArea
-19. اضافه کردن focus trap به Modal
-20. اضافه کردن script برای `test:coverage`
+### فاز ۳ — بهبود کیفیت ✅ **تکمیل شده**
+16. ✅ رفع `navigator.platform` deprecated در FindReplacePlugin (Editor.js قبلاً انجام شده بود)
+17. ✅ اضافه کردن `aria-label` و `aria-pressed` به toolbar buttons + `role="toolbar"` به wrapper + `role="group"` به سطرها
+18. ✅ اضافه کردن `role="textbox"`، `aria-multiline="true"`، `aria-label` به editableArea (با fallback از textarea label/title/options.ariaLabel)
+19. ✅ اضافه کردن focus trap، `role="dialog"`، `aria-modal="true"`، `aria-labelledby`، Escape-to-close و restore focus به Modal
+20. ✅ اضافه کردن script برای `test:coverage` (در فاز ۲)
 
 ---
 

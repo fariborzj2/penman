@@ -1,5 +1,6 @@
 import en from './locales/en.js';
 import fa from './locales/fa.js';
+import { logger } from '../utils/logger.js';
 
 // Pre-load available dictionaries
 const dictionaries = {
@@ -15,7 +16,7 @@ export class I18nManager {
   setLanguage(lang) {
     // Fallback to English if language is not supported
     if (!dictionaries[lang]) {
-      console.warn(`Penman i18n: Language '${lang}' is not supported. Falling back to 'en'.`);
+      logger.warn(`Penman i18n: Language '${lang}' is not supported. Falling back to 'en'.`);
       this.lang = 'en';
     } else {
       this.lang = lang;

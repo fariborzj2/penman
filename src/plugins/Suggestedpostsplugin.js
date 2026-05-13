@@ -1,4 +1,5 @@
 import { FloatingUI } from '../ui/FloatingUI.js';
+import { uniqueId } from '../utils/uniqueId.js';
 
 /**
  * SuggestedPostsPlugin
@@ -6,7 +7,7 @@ import { FloatingUI } from '../ui/FloatingUI.js';
  */
 
 function generateId() {
-  return 'sp-' + Math.random().toString(36).substr(2, 9);
+  return uniqueId('sp-');
 }
 
 function escapeHtml(str) {

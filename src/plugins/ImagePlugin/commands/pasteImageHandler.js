@@ -1,6 +1,7 @@
 import { executeUploadPipeline } from '../core/uploadPipeline.js';
 import { validateURL, TrustLevel } from '../security/urlValidator.js';
 import { createFigureNode } from '../rendering/figureRenderer.js';
+import { logger } from '../../../utils/logger.js';
 
 
 /**
@@ -28,7 +29,7 @@ export function pasteImageHandler(editor, event, uploadFn) {
       if (uploadFn) {
         executeUploadPipeline(editor, filesToUpload, uploadFn);
       } else {
-        console.warn('Image upload attempted but no uploadFn provided.');
+        logger.warn('Image upload attempted but no uploadFn provided.');
       }
       return true; // Handled
     }

@@ -163,15 +163,21 @@ export function setupFormatPlugin(editor) {
                   ed._pendingFormats.add(format);
                }
            }
-           
+
            // Force UI update
            ed.emit('selectionChange');
            return;
         }
 
-        // Core formatting function handling toggle and normalization for non-collapsed
+        // Core formatting function handling toggle and normalization for non-collapsed.
+        // We rely on the browser's `document.execCommand(format)` because it
+        // correctly handles partial selections (e.g. unbolding a single word
+        // inside an already-bold sentence). Hand-rolled DOM splitting via
+        // Range.extractContents loses the surrounding wrapper structure in
+        // common cases, so the native command remains the most robust option
+        // until execCommand is removed from browsers.
         document.execCommand(format);
-        
+
         // Ensure DOM structure is strictly normalized
         ed.selection.save();
         normalizeInline(ed.editableArea);

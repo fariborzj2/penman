@@ -1,3 +1,4 @@
+import { logger } from '../../utils/logger.js';
 export function setupFindReplacePlugin(editor) {
   let activeModal = null;
 
@@ -88,7 +89,7 @@ export function setupFindReplacePlugin(editor) {
           range.setEnd(endNode, endOffset);
           return range;
         } catch (e) {
-          console.warn('Range creation failed', e);
+          logger.warn('Range creation failed', e);
         }
       }
       return null;
@@ -206,7 +207,7 @@ export function setupFindReplacePlugin(editor) {
               range.insertNode(document.createTextNode(replacement));
               return true;
             } catch (e) {
-              console.warn('Find and Replace native DOM split failed', e);
+              logger.warn('Find and Replace native DOM split failed', e);
             }
           }
         }
@@ -332,7 +333,16 @@ export function setupFindReplacePlugin(editor) {
               editor.history.pushImmediate();
             }
 
-            let mapper = new TextMapper(editor.editableArea, normalizeRTL);
+            // Build the mapper ONCE outside the loop. The replacement pass
+            // walks the results array in REVERSE (last match first). This
+            // guarantees that the offsets in `mapping` remain valid for
+            // earlier matches: any DOM modification made for a later match
+            // either happens inside a separate text node, or at an offset
+            // strictly greater than every earlier match's start offset in the
+            // same node. Either way, earlier mapping entries continue to
+            // resolve to the correct character. Do not change to forward
+            // iteration without also rebuilding the mapper inside the loop.
+            const mapper = new TextMapper(editor.editableArea, normalizeRTL);
 
             for (let i = results.length - 1; i >= 0; i--) {
               const result = results[i];
@@ -350,7 +360,7 @@ export function setupFindReplacePlugin(editor) {
                     range.deleteContents();
                     range.insertNode(document.createTextNode(replacement));
                   } catch (e) {
-                    console.warn('Find and Replace native DOM split failed', e);
+                    logger.warn('Find and Replace native DOM split failed', e);
                   }
                 }
               }
@@ -430,14 +440,26 @@ export function setupFindReplacePlugin(editor) {
     onAction: openFindReplace
   });
 
-  editor.editableArea.addEventListener('keydown', (e) => {
-    const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+  const findKeyHandler = (e) => {
+    const isMac = /Mac|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const isFind = (isMac ? e.metaKey : e.ctrlKey) &&
       e.key.toLowerCase() === 'f' && !e.shiftKey && !e.altKey;
 
     if (isFind) {
       e.preventDefault();
       openFindReplace();
+    }
+  };
+
+  editor.editableArea.addEventListener('keydown', findKeyHandler);
+
+  editor.on('destroy', () => {
+    if (editor.editableArea) {
+      editor.editableArea.removeEventListener('keydown', findKeyHandler);
+    }
+    if (activeModal && typeof activeModal.close === 'function') {
+      try { activeModal.close(); } catch (_) { /* noop */ }
+      activeModal = null;
     }
   });
 }
