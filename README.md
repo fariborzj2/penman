@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="public/penman-logo.svg" alt="Penman" width="360" />
+</p>
+
 # Penman Editor
 
 A framework-agnostic, dependency-light Vanilla JavaScript rich text editor (WYSIWYG) with strong sanitization, first-class RTL/Persian support, and a plugin-based architecture.

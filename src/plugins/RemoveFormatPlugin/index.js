@@ -1,4 +1,4 @@
-import { removeInlineFormatting } from '../utils/domCommands.js';
+import { removeInlineFormatting } from '../../utils/domCommands.js';
 
 export function setupRemoveFormatPlugin(editor) {
   const inlineTags = ['strong', 'em', 'b', 'i', 'u', 'span', 'a', 'mark', 's', 'strike'];

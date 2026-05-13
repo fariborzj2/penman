@@ -85,6 +85,35 @@ export class HistoryManager {
   }
 
   /**
+   * If a debounced typing snapshot is pending, capture it NOW as its own
+   * undo step. Called by CommandManager *before* running a command so the
+   * sequence "type → run command" produces two undo entries (typing, then
+   * command) instead of one combined entry. Without this, undo would step
+   * back past both the typing and the command in a single press.
+   */
+  flushPending() {
+    if (!this.debounceTimeout) return;
+    clearTimeout(this.debounceTimeout);
+    this.debounceTimeout = null;
+
+    const snapshot = this._captureSnapshot();
+
+    if (this.undoStack.length > 0) {
+      const lastSnapshot = this.undoStack[this.undoStack.length - 1];
+      const stripMarkers = (html) => html.replace(/<span id="penman-selection-marker-(start|end)" style="display: none;"><\/span>/g, '');
+      if (stripMarkers(lastSnapshot.html) === stripMarkers(snapshot.html)) {
+        return;
+      }
+    }
+
+    this.undoStack.push(snapshot);
+    if (this.undoStack.length > this.maxStackSize) {
+      this.undoStack.shift();
+    }
+    this.redoStack = [];
+  }
+
+  /**
    * Undoes the last action
    */
   undo() {
@@ -125,15 +154,33 @@ export class HistoryManager {
   }
 
   /**
-   * Restores a snapshot into the editor
+   * Restores a snapshot into the editor.
+   *
+   * IMPORTANT: snapshot.html contains the embedded selection markers
+   * (<span id="penman-selection-marker-start|end" …>). We MUST NOT route
+   * this through editor.setContent(), because that path runs the sanitizer
+   * which strips the `id` attribute from <span> elements per its strict
+   * attribute allow-list — that would leave the markers in the DOM as
+   * anonymous spans, selection.restore() would fail to locate them, and
+   * the cursor would land at the first text node (= top of the document).
+   *
+   * The snapshot came from our own getContent(); it is already sanitized.
+   * Setting innerHTML directly preserves the marker IDs and lets the
+   * selection manager put the caret back exactly where the user left it.
+   *
    * @param {Object} snapshot
    */
   _restoreSnapshot(snapshot) {
-    this.editor.setContent(snapshot.html);
+    if (!this.editor.editableArea) return;
 
-    // The HTML string has the markers embedded. We use the selection manager to restore the range based on them.
+    this.editor.editableArea.innerHTML = snapshot.html;
+    if (typeof this.editor._syncToTextarea === 'function') {
+      this.editor._syncToTextarea();
+    }
+
     this.editor.selection.restore();
 
     this.editor.emit('change', this.editor.getContent());
+    this.editor.emit('selectionChange');
   }
 }

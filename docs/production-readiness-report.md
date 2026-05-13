@@ -193,21 +193,26 @@ const isMac = navigator.userAgent.includes('Mac') || navigator.userAgentData?.pl
 
 **فایل کمکی جدید:** `src/utils/domCommands.js` — مجموعه‌ای از helper های native selection-based برای جایگزینی execCommand: `insertHTMLAtSelection`, `insertTextAtSelection`, `removeInlineFormatting`, `formatBlockNative`, `alignBlocks`, `isAlignmentActive`, `wrapSelectionWith`, `unwrapSelectionFrom`, `isRangeFullyWrappedBy`, `toggleInlineWrap`.
 
-**migration انجام‌شده و باقی:**
+**migration انجام‌شده و revert ها:**
 - ✅ `Editor.insertContent` → `insertHTMLAtSelection`
 - ✅ `captionController insertText` → `insertTextAtSelection`
 - ✅ `HorizontalRulePlugin` → block-split + hr insertion دستی
 - ✅ `RemoveFormatPlugin` → `removeInlineFormatting`
 - ✅ `LinkPlugin unlink` → walking ancestors + descendants
-- ⏸️ `FormatPlugin` (bold/italic/underline/strikethrough/sub/sup) → **revert شد به `document.execCommand`** پس از کشف باگ partial-toggle (حذف بخشی از فرمت یک کلمه در میانهٔ جمله بولد، تمام جمله را un-bold می‌کرد). الگوریتم `Range.extractContents` ساختار wrapper اطراف selection را در حالت‌های رایج حفظ نمی‌کند. execCommand این edge case را native و درست مدیریت می‌کند.
-- ✅ `BlockTypePlugin` (دو call) → `formatBlockNative`
 - ✅ `Editor.js` justify* commands → `alignBlocks` (native CSS text-align)
+- ⏸️ `FormatPlugin` (bold/italic/underline/strikethrough/sub/sup) → **revert شد به `document.execCommand`** پس از کشف باگ partial-toggle (حذف بخشی از فرمت یک کلمه در میانهٔ جمله بولد، تمام جمله را un-bold می‌کرد).
+- ⏸️ `BlockTypePlugin` (دو call) → **revert شد به `document.execCommand('formatBlock')`** پس از کشف اینکه تبدیل به h1-h6 کار نمی‌کرد. `formatBlockNative` با edge case های selection (collapsed، چندبلاکی، unwrapped blocks مختلف) به‌درستی تطابق نداشت.
 
-**نتیجه:** ۷ مورد از ۱۲ مورد direct `document.execCommand` migrate شدند. **۵ مورد باقی‌مانده:**
+`Range.extractContents` ساختار wrapper اطراف selection را در حالت‌های رایج حفظ نمی‌کند و selection restoration پس از replace کردن block tag پیچیده‌تر از آن است که با offset-based bookkeeping ساده پوشش داده شود. execCommand این edge case ها را native و درست مدیریت می‌کند.
+
+**نتیجه:** ۵ مورد از ۱۲ مورد direct `document.execCommand` migrate شدند (۴۲٪). **۷ مورد باقی‌مانده:**
 1. `Editor.js` — `defaultParagraphSeparator` (یک config یک‌بار، نه command، deprecation بی‌اثر است)
-2. `FontSizePlugin` & `ColorPlugin` — workaround با `fontSize='7'` برای wrap کردن selection (پیچیده)
-3. `FormatPlugin` — toggle inline format (revert محتاطانه؛ تا زمانی که الگوریتم بهتری برای partial toggle نوشته شود)
-4. `CommandManager.js` — fallback صرفاً دفاعی برای commands قدیمی که حالا همگی native هستند
+2. `FontSizePlugin` & `ColorPlugin` — workaround با `fontSize='7'` (پیچیده)
+3. `FormatPlugin` — toggle inline format (revert محتاطانه)
+4. `BlockTypePlugin` (دو call) — تبدیل block tag (revert محتاطانه)
+5. `CommandManager.js` — fallback صرفاً دفاعی
+
+Helper های `formatBlockNative` و `toggleInlineWrap`/`unwrapSelectionFrom` در `src/utils/domCommands.js` باقی می‌مانند و در نسخه‌های آینده می‌توانند با الگوریتم split-and-rewrap بهبود یافته و دوباره استفاده شوند.
 
 در کل codebase **۴۹ بار** از `document.execCommand` استفاده شده. این API رسماً deprecated است و مرورگرها در حال حذف آن هستند. این یک بدهی فنی بزرگ است که نیاز به برنامه مهاجرت دارد.
 

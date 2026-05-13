@@ -10,6 +10,20 @@ export function setupMarkdownPlugin(editor) {
   editor.on('beforePaste', (pasteEvent) => {
     // Only intercept plain text paste, where text exists and html is empty or generic
     if (pasteEvent.text && !pasteEvent.html) {
+      // Yield to Editor's "magic paste" link-wrap when the user has selected
+      // text in the editor. Pasting a URL on a selection should turn that
+      // selection into a link — NOT replace it with the URL itself.
+      const sel = window.getSelection();
+      const hasTextSelection = sel && sel.rangeCount > 0 && !sel.isCollapsed
+        && editor.editableArea && editor.editableArea.contains(sel.anchorNode);
+      const selectedNode = editor.selection && typeof editor.selection.getSelectedNode === 'function'
+        ? editor.selection.getSelectedNode()
+        : null;
+      const looksLikeUrl = /^(https?:\/\/|www\.)\S+$/i.test(pasteEvent.text.trim());
+      if ((hasTextSelection || selectedNode) && looksLikeUrl) {
+        return; // let the core paste handler create the link
+      }
+
       const html = parseMarkdownToHTML(pasteEvent.text);
       if (html !== pasteEvent.text) {
         pasteEvent.preventDefault();

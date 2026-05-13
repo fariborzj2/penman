@@ -33,6 +33,14 @@ export function setupEmbedPlugin(editor) {
           node.style.left = '0';
           node.style.width = '100%';
           node.style.height = '100%';
+          // Defer offscreen iframes (YouTube, Vimeo, etc.) until they're
+          // about to enter the viewport. Safe for every modern browser
+          // and ignored otherwise. Whitelisted by the sanitizer so it
+          // survives subsequent save/load cycles.
+          const tag = node.tagName && node.tagName.toLowerCase();
+          if (tag === 'iframe' && !node.hasAttribute('loading')) {
+            node.setAttribute('loading', 'lazy');
+          }
         }
         wrapper.appendChild(node);
       });

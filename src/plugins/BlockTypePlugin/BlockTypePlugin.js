@@ -1,5 +1,3 @@
-import { formatBlockNative } from '../../utils/domCommands.js';
-
 export function setupBlockTypePlugin(editor) {
   // Define default block types if none provided in options
   const defaultBlockTypes = [
@@ -194,7 +192,7 @@ export function setupBlockTypePlugin(editor) {
              node = node.parentNode;
           }
           if (!changed) {
-              formatBlockNative(blockDef.cmd, editor.editableArea);
+              document.execCommand('formatBlock', false, blockDef.cmd);
           }
       } else if (isWrapper && unwrappedBlocks.length > 0) {
         let wrapper = null;
@@ -232,7 +230,17 @@ export function setupBlockTypePlugin(editor) {
         // Standard execCommand formatting (e.g., h1, p)
         // If we unwrapped wrappers, our native selection might be lost because the wrapper node was removed.
         // We must ensure the selection is restored onto the unwrapped blocks before calling execCommand.
-        if (unwrappedBlocks.length > 0) {
+        //
+        // IMPORTANT: only EXPAND the selection when the user's original
+        // selection was already non-collapsed (true range). When the user
+        // had a collapsed cursor in a single block, we keep the collapsed
+        // position so formatBlock converts the containing block in place
+        // and the cursor stays where the user put it. Expanding a collapsed
+        // selection across the whole block causes the cursor to land at the
+        // end of the block (or worse, jump to the document end after the
+        // CommandManager's save/restore round-trip).
+        const wasCollapsed = !!(sel && sel.isCollapsed);
+        if (unwrappedBlocks.length > 0 && !wasCollapsed) {
            sel.removeAllRanges();
            const newRange = document.createRange();
            newRange.setStartBefore(unwrappedBlocks[0]);
@@ -241,7 +249,7 @@ export function setupBlockTypePlugin(editor) {
         }
 
         if (!(sel.isCollapsed && unwrappedBlocks.length === 0 && !isWrapper)) {
-            formatBlockNative(blockDef.cmd, editor.editableArea);
+            document.execCommand('formatBlock', false, blockDef.cmd);
         }
 
         // Re-calculate blocks after execCommand

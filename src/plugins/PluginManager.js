@@ -1,22 +1,23 @@
-import { setupLinkPlugin } from './LinkPlugin.js';
-import { setupFormatPlugin } from './FormatPlugin/FormatPlugin.js';
-import { setupListPlugin } from './ListPlugin.js';
-import { setupBlockTypePlugin } from './BlockTypePlugin/BlockTypePlugin.js';
-import { setupFontSizePlugin } from './FontSizePlugin/FontSizePlugin.js';
-import { setupRemoveFormatPlugin } from './RemoveFormatPlugin.js';
-import { setupHorizontalRulePlugin } from './HorizontalRulePlugin.js';
-import { setupFindReplacePlugin } from './FindReplacePlugin/FindReplacePlugin.js';
-import { setupTablePlugin } from './table/TablePlugin.js';
+import { setupLinkPlugin } from './LinkPlugin/index.js';
+import { setupFormatPlugin } from './FormatPlugin/index.js';
+import { setupListPlugin } from './ListPlugin/index.js';
+import { setupBlockTypePlugin } from './BlockTypePlugin/index.js';
+import { setupFontSizePlugin } from './FontSizePlugin/index.js';
+import { setupRemoveFormatPlugin } from './RemoveFormatPlugin/index.js';
+import { setupHorizontalRulePlugin } from './HorizontalRulePlugin/index.js';
+import { setupFindReplacePlugin } from './FindReplacePlugin/index.js';
+import { setupTablePlugin } from './TablePlugin/index.js';
 import { setupImagePlugin } from './ImagePlugin/index.js';
 import { setupColorPlugin } from './ColorPlugin/index.js';
 import { setupSourceCodePlugin } from './SourceCodePlugin/index.js';
 import { setupDraftPlugin } from './DraftPlugin/index.js';
 import { setupDirectionPlugin } from './DirectionPlugin/index.js';
-import { setupSuggestedPostsPlugin } from './SuggestedPostsPlugin.js';
+import { setupSuggestedPostsPlugin } from './SuggestedPostsPlugin/index.js';
 import { setupMediaPlugin } from './MediaPlugin/index.js';
-import { setupCodeBlockPlugin } from './CodeBlockPlugin/CodeBlockPlugin.js';
-import { setupMarkdownPlugin } from './MarkdownPlugin/MarkdownPlugin.js';
-import { setupEmbedPlugin } from './EmbedPlugin/EmbedPlugin.js';
+import { setupCodeBlockPlugin } from './CodeBlockPlugin/index.js';
+import { setupMarkdownPlugin } from './MarkdownPlugin/index.js';
+import { setupEmbedPlugin } from './EmbedPlugin/index.js';
+import { setupContentAuditPlugin } from './ContentAuditPlugin/index.js';
 import { logger } from '../utils/logger.js';
 
 export const PluginManager = {
@@ -39,7 +40,8 @@ export const PluginManager = {
     media: setupMediaPlugin,
     codeblock: setupCodeBlockPlugin,
     markdown: setupMarkdownPlugin,
-    embed: setupEmbedPlugin
+    embed: setupEmbedPlugin,
+    audit: setupContentAuditPlugin
   },
 
   add(name, setup) {

@@ -72,6 +72,14 @@ export class CommandManager {
    * Executes a command on the editor
    */
   execute(cmd, value = null) {
+    // 0. If the user has been typing, flush the pending typing snapshot
+    //    NOW so this command becomes its own undo step. Otherwise the
+    //    typing would be cleared with the same Cmd+Z that undoes the
+    //    command, making "undo" jump two changes back.
+    if (this.editor.history && typeof this.editor.history.flushPending === 'function') {
+      this.editor.history.flushPending();
+    }
+
     // 1. Restore selection so command hits the right spot
     this.editor.selection.restore();
 

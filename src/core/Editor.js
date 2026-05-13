@@ -222,15 +222,32 @@ export class Editor extends EventEmitter {
       if (e.target.closest('a')) { e.preventDefault(); }
     };
     this._boundHandlers.mousedown = (e) => {
-      const widget = e.target.closest('table, figure.penman-image, figure.penman-media-block, .penman-suggested-posts-wrapper');
+      // hr, table, image, media, suggested-posts are atomic block widgets:
+      // clicking them selects the entire widget so the user can copy/delete
+      // it with a single keystroke rather than fiddling with the cursor.
+      const widget = e.target.closest('hr, table, figure.penman-image, figure.penman-media-block, figure.penman-embed-block, .penman-suggested-posts-wrapper');
       if (widget) {
-        const isInteractive = e.target.closest('figcaption, td, th');
+        // Inner-interactive elements should not trigger whole-widget selection.
+        // Anchors and the suggested-posts list items belong here so clicking
+        // a link inside a suggested-posts widget does not wrap the whole
+        // widget in a focus outline.
+        const isInteractive = e.target.closest(
+          'figcaption, td, th, a, .penman-suggested-posts-wrapper-link, .penman-suggested-posts-wrapper-item, .penman-suggested-posts-wrapper-title'
+        );
         if (!isInteractive) {
           e.preventDefault();
           this.editableArea.focus();
           this.selection.selectNode(widget);
           return;
         }
+        // Click landed on something interactive INSIDE a widget. Drop any
+        // existing widget selection so the user does not see a residual
+        // focus outline around the widget while interacting with its
+        // inner element.
+        if (this.selection.getSelectedNode()) {
+          this.selection.clearNodeSelection();
+        }
+        return;
       }
       if (this.selection.getSelectedNode() && !this.selection.getSelectedNode().contains(e.target)) {
         this.selection.clearNodeSelection();

@@ -22,6 +22,12 @@ export function createFigureNode(editor, src, alt = '', dataId = null, alignment
   const img = document.createElement('img');
   img.setAttribute('src', src);
   img.setAttribute('draggable', 'false');
+  // Performance hints: defer offscreen images until they're about to enter
+  // the viewport and let the browser decode them off the main thread.
+  // These attributes are intentionally part of the sanitizer's allow-list
+  // for <img>, so they survive every editor save/load round-trip.
+  img.setAttribute('loading', 'lazy');
+  img.setAttribute('decoding', 'async');
 
   if (width) img.setAttribute('width', width);
   if (height) img.setAttribute('height', height);

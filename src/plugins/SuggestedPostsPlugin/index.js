@@ -1,5 +1,5 @@
-import { FloatingUI } from '../ui/FloatingUI.js';
-import { uniqueId } from '../utils/uniqueId.js';
+import { FloatingUI } from '../../ui/FloatingUI.js';
+import { uniqueId } from '../../utils/uniqueId.js';
 
 /**
  * SuggestedPostsPlugin
@@ -121,7 +121,7 @@ export function setupSuggestedPostsPlugin(editor) {
 
   function buildModalBody() {
     return `
-      <div class="psp-modal-inner" style="padding: 0 15px 15px;  overflow: auto; max-height: 350px">
+      <div class="psp-modal-inner" style="padding: 15px;  overflow: auto; max-height: 350px">
         <div id="psp-items-list" style="margin-bottom: 12px;"></div>
         <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
           <div style="display:flex; flex-direction:column; gap:4px;">

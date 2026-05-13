@@ -1,22 +1,59 @@
 /*
- * Penman Editor Content CSS — v2.0 Modern Redesign
+ * Penman Editor Content CSS — v2.1
  * ─────────────────────────────────────────────────
- * Styles applied inside the editable content area.
+ * Styles applied INSIDE the editable content area.
+ *
+ * Design tokens (kept self-contained so the editor renders correctly even
+ * when consumers strip the global penman-ui.css):
+ *   --pmc-text          primary body text
+ *   --pmc-text-muted    secondary / captions
+ *   --pmc-heading       darker heading color
+ *   --pmc-link          accent / link
+ *   --pmc-link-hover    darker accent
+ *   --pmc-border        subtle borders
+ *   --pmc-border-strong divider for hr & emphasis
+ *   --pmc-bg            page surface
+ *   --pmc-bg-soft       cards, blockquote, code background
+ *   --pmc-bg-active     selected widgets background
+ *   --pmc-accent-soft   tinted accent for highlight
  */
+
+.penman-editor-area {
+  --pmc-text:            #1e2a3a;
+  --pmc-text-muted:      #64748b;
+  --pmc-heading:         #0f172a;
+  --pmc-link:            #4f6ef7;
+  --pmc-link-hover:      #3a57e8;
+  --pmc-border:          #e2e6f0;
+  --pmc-border-strong:   #cbd5e1;
+  --pmc-bg:              #ffffff;
+  --pmc-bg-soft:         #f8f9fc;
+  --pmc-bg-active:       rgba(79, 110, 247, 0.08);
+  --pmc-accent-soft:     rgba(79, 110, 247, 0.10);
+  --pmc-radius:          8px;
+  --pmc-radius-sm:       6px;
+}
 
 /* ═══════════════════════════════════════════════
    1. EDITOR AREA
    ═══════════════════════════════════════════════ */
 .penman-editor-area {
-  padding: 20px 24px;
+  padding: 22px 26px;
   outline: none;
   font-family: inherit;
   font-size: 15px;
   line-height: 1.75;
-  color: #1e2a3a;
+  color: var(--pmc-text);
   overflow-y: auto;
   flex: 1;
-  caret-color: #4f6ef7;
+  caret-color: var(--pmc-link);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.penman-editor-area::selection,
+.penman-editor-area *::selection {
+  background: rgba(79, 110, 247, 0.18);
 }
 
 /* ═══════════════════════════════════════════════
@@ -25,7 +62,6 @@
 .penman-editor-area p {
   margin: 0 0 0.9em 0;
 }
-
 .penman-editor-area p:last-child {
   margin-bottom: 0;
 }
@@ -38,10 +74,13 @@
 .penman-editor-area h6 {
   margin: 1.4em 0 0.5em 0;
   line-height: 1.3;
-  color: #0f172a;
+  color: var(--pmc-heading);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
+.penman-editor-area h1:first-child,
+.penman-editor-area h2:first-child,
+.penman-editor-area h3:first-child { margin-top: 0; }
 
 .penman-editor-area h1 { font-size: 2em; }
 .penman-editor-area h2 { font-size: 1.55em; }
@@ -49,6 +88,35 @@
 .penman-editor-area h4 { font-size: 1.1em; }
 .penman-editor-area h5 { font-size: 1em; }
 .penman-editor-area h6 { font-size: 0.9em; color: #475569; }
+
+.penman-editor-area strong, .penman-editor-area b { font-weight: 700; color: var(--pmc-heading); }
+.penman-editor-area mark              { background: #fef08a; color: inherit; padding: 0 2px; border-radius: 2px; }
+.penman-editor-area small             { font-size: 0.85em; color: var(--pmc-text-muted); }
+.penman-editor-area sub, .penman-editor-area sup { font-size: 0.72em; line-height: 0; }
+
+/* Inline code */
+.penman-editor-area :not(pre) > code {
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, Consolas, monospace;
+  font-size: 0.88em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--pmc-bg-soft);
+  border: 1px solid var(--pmc-border);
+  color: #be185d;
+  direction: ltr;
+}
+
+/* Keyboard key */
+.penman-editor-area kbd {
+  font-family: "SF Mono", ui-monospace, Consolas, monospace;
+  font-size: 0.78em;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--pmc-border-strong);
+  background: linear-gradient(180deg, #fff 0%, var(--pmc-bg-soft) 100%);
+  box-shadow: 0 1px 0 var(--pmc-border-strong);
+  color: var(--pmc-heading);
+}
 
 /* ═══════════════════════════════════════════════
    3. LISTS
@@ -58,92 +126,126 @@
   margin: 0 0 0.9em 0;
   padding-left: 1.8em;
 }
-
 [dir="rtl"] .penman-editor-area ul,
 [dir="rtl"] .penman-editor-area ol {
   padding-left: 0;
   padding-right: 1.8em;
 }
-
-.penman-editor-area li {
-  margin-bottom: 0.25em;
-}
+.penman-editor-area li { margin-bottom: 0.25em; }
+.penman-editor-area li > ul,
+.penman-editor-area li > ol { margin-top: 0.25em; margin-bottom: 0; }
 
 /* ═══════════════════════════════════════════════
    4. BLOCKQUOTE
    ═══════════════════════════════════════════════ */
 .penman-editor-area blockquote {
-  margin: 0 0 1em 0;
+  margin: 1em 0;
   padding: 12px 18px;
-  background: #f8f9fc;
-  border-left: 4px solid #4f6ef7;
-  border-radius: 0 6px 6px 0;
+  background: var(--pmc-bg-soft);
+  border-left: 4px solid var(--pmc-link);
+  border-radius: 0 var(--pmc-radius-sm) var(--pmc-radius-sm) 0;
   color: #475569;
   font-style: italic;
 }
+.penman-editor-area blockquote p:last-child { margin-bottom: 0; }
 
 [dir="rtl"] .penman-editor-area blockquote {
   border-left: none;
-  border-right: 4px solid #4f6ef7;
-  border-radius: 6px 0 0 6px;
+  border-right: 4px solid var(--pmc-link);
+  border-radius: var(--pmc-radius-sm) 0 0 var(--pmc-radius-sm);
 }
 
 /* ═══════════════════════════════════════════════
-   5. LINKS
+   5. HORIZONTAL RULE — selectable & subtle
+   ═══════════════════════════════════════════════
+   We render <hr> as a block-level widget with a generous click target
+   (~28px tall) so it can be selected and deleted easily. The visible
+   line itself is a subtle 1px divider centered in that target. The
+   selection outline (penman-selected-node) appears around the entire
+   widget, making it unmistakable.
+*/
+.penman-editor-area hr {
+  display: block;
+  width: 100%;
+  height: 1px;
+  margin: 1.6em 0;
+  padding: 14px 0;       /* vertical click target */
+  background-color: transparent;
+  border: 0;
+  position: relative;
+  cursor: pointer;
+  box-sizing: content-box;
+}
+.penman-editor-area hr::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--pmc-border-strong);
+  border-radius: 1px;
+}
+.penman-editor-area hr:hover::before {
+  background: #94a3b8;
+}
+.penman-editor-area hr.penman-selected-node {
+  outline: 2px solid var(--pmc-link) !important;
+  outline-offset: 4px !important;
+  background-color: var(--pmc-bg-active);
+  border-radius: var(--pmc-radius-sm);
+}
+
+/* ═══════════════════════════════════════════════
+   6. LINKS
    ═══════════════════════════════════════════════ */
 .penman-editor-area a {
-  color: #4f6ef7;
+  color: var(--pmc-link);
   text-decoration: underline;
   text-decoration-color: rgba(79, 110, 247, 0.4);
-  text-underline-offset: 2px;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
   cursor: pointer;
   transition: color 0.15s ease, text-decoration-color 0.15s ease;
 }
-
 .penman-editor-area a:hover {
-  color: #3a57e8;
-  text-decoration-color: #3a57e8;
+  color: var(--pmc-link-hover);
+  text-decoration-color: var(--pmc-link-hover);
 }
 
 /* ═══════════════════════════════════════════════
-   6. TABLES
+   7. TABLES
    ═══════════════════════════════════════════════ */
 .penman-editor-area table {
   border-collapse: collapse;
   width: 100%;
-  margin-bottom: 1em;
-  border-radius: 6px;
+  margin: 1em 0;
+  border-radius: var(--pmc-radius-sm);
   overflow: hidden;
-  border: 1px solid #e2e6f0;
+  border: 1px solid var(--pmc-border);
 }
-
-.penman-editor-area thead tr {
-  background: #f8f9fc;
-}
-
+.penman-editor-area thead tr { background: var(--pmc-bg-soft); }
 .penman-editor-area td,
 .penman-editor-area th {
-  border: 1px solid #e2e6f0;
-  padding: 9px 12px;
+  border: 1px solid var(--pmc-border);
+  padding: 10px 12px;
   min-width: 24px;
   position: relative;
   font-size: 14px;
+  vertical-align: top;
 }
-
 .penman-editor-area th {
   font-weight: 600;
   color: #374151;
+  background: var(--pmc-bg-soft);
 }
-
-.penman-editor-area table p {
-  margin: 0;
-}
+.penman-editor-area table p { margin: 0; }
 
 /* Cell selection */
 .penman-cell-selected {
-  outline: 2px solid #4f6ef7;
+  outline: 2px solid var(--pmc-link);
   outline-offset: -2px;
-  background-color: rgba(79, 110, 247, 0.08);
+  background-color: var(--pmc-bg-active);
 }
 
 /* Resize handles */
@@ -154,49 +256,47 @@
   position: absolute;
   width: 6px;
   height: 6px;
-  background-color: #4f6ef7;
+  background-color: var(--pmc-link);
   border-radius: 50%;
   z-index: 2;
 }
-
 .penman-cell-handle-tl { top: -3px;    left: -3px;  }
 .penman-cell-handle-tr { top: -3px;    right: -3px; }
 .penman-cell-handle-bl { bottom: -3px; left: -3px;  }
 .penman-cell-handle-br { bottom: -3px; right: -3px; }
 
 /* ═══════════════════════════════════════════════
-   7. SELECTION / FOCUS STATES
+   8. SELECTION / FOCUS STATES
    ═══════════════════════════════════════════════ */
 .penman-selected-node {
-  outline: 2.5px solid #4f6ef7 !important;
+  outline: 2.5px solid var(--pmc-link) !important;
   outline-offset: 4px !important;
   border-radius: 4px;
 }
 
 /* ═══════════════════════════════════════════════
-   8. IMAGES
+   9. IMAGES
    ═══════════════════════════════════════════════ */
 .penman-image {
   margin: 18px auto;
   width: fit-content;
-  border: 1.5px solid #e2e6f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--pmc-border);
+  border-radius: var(--pmc-radius);
   overflow: hidden;
-  transition: border-color 0.15s ease;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-
 .penman-image:hover {
   border-color: #c8d0e0;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
 }
-
-.penman-image.penman-align-center { text-align: center; }
-.penman-image.penman-align-left   { text-align: left;   }
-.penman-image.penman-align-right  { text-align: right;  }
+.penman-image.penman-align-center { text-align: center; margin-left: auto; margin-right: auto; }
+.penman-image.penman-align-left   { text-align: left;   margin-left: 0; }
+.penman-image.penman-align-right  { text-align: right;  margin-right: 0; }
 
 figure.penman-selected-image {
-  outline: 2.5px solid #4f6ef7;
+  outline: 2.5px solid var(--pmc-link);
   outline-offset: 5px;
-  border-radius: 8px;
+  border-radius: var(--pmc-radius);
 }
 
 .penman-image-wrapper img {
@@ -208,16 +308,15 @@ figure.penman-selected-image {
 /* Caption */
 figcaption.penman-image-caption {
   text-align: center;
-  color: #64748b;
+  color: var(--pmc-text-muted);
   font-size: 0.85em;
   margin-top: 0;
   padding: 8px 12px;
   outline: none;
   min-height: 1.5em;
-  background: #f8f9fc;
-  border-top: 1px solid #e2e6f0;
+  background: var(--pmc-bg-soft);
+  border-top: 1px solid var(--pmc-border);
 }
-
 figcaption.penman-image-caption:empty::before {
   content: attr(data-placeholder);
   color: #a0aec0;
@@ -226,161 +325,113 @@ figcaption.penman-image-caption:empty::before {
 }
 
 /* ═══════════════════════════════════════════════
-   9. CALLOUT / COLORED BLOCKS
+   10. CALLOUT / COLORED BLOCKS
    ═══════════════════════════════════════════════ */
-.green-block {
-  color: #166534;
-  background: #f0fdf4;
-  border-right: 3px solid #22c55e;
-  padding: 12px 16px;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-
-.blue-block {
-  color: #1e3a8a;
-  background: #eff6ff;
-  border-right: 3px solid #3b82f6;
-  padding: 12px 16px;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-
-.orange-block {
-  color: #9a3412;
-  background: #fff7ed;
-  border-right: 3px solid #f97316;
-  padding: 12px 16px;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 14px;
-  font-size: 14px;
-}
-
+.green-block,
+.blue-block,
+.orange-block,
 .red-block {
-  color: #7f1d1d;
-  background: #fef2f2;
-  border-right: 3px solid #ef4444;
   padding: 12px 16px;
-  border-radius: 0 6px 6px 0;
-  margin-bottom: 14px;
+  margin: 0 0 14px 0;
+  border-radius: 0 var(--pmc-radius-sm) var(--pmc-radius-sm) 0;
   font-size: 14px;
 }
 
-/* LTR variants */
+.green-block  { color: #166534; background: #f0fdf4; border-right: 3px solid #22c55e; }
+.blue-block   { color: #1e3a8a; background: #eff6ff; border-right: 3px solid #3b82f6; }
+.orange-block { color: #9a3412; background: #fff7ed; border-right: 3px solid #f97316; }
+.red-block    { color: #7f1d1d; background: #fef2f2; border-right: 3px solid #ef4444; }
+
 [dir="ltr"] .green-block,
 [dir="ltr"] .blue-block,
 [dir="ltr"] .orange-block,
 [dir="ltr"] .red-block {
   border-right: none;
   border-left: 3px solid;
-  border-radius: 6px 0 0 6px;
+  border-radius: var(--pmc-radius-sm) 0 0 var(--pmc-radius-sm);
 }
-
 [dir="ltr"] .green-block  { border-left-color: #22c55e; }
 [dir="ltr"] .blue-block   { border-left-color: #3b82f6; }
 [dir="ltr"] .orange-block { border-left-color: #f97316; }
 [dir="ltr"] .red-block    { border-left-color: #ef4444; }
 
 /* ═══════════════════════════════════════════════
-   10. SUGGESTED POSTS PLUGIN
+   11. SUGGESTED POSTS PLUGIN
    ═══════════════════════════════════════════════ */
 .penman-suggested-posts-wrapper {
-  border: 1.5px solid #e2e6f0;
-  border-radius: 8px;
+  border: 1.5px solid var(--pmc-border);
+  border-radius: var(--pmc-radius);
   padding: 12px 16px;
   margin: 14px 0;
-  background: #f8f9fc;
+  background: var(--pmc-bg-soft);
   direction: rtl;
 }
-
 .penman-suggested-posts-wrapper-title {
   font-size: 12px;
   font-weight: 700;
   color: #374151;
   margin-bottom: 8px;
   padding-bottom: 6px;
-  border-bottom: 1px solid #e2e6f0;
+  border-bottom: 1px solid var(--pmc-border);
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
-
 .penman-suggested-posts-wrapper-list {
   list-style: none !important;
   margin: 0 !important;
   padding: 0 !important;
 }
-
 .penman-suggested-posts-wrapper-item {
   margin: 0 0 5px 0 !important;
   padding: 0 !important;
 }
-
 .penman-suggested-posts-wrapper-link {
-  color: #4f6ef7 !important;
+  color: var(--pmc-link) !important;
   text-decoration: none !important;
   font-size: 13.5px !important;
   line-height: 1.6 !important;
   transition: color 0.15s ease !important;
 }
-
 .penman-suggested-posts-wrapper-link:hover {
-  color: #3a57e8 !important;
+  color: var(--pmc-link-hover) !important;
   text-decoration: underline !important;
 }
 
 /* ═══════════════════════════════════════════════
-   11. MEDIA PLUGIN
+   12. MEDIA PLUGIN
    ═══════════════════════════════════════════════ */
 .penman-media-block {
   margin: 1em 0;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: var(--pmc-radius);
   overflow: hidden;
 }
-
 .penman-media-wrapper {
   background: #000;
-  border-radius: 8px;
+  border-radius: var(--pmc-radius);
   overflow: hidden;
 }
-
-.penman-media-overlay {
-  background: transparent;
-}
+.penman-media-overlay { background: transparent; }
 
 figure.penman-media-block.penman-selected-node {
-  outline: 2.5px solid #4f6ef7;
+  outline: 2.5px solid var(--pmc-link);
   outline-offset: 4px;
-  border-radius: 8px;
+  border-radius: var(--pmc-radius);
 }
 
 /* ═══════════════════════════════════════════════
-   12. CODE BLOCKS (syntax highlighting)
+   13. CODE BLOCKS (syntax highlighting)
    ═══════════════════════════════════════════════ */
 .penman-editor-area pre {
   direction: ltr !important;
   text-align: left !important;
-  background: #0f172a;
-  border-radius: 8px;
-  margin: 0 0 1em 0;
-  overflow: hidden;
-  border: 1px solid #1e293b;
-}
-
-.penman-editor-area pre code {
-  direction: ltr !important;
-  text-align: left !important;
-}
-
-.penman-editor-area pre code.hljs {
-  display: block;
+  margin: 1em 0;
+  border-radius: var(--pmc-radius-sm);
   overflow-x: auto;
   padding: 1.1em 1.3em;
   font-size: 13.5px;
   line-height: 1.65;
-  font-family: "SF Mono", "Fira Code", "Cascadia Code", Consolas, monospace;
+  font-family: "SF Mono", "Fira Code", "Cascadia Code", ui-monospace, Consolas, monospace;
   background: #0f172a;
   color: #e2e8f0;
 }
@@ -424,3 +475,27 @@ figure.penman-media-block.penman-selected-node {
 
 .hljs-emphasis     { font-style: italic; }
 .hljs-strong       { font-weight: bold; }
+
+/* ═══════════════════════════════════════════════
+   14. PLACEHOLDER
+   ═══════════════════════════════════════════════ */
+.penman-editor-area:empty::before,
+.penman-editor-area > p:only-child:empty::before {
+  content: attr(data-placeholder);
+  color: #a0aec0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════════
+   15. EMBED
+   ═══════════════════════════════════════════════ */
+.penman-embed-block {
+  margin: 1em 0;
+  border-radius: var(--pmc-radius);
+  overflow: hidden;
+}
+figure.penman-embed-block.penman-selected-node {
+  outline: 2.5px solid var(--pmc-link);
+  outline-offset: 4px;
+  border-radius: var(--pmc-radius);
+}

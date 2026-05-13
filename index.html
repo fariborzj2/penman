@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html>
+<html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -12,14 +12,15 @@
       padding: 40px 20px;
       background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f5f0ff 100%);
       min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .main {
       display: flex;
       flex-direction: column;
       gap: 32px;
       align-items: center;
       font-size: 13px;
-      direction: rtl;
     }
-
     /* Page header */
     .page-header {
       text-align: center;
@@ -86,28 +87,31 @@
   </style>
 </head>
 <body>
-  <div class="page-header">
-    <h1>Penman Editor</h1>
-    <p>ویرایشگر متن غنی نسل جدید با معماری مدرن، عملکرد سریع و رابط کاربری روان؛ طراحی‌شده برای تولید و مدیریت محتوا بدون وابستگی خارجی و با تمرکز بر توسعه‌پذیری، پایداری و تجربه کاربری حرفه‌ای.</p>
-  </div>
+  <div class="main">
+    <div class="page-header">
+      <img src="public/penman-logo.png" alt="Penman" style="width: 280px; height: auto; margin: 0 auto 16px; display: block;" />
+      <h1 style="position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;">Penman Editor</h1>
+      <p>ویرایشگر متن غنی نسل جدید با معماری مدرن، عملکرد سریع و رابط کاربری روان؛ طراحی‌شده برای تولید و مدیریت محتوا بدون وابستگی خارجی و با تمرکز بر توسعه‌پذیری، پایداری و تجربه کاربری حرفه‌ای.</p>
+    </div>
 
-  <div class="editor-card">
-    <div class="editor-card-header">
-      <h2>ویرایشگر فارسی</h2>
-      <span class="editor-card-badge badge-rtl">RTL</span>
+    <div class="editor-card">
+      <div class="editor-card-header">
+        <h2>ویرایشگر فارسی</h2>
+        <span class="editor-card-badge badge-rtl">RTL</span>
+      </div>
+      <div class="editor-card-body">
+        <textarea class="mytextarea" name="shortstory" data-height="280" data-direction="rtl"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+      </div>
     </div>
-    <div class="editor-card-body">
-      <textarea class="mytextarea" name="shortstory" data-height="280" data-direction="rtl"><p>متن مقاله را اینجا وارد کنید</p></textarea>
-    </div>
-  </div>
 
-  <div class="editor-card" dir="ltr">
-    <div class="editor-card-header">
-      <h2>English Editor</h2>
-      <span class="editor-card-badge badge-ltr">LTR</span>
-    </div>
-    <div class="editor-card-body">
-      <textarea class="mytextarea" name="fullstory" data-height="380" data-direction="ltr"><p>Enter your full story here</p></textarea>
+    <div class="editor-card" dir="ltr">
+      <div class="editor-card-header">
+        <h2>English Editor</h2>
+        <span class="editor-card-badge badge-ltr">LTR</span>
+      </div>
+      <div class="editor-card-body">
+        <textarea class="mytextarea" name="fullstory" data-height="380" data-direction="ltr"><p>Enter your full story here</p></textarea>
+      </div>
     </div>
   </div>
 
@@ -121,10 +125,13 @@
     // Define the global default configurations
     const penmanDefaults = {
       lang: 'fa',
-      plugins: ['embed', 'link', 'draft', 'suggestedposts', 'format', 'list', 'blocktype', 'fontsize', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction', 'media', 'codeblock', 'markdown'],
+      plugins: ['embed', 'link', 'draft', 'suggestedposts', 'format', 'list', 'blocktype', 'fontsize', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction', 'media', 'codeblock', 'markdown', 'audit'],
+      // The page title (H1) is stored in a separate input outside the editor,
+      // so the audit should not require / complain about H1 inside the body.
+      auditIgnoreH1: true,
       toolbar: {
         rows: [
-          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'embed', 'table', 'suggestedposts', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr', 'codeblock'], 
+          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'embed', 'table', 'suggestedposts', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr', 'codeblock', 'audit'],
           ['bold', 'italic', 'underline','strikethrough', 'superscript', 'subscript', 'justifyright', 'justifycenter', 'justifyleft', 'justifyfull', 'bullist', 'numlist', 'indentlist', 'outdentlist', 'link', 'unlink', 'removeformat', 'textcolor', 'highlight'],
         ]
       },

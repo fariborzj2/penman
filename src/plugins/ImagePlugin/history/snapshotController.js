@@ -15,13 +15,26 @@
 export function captureCompletionSnapshot(editor, dataId) {
   // Edge Case Lock is enforced at the caller level via Atomic Mutation Block.
   // When this is called, the DOM mutation is already SUCCESS and done.
-  if (editor && editor.history) {
-    editor.history.pushImmediate();
-  }
+  if (!editor) return;
+  if (editor.history) editor.history.pushImmediate();
+  // Tell the rest of the editor (DraftPlugin auto-save, textarea sync,
+  // listeners) that the document changed. pushImmediate alone updates the
+  // undo stack but does not emit, which previously left the draft store
+  // unaware of newly inserted images until the user typed something.
+  _emitChange(editor);
 }
 
 export function captureAtomicSnapshot(editor) {
-  if (editor && editor.history) {
-    editor.history.pushImmediate();
-  }
+  if (!editor) return;
+  if (editor.history) editor.history.pushImmediate();
+  _emitChange(editor);
+}
+
+function _emitChange(editor) {
+  try {
+    if (typeof editor._syncToTextarea === 'function') editor._syncToTextarea();
+    if (typeof editor.emit === 'function' && typeof editor.getContent === 'function') {
+      editor.emit('change', editor.getContent());
+    }
+  } catch (_) { /* never let snapshot bookkeeping crash the editor */ }
 }

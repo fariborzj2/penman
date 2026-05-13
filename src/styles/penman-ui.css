@@ -77,10 +77,10 @@
   box-shadow: var(--pm-shadow-focus);
 }
 
-.penman-wrapper *::-webkit-scrollbar        { width: 5px; height: 5px; }
-.penman-wrapper *::-webkit-scrollbar-track  { background: transparent; }
-.penman-wrapper *::-webkit-scrollbar-thumb  { background: var(--pm-border); border-radius: 99px; }
-.penman-wrapper *::-webkit-scrollbar-thumb:hover { background: #c8d0e0; }
+.penman-wrapper *::-webkit-scrollbar    , .penman-modal-overlay *::-webkit-scrollbar  { width: 5px; height: 5px; }
+.penman-wrapper *::-webkit-scrollbar-track , .penman-modal-overlay *::-webkit-scrollbar-track  { background: transparent; }
+.penman-wrapper *::-webkit-scrollbar-thumb , .penman-modal-overlay *::-webkit-scrollbar-thumb { background: var(--pm-border); border-radius: 99px; }
+.penman-wrapper *::-webkit-scrollbar-thumb:hover , .penman-modal-overlay *::-webkit-scrollbar-thumb:hover { background: #c8d0e0; }
 
 .penman-main {
   display: flex;
@@ -474,6 +474,8 @@
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   animation: pm-overlay-in var(--pm-duration-base) var(--pm-ease) both;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pm-border) transparent;
 }
 
 @keyframes pm-overlay-in {
@@ -515,6 +517,7 @@
   font-weight: 700;
   color: var(--pm-text);
   letter-spacing: -0.01em;
+  white-space: nowrap;
 }
 
 .penman-modal-close {

@@ -58,10 +58,19 @@ export class MediaRenderer {
       } else {
         mediaElement = document.createElement('audio');
       }
-      
+
       if (mediaData.title) mediaElement.title = mediaData.title;
       if (mediaData.controls !== false) mediaElement.controls = true; // default true
       if (mediaData.autoplay) mediaElement.autoplay = true;
+      // <video> and <audio> don't support loading="lazy" (that's an <img>/
+      // <iframe>-only attribute). The standards-track equivalent is
+      // preload="metadata", which fetches just enough bytes to know the
+      // media's duration/dimensions and defers the actual playback bytes
+      // until the user hits play. Autoplay cases obviously need full
+      // preload, so we leave those alone.
+      if (!mediaData.autoplay && !mediaElement.hasAttribute('preload')) {
+        mediaElement.setAttribute('preload', 'metadata');
+      }
 
       mediaElement.src = mediaData.embedUrl;
       mediaElement.style.position = 'absolute';
@@ -82,6 +91,10 @@ export class MediaRenderer {
       mediaElement.style.height = '100%';
       mediaElement.setAttribute('frameborder', '0');
       mediaElement.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture');
+      // Defer cross-origin embeds (YouTube, Vimeo, etc.) until they're
+      // about to scroll into view. The sanitizer already whitelists this
+      // attribute for <iframe>, so it survives every round-trip.
+      mediaElement.setAttribute('loading', 'lazy');
       
       // STRICT RULE: Native lazy loading
       mediaElement.setAttribute('loading', 'lazy');
