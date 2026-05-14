@@ -1,16 +1,34 @@
-# CodeBlock Plugin
+# CodeBlockPlugin
 
-Provides a highly stable, high-performance code block editing experience for the Penman editor.
+Inserts and renders `<pre><code>` blocks for code snippets, with syntax highlighting via a built-in regex tokenizer.
 
-## Overview
-This plugin delivers a real-time, lag-free syntax highlighting experience strictly using native JavaScript and regular expressions. It introduces a custom Regex-based tokenizer and an incremental DOM patching engine, guaranteeing that text typing, cursor navigation, and operations like undo/redo remain uninterrupted and instantaneous, even on large code blocks.
+## Activate
 
-## Core Features
-- **Real-Time Highlighting**: Syntax highlighting for JavaScript via a native, lightning-fast Regex tokenizer. No external libraries are used.
-- **Incremental Patching**: The rendering pipeline uses a diff-and-patch approach, modifying only the necessary text nodes and spans instead of trashing and rewriting innerHTML. This limits re-rendering to absolute minimums (< 8ms per keystroke).
-- **Absolute Cursor Stability**: Cursor position is calculated by absolute text length offsets, making it fully decoupled from the DOM nodes that represent tokens.
-- **IDE Features**:
-  - Auto-indentation on `Enter`.
-  - Double space insertion on `Tab`.
-- **Pure Text State**: The DOM is treated strictly as a rendering projection. The source of truth is always plain text.
-- **Robust Edge Cases**: Fully supports pasting raw text directly into the code block and seamlessly manages rapid mid-token edits.
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['codeblock'],
+  toolbar: 'codeblock'
+});
+```
+
+## What it registers
+
+| Surface | Name | Notes |
+|---|---|---|
+| Command | `INSERT_CODEBLOCK` | Inserts an empty `<pre><code>` and places the caret inside. |
+| Button | `codeblock` | Toolbar icon. |
+| i18n namespace | `plugins.codeBlock` | |
+| Icons | `codeblock` | |
+
+## Behaviour
+
+- **Enter** inside a code block inserts a newline (does NOT exit the block).
+- **Enter** twice on an empty line (or **Ctrl/⌘+Enter**) breaks out into a fresh paragraph below.
+- **Backspace** at the start of an empty block deletes the block entirely.
+- **Tab** inserts a 2-space indent at the caret.
+- Pasted code keeps text as-is (no Markdown auto-convert) and is re-tokenized.
+
+## Styling
+
+Ships a "VS Code Dark+" inspired palette in `penman-content.css` that works on both light and dark editor surfaces (the block always has a dark background by design).

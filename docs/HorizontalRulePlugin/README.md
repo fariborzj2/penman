@@ -1,15 +1,30 @@
 # HorizontalRulePlugin
 
-## Exact purpose of the plugin
-Inserts a horizontal rule (`<hr>`) element at the current cursor position.
+Inserts a selectable, deletable `<hr>` widget. Rendered as a block with a generous click target so the user can select and remove it with one click rather than the awkward native `<hr>` behavior.
 
-## System role
-Registers the `INSERT_HORIZONTAL_RULE` command and an `hr` UI button. Handles the logic of splitting the current block-level element if necessary and ensures a `<p><br></p>` exists after the inserted `<hr>` if it is placed at the end of the editor content.
+## Activate
 
-## Clear boundary of what it DOES NOT do
-- Does NOT allow configuration of the `<hr>` styling, thickness, or color via UI.
-- Does NOT embed the `<hr>` inside paragraph tags (strictly splits blocks).
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['hr'],
+  toolbar: 'hr'
+});
+```
 
-## Dependencies
-- `editor.commands` (CommandManager)
-- `editor.ui.registry` (UIManager)
+## What it registers
+
+| Surface | Name | Notes |
+|---|---|---|
+| Command | `INSERT_HORIZONTAL_RULE` | Inserts `<hr>` at the caret. |
+| Button | `hr` | Toolbar icon. |
+| i18n namespace | `plugins.hr` | |
+| Icons | `hr` | |
+
+## Markdown shortcut
+
+Typing `---` on its own line at the start of a paragraph auto-converts to an `<hr>` (handled by `MarkdownPlugin`).
+
+## Behaviour
+
+`penman-content.css` renders `<hr>` as a 28-pixel-tall block with a centered 1px divider. The widget has `cursor: pointer` so clicking it selects the whole HR — Backspace then removes it. Selection highlight outlines the entire widget (not just the line).

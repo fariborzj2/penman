@@ -1,24 +1,54 @@
 # BlockTypePlugin
 
-## Exact purpose of the plugin
-Allows users to change the block-level HTML tag of the currently selected text (e.g., Paragraph, Headings 1-6, Blockquote).
+Converts the current block (paragraph / heading / blockquote / callout) using a searchable dropdown that previews each block type in its actual visual style.
 
-## System role
-Registers a searchable `blocktype` UI dropdown menu. It listens to editor `selectionChange` events to dynamically update the active block type displayed in the toolbar based on cursor position. It uses `document.execCommand('formatBlock')` to apply changes.
+## Activate
 
-## Clear boundary of what it DOES NOT do
-- Does NOT apply inline formatting (e.g., bold, italic).
-- Does NOT handle list creation or mutation.
-- Does NOT allow custom block tags outside of the configured `blockTypes` array.
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['blocktype'],
+  toolbar: 'blocktype'
+});
+```
 
-## Default Block Types
-The plugin includes a set of pre-defined block types, including standard typography (Paragraph, Heading 1-6, Blockquote) and styled informational blocks:
-- **Success**: Green styled block for positive feedback.
-- **Info**: Blue styled block for general information.
-- **Warning**: Orange styled block for cautionary notes.
-- **Danger**: Red styled block for critical errors or warnings.
+## What it registers
 
-## Dependencies
-- `editor.ui.registry` (UIManager)
-- `editor.options.blockTypes`
-- `editor.selection` (SelectionManager)
+| Surface | Name | Notes |
+|---|---|---|
+| Command | `SET_BLOCK_TYPE` | Receives a `block` descriptor `{ name, cmd, class?, i18nKey?, optionStyle? }`. |
+| Dropdown | `blocktype` | Searchable list of available block types. Renders each option in its real tag (e.g. H1 in 2em bold, blockquote indented) so users see what they're getting. |
+| i18n namespace | `plugins.blockType` | Persian + English shipped. |
+
+## Default block types
+
+Configurable via the `blockTypes` init option. Defaults: `Paragraph`, `Heading 1..6`, `Blockquote`, plus 4 colored callouts (`Success`, `Info`, `Warning`, `Danger`).
+
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['blocktype'],
+  blockTypes: [
+    { name: 'Paragraph', cmd: 'p',  i18nKey: 'plugins.blockType.paragraph' },
+    { name: 'Heading 1', cmd: 'h1', i18nKey: 'plugins.blockType.heading1' },
+    { name: 'Quote',     cmd: 'blockquote', i18nKey: 'plugins.blockType.blockquote' },
+    { name: 'Success',   cmd: 'div', class: 'green-block', optionStyle: { color: '#166534', background: '#dcfce7' } }
+  ]
+});
+```
+
+## How it works
+
+The dropdown's `renderDropdownContent` builds a search box plus a list of rendered preview elements — each preview is a real `<h1>`, `<blockquote>`, etc. so the option visually represents the outcome. Selecting an option calls `editor.execCommand('SET_BLOCK_TYPE', block)`, which:
+
+1. Snapshots history.
+2. Replaces the current block element with the target tag (preserving inline content).
+3. Strips other block-type classes (prevents class pollution between switches), then adds the new block's class if any.
+
+The dropdown label live-updates on `selectionChange` to show the active block type.
+
+## Boundaries
+
+- Does NOT apply inline formatting (bold/italic — see `FormatPlugin`).
+- Does NOT handle list creation (see `ListPlugin`).
+- Does NOT allow custom block tags outside the configured `blockTypes` array.

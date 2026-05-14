@@ -1,17 +1,32 @@
 # FontSizePlugin
 
-## Exact purpose of the plugin
-Applies explicit inline CSS font-size styles to the current text selection.
+Single dropdown that sets the font-size on the current selection by wrapping it in `<span style="font-size: …">`. Each dropdown option renders at its own size so users see the result before clicking.
 
-## System role
-Registers the `SET_FONT_SIZE` custom command and a `fontsize` UI dropdown menu. The command uses a workaround with `document.execCommand('fontSize', false, '7')` followed by a DOM traversal to replace the legacy `<font>` tags with `<span>` tags containing the actual `font-size` CSS property. Also handles cleaning up pre-existing `font-size` spans.
+## Activate
 
-## Clear boundary of what it DOES NOT do
-- Does NOT apply block-level sizing.
-- Does NOT use pre-defined CSS classes for font sizes; uses explicit inline styles (`style="font-size: X"`).
-- Does NOT alter the font family.
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['fontsize'],
+  toolbar: 'fontsize',
+  fontSizes: ['12px', '14px', '16px', '18px', '24px', '32px']  // default
+});
+```
 
-## Dependencies
-- `editor.ui.registry` (UIManager)
-- `editor.commands` (CommandManager)
-- `editor.selection` (SelectionManager)
+## What it registers
+
+| Surface | Name | Notes |
+|---|---|---|
+| Command | `SET_FONT_SIZE` | Receives the size string; wraps current selection. |
+| Dropdown | `fontsize` | Shows each size rendered at its own size (visual preview). |
+| i18n namespace | `plugins.fontSize` | |
+
+## Options
+
+| Option | Type | Default | Meaning |
+|---|---|---|---|
+| `fontSizes` | `string[]` | `['12px','14px','16px','18px','24px','32px']` | Sizes shown in the dropdown. Any valid CSS length string is accepted. |
+
+## Behaviour
+
+The dropdown's trigger label shows the active size; it updates on `selectionChange` by reading `computedStyle.fontSize` of the caret's parent. The active size is preserved across selection moves.

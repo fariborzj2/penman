@@ -1,18 +1,35 @@
 # FindReplacePlugin
 
-## Exact purpose of the plugin
-Provides text search and replace capabilities within the editor's editable area, including options for match case, ignore diacritics (RTL), and whole words.
+Find-and-replace with diacritic-insensitive RTL matching. Opens a modal with Find / Replace / Match-case / Ignore-diacritics / All-words options and Next / Prev / Replace / Replace All buttons.
 
-## System role
-Instantiates a `TextMapper` to build a text-to-node offset mapping via a `TreeWalker`. It provides a Find/Replace Modal UI, manages search state (`currentIndex`, `results`), highlights matches natively using `Selection` ranges, and mutates text nodes or native DOM elements for replacements.
+## Activate
 
-## Clear boundary of what it DOES NOT do
-- Does NOT search within HTML attributes or tag names.
-- Does NOT support Regular Expression (RegEx) searches.
-- Does NOT search outside of `editor.editableArea`.
+```js
+penman.init({
+  selector: '#editor',
+  plugins: ['findreplace'],
+  toolbar: 'findreplace'
+});
+```
 
-## Dependencies
-- `editor.ui.createModal` (UIManager)
-- `editor.history` (HistoryManager)
-- `editor.selection` (SelectionManager)
-- `TextMapper` (internal module class)
+Also opens with `Ctrl/⌘+F` while the editor is focused.
+
+## What it registers
+
+| Surface | Name | Notes |
+|---|---|---|
+| Button | `findreplace` | Toolbar icon. |
+| i18n namespace | `plugins.findReplace` | |
+| Icons | `findreplace` | |
+
+## Search engine
+
+- Diacritic normalization: when "Ignore Diacritics (RTL)" is on, the search runs on a NFD-stripped form of the content so هاء/کاف variants and Arabic kashida marks all match the corresponding Persian letters.
+- `TextMapper` maintains a bidirectional offset map between the normalized search text and the live DOM, so highlighting and replacement land on the correct ranges even with mixed normalization.
+- "All words" matches each word in the find input separately (OR-style multi-token search).
+
+## Behaviour
+
+- Each found match is highlighted in turn (the active match wraps with a `<mark>`-like span).
+- Replace runs on the active match; Replace All iterates in reverse so earlier offsets stay valid.
+- A snapshot is pushed to history before Replace All so undo restores the entire bulk operation.
