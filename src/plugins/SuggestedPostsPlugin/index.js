@@ -1,5 +1,6 @@
 import { FloatingUI } from '../../ui/FloatingUI.js';
 import { uniqueId } from '../../utils/uniqueId.js';
+import { escapeHtml, safeUrl } from '../../utils/html.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
@@ -13,15 +14,7 @@ function generateId() {
   return uniqueId('sp-');
 }
 
-function escapeHtml(str) {
-  if (!str) return '';
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
+// escapeHtml is now imported from utils/html.js (shared with all plugins).
 
 export function setupSuggestedPostsPlugin(editor) {
   // Register plugin-owned data (lang + icons). Self-contained: removing
@@ -123,145 +116,166 @@ export function setupSuggestedPostsPlugin(editor) {
     if (editor.selection && typeof editor.selection.save === 'function' && !editingBlock) {
       editor.selection.save();
     }
-    const modal = editor.ui.createModal({
+
+    // Build the dynamic items-list panel as a custom field. The list re-renders
+    // itself whenever an item is added / edited / deleted.
+    const listEl = document.createElement('div');
+    listEl.className = 'psp-items-list';
+
+    // Build the "Add" button as a custom field below the inputs.
+    const addBtnWrap = document.createElement('div');
+    const addBtn = document.createElement('button');
+    addBtn.type = 'button';
+    addBtn.className = 'penman-btn penman-btn-primary';
+    addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
+    addBtnWrap.appendChild(addBtn);
+
+    // Error line shown when the add-form is invalid.
+    const errorEl = document.createElement('div');
+    errorEl.className = 'penman-form-error';
+    errorEl.hidden = true;
+
+    const formModal = editor.ui.createFormModal({
       title: editor.i18n.t('plugins.suggestedPosts.title'),
-      hideFooter: true,
-      body: buildModalBody(),
+      hideFooter: true, // we render our own footer via `buttons` below
+      fields: [
+        { type: 'custom', render: () => listEl },
+        {
+          type: 'text',
+          name: 'title',
+          label: editor.i18n.t('plugins.suggestedPosts.lable'),
+          placeholder: editor.i18n.t('plugins.suggestedPosts.titlePlaceholder')
+        },
+        {
+          type: 'url',
+          name: 'url',
+          label: editor.i18n.t('plugins.suggestedPosts.urlLabel'),
+          placeholder: editor.i18n.t('plugins.suggestedPosts.urlPlaceholder'),
+          dir: 'ltr'
+        },
+        { type: 'custom', render: () => errorEl },
+        { type: 'custom', render: () => addBtnWrap }
+      ]
     });
-    bindModalEvents(modal.modalElement || modal.element, modal);
-  }
 
-  function buildModalBody() {
-    return `
-      <div class="psp-modal-inner" style="padding: 15px;  overflow: auto; max-height: 350px">
-        <div id="psp-items-list" style="margin-bottom: 12px;"></div>
-        <div class="psp-form" style="display:flex; flex-direction:column; gap:8px;">
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-title-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.suggestedPosts.lable')}</label>
-            <input id="psp-title-input" type="text" placeholder="${editor.i18n.t('plugins.suggestedPosts.titlePlaceholder')}" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit;" />
+    // Build a custom footer (the FormModal was created with hideFooter: true).
+    const footer = document.createElement('div');
+    footer.className = 'penman-modal-footer';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.type = 'button';
+    cancelBtn.className = 'penman-btn';
+    cancelBtn.textContent = editor.i18n.t('ui.cancel');
+    cancelBtn.addEventListener('click', () => formModal.close());
+    const submitBtn = document.createElement('button');
+    submitBtn.type = 'button';
+    submitBtn.className = 'penman-btn penman-btn-primary';
+    submitBtn.textContent = editor.i18n.t('ui.ok');
+    submitBtn.addEventListener('click', () => {
+      if (items.length === 0) return showError(editor.i18n.t('plugins.suggestedPosts.minOnePost'));
+      insertBlock();
+      formModal.close();
+    });
+    footer.appendChild(cancelBtn);
+    footer.appendChild(submitBtn);
+    formModal.modalElement.appendChild(footer);
+
+    function renderItemsList() {
+      if (items.length === 0) { listEl.innerHTML = ''; return; }
+      listEl.innerHTML = `
+        <div class="psp-items-wrap">
+          <div class="psp-items-header">
+            ${items.length} ${editor.i18n.t('plugins.suggestedPosts.postsAdded')}
           </div>
-          <div style="display:flex; flex-direction:column; gap:4px;">
-            <label for="psp-url-input" style="font-size:13px; color:#555;">${editor.i18n.t('plugins.suggestedPosts.urlLabel')}</label>
-            <input id="psp-url-input" type="url" placeholder="${editor.i18n.t('plugins.suggestedPosts.urlPlaceholder')}" style="padding:7px 10px; border:1px solid #ccc; border-radius:4px; font-size:14px; font-family:inherit; direction:ltr;" />
-          </div>
-          <div id="psp-error" style="color:#dc3545; font-size:12px; display:none;"></div>
-          <button id="psp-add-btn" type="button" class="penman-btn" style="background:#28a745; color:#fff;">${editor.i18n.t('plugins.suggestedPosts.insert')}</button>
+          <ul class="psp-items">
+            ${items.map(item => `
+              <li data-id="${escapeHtml(item.id)}" class="psp-item">
+                <div class="psp-item-body">
+                  <div class="psp-item-title">${escapeHtml(item.title)}</div>
+                  <div class="psp-item-url">${escapeHtml(item.url)}</div>
+                </div>
+                <button class="psp-edit-btn penman-btn-icon" data-id="${escapeHtml(item.id)}" type="button" aria-label="${editor.i18n.t('ui.edit')}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg>
+                </button>
+                <button class="psp-delete-btn penman-btn-icon" data-id="${escapeHtml(item.id)}" type="button" aria-label="${editor.i18n.t('ui.delete')}">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+              </li>
+            `).join('')}
+          </ul>
         </div>
-      </div>
-      <div class="penman-modal-footer">
-        <button class="penman-btn penman-modal-btn-cancel" type="button">${editor.i18n.t('ui.cancel')}</button>
-        <button id="psp-submit-btn" class="penman-btn penman-modal-btn-submit penman-btn-primary" type="button">${editor.i18n.t('ui.ok')}</button>
-      </div>
-    `;
-  }
+      `;
+      listEl.querySelectorAll('.psp-edit-btn').forEach(btn => btn.addEventListener('click', () => startEdit(btn.dataset.id)));
+      listEl.querySelectorAll('.psp-delete-btn').forEach(btn => btn.addEventListener('click', () => deleteItem(btn.dataset.id)));
+      syncSubmitState();
+    }
 
-  function renderItemsList(elModal) {
-    const listContainer = elModal.querySelector('#psp-items-list');
-    if (!listContainer) return;
-    if (items.length === 0) { listContainer.innerHTML = ''; return; }
+    function showError(msg) { errorEl.textContent = msg; errorEl.hidden = false; }
+    function hideError()    { errorEl.textContent = ''; errorEl.hidden = true; }
 
-    listContainer.innerHTML = `
-      <div style="border:1px solid #E2E8F0; border-radius:6px; overflow:hidden; margin-bottom:4px;">
-        <div style="padding:6px 10px; background:#F8FAFC; font-size:12px; color:#64748B; border-bottom:1px solid #E2E8F0;">
-          ${items.length} ${editor.i18n.t('plugins.suggestedPosts.postsAdded')}
-        </div>
-        <ul style="list-style:none; margin:0; padding:0;">
-          ${items.map(item => `
-            <li data-id="${escapeHtml(item.id)}" style="display:flex; align-items:center; gap:8px; padding:8px 10px; border-bottom:1px solid #f0f0f0; font-size:13px;">
-              <div style="flex:1; min-width:0; overflow:hidden;">
-                <div style="font-weight:500; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.title)}</div>
-                <div style="color:#888; font-size:11px; direction:ltr; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(item.url)}</div>
-              </div>
-              <button class="psp-edit-btn" data-id="${escapeHtml(item.id)}" type="button" style="background:none; border:none; cursor:pointer; color:#4285f4;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z"/><path d="m15 5 4 4"/></svg></button>
-              <button class="psp-delete-btn" data-id="${escapeHtml(item.id)}" type="button" style="background:none; border:none; cursor:pointer; color:#dc3545;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></button>
-            </li>
-          `).join('')}
-        </ul>
-      </div>
-    `;
+    function syncSubmitState() {
+      submitBtn.disabled = items.length === 0;
+    }
 
-    listContainer.querySelectorAll('.psp-edit-btn').forEach(btn => btn.addEventListener('click', () => startEdit(btn.dataset.id, elModal)));
-    listContainer.querySelectorAll('.psp-delete-btn').forEach(btn => btn.addEventListener('click', () => deleteItem(btn.dataset.id, elModal)));
-  }
+    function setAddMode(mode) {
+      if (mode === 'edit') {
+        addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.saveChanges');
+        addBtn.classList.add('penman-btn-warning');
+      } else {
+        addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
+        addBtn.classList.remove('penman-btn-warning');
+      }
+    }
 
-  function bindModalEvents(elModal, modal) {
-    renderItemsList(elModal);
-    syncAddButton(elModal);
+    function startEdit(id) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      editingId = id;
+      formModal.getField('title').value = item.title;
+      formModal.getField('url').value = item.url;
+      setAddMode('edit');
+      formModal.getField('url').focus();
+    }
 
-    const urlInput = elModal.querySelector('#psp-url-input');
-    const titleInput = elModal.querySelector('#psp-title-input');
-    const errorEl = elModal.querySelector('#psp-error');
-    const addBtn = elModal.querySelector('#psp-add-btn');
+    function deleteItem(id) {
+      items = items.filter(i => i.id !== id);
+      if (editingId === id) {
+        editingId = null;
+        formModal.getField('title').value = '';
+        formModal.getField('url').value = '';
+        setAddMode('add');
+      }
+      renderItemsList();
+    }
 
     addBtn.addEventListener('click', () => {
-      const url = urlInput.value.trim();
-      const title = titleInput.value.trim();
-      if (!url || !title) return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.fillBothFields'));
-      try { new URL(url); } catch (_) { return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.invalidUrl')); }
-
-      hideError(errorEl);
+      const data = formModal.collect();
+      const title = (data.title || '').trim();
+      const rawUrl = (data.url || '').trim();
+      if (!rawUrl || !title) return showError(editor.i18n.t('plugins.suggestedPosts.fillBothFields'));
+      // URL() throws for syntactically invalid URLs; safeUrl() additionally
+      // rejects unsafe schemes like javascript:/vbscript:/data: that would
+      // otherwise become live XSS vectors when rendered as <a href="...">.
+      try { new URL(rawUrl); } catch (_) { return showError(editor.i18n.t('plugins.suggestedPosts.invalidUrl')); }
+      const url = safeUrl(rawUrl);
+      if (!url) return showError(editor.i18n.t('plugins.suggestedPosts.invalidUrl'));
+      hideError();
       if (editingId) {
         const idx = items.findIndex(i => i.id === editingId);
         if (idx !== -1) items[idx] = { id: editingId, title, url };
         editingId = null;
-        addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
-        addBtn.style.background = '#28a745';
+        setAddMode('add');
       } else {
         items.push({ id: generateId(), title, url });
       }
-
-      urlInput.value = ''; titleInput.value = '';
-      renderItemsList(elModal);
-      syncAddButton(elModal);
-      urlInput.focus();
+      formModal.getField('title').value = '';
+      formModal.getField('url').value = '';
+      renderItemsList();
+      formModal.getField('url').focus();
     });
 
-    elModal.querySelector('#psp-submit-btn').addEventListener('click', () => {
-      if (items.length === 0) return showError(errorEl, editor.i18n.t('plugins.suggestedPosts.minOnePost'));
-      insertBlock();
-      modal.close();
-    });
-
-    elModal.querySelector('.penman-modal-btn-cancel').addEventListener('click', () => modal.close());
+    renderItemsList();
+    syncSubmitState();
   }
-
-  function startEdit(id, elModal) {
-    const item = items.find(i => i.id === id);
-    if (!item) return;
-    editingId = id;
-    const addBtn = elModal.querySelector('#psp-add-btn');
-    elModal.querySelector('#psp-url-input').value = item.url;
-    elModal.querySelector('#psp-title-input').value = item.title;
-    addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.saveChanges');
-    addBtn.style.background = '#fd7e14';
-    elModal.querySelector('#psp-url-input').focus();
-  }
-
-  function deleteItem(id, elModal) {
-    items = items.filter(i => i.id !== id);
-    if (editingId === id) {
-      editingId = null;
-      const addBtn = elModal.querySelector('#psp-add-btn');
-      elModal.querySelector('#psp-url-input').value = '';
-      elModal.querySelector('#psp-title-input').value = '';
-      addBtn.textContent = editor.i18n.t('plugins.suggestedPosts.addLink');
-      addBtn.style.background = '#28a745';
-    }
-    renderItemsList(elModal);
-    syncAddButton(elModal);
-  }
-
-  function syncAddButton(elModal) {
-    const btn = elModal.querySelector('#psp-submit-btn');
-    if (!btn) return;
-    const disabled = items.length === 0;
-    btn.disabled = disabled;
-    btn.style.opacity = disabled ? '0.5' : '1';
-    btn.style.cursor = disabled ? 'not-allowed' : 'pointer';
-  }
-
-  function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-  function hideError(el) { el.textContent = ''; el.style.display = 'none'; }
 
   function insertBlock() {
     if (items.length === 0) return;

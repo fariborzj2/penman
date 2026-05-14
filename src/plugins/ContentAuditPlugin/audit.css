@@ -8,11 +8,13 @@
   flex-direction: column;
   width: 100%;
   max-height: calc(90vh - 60px);
-  font-family: inherit;
+  font-family: 'vazirmatn';
   color: var(--pm-text);
   background: var(--pm-bg);
 }
-
+.penman-audit button {
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
 /* ─── HERO / Summary header ─────────────────────────────────────────── */
 
 .penman-audit-hero {

@@ -1,6 +1,17 @@
 node_modules/
 dist/
+coverage/
 
+# Server runtime artifacts
 server/uploads/
 
+# OS / editor cruft
 .DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+
+# Local working / scratch files (smoke tests, demos)
+_smoke-*.mjs
+verify_ui.py

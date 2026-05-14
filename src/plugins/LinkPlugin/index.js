@@ -2,13 +2,7 @@ import faStrings from './lang/fa.js';
 import enStrings from './lang/en.js';
 import icons from './icons/index.js';
 
-/**
- * Simple HTML attribute escaper to prevent quotes from breaking HTML structure
- */
-function escapeHtmlAttr(str) {
-  if (!str) return '';
-  return String(str).replace(/"/g, '&quot;');
-}
+import { escapeHtmlAttr, safeUrl } from '../../utils/html.js';
 
 export function setupLinkPlugin(editor) {
   // Register plugin-owned i18n strings and icons. After this call the editor
@@ -130,51 +124,66 @@ export function setupLinkPlugin(editor) {
       // Save current selection before opening the modal so we know where to insert
       editor.selection.save();
 
-      editor.ui.createModal({
-        title: existingLink ? editor.i18n.t('plugins.link.insert') : editor.i18n.t('plugins.link.insert'),
-        body: `
-          <div style="padding: 15px">
-            <div class="penman-modal-form-row">
-              <label for="penman-link-url">${editor.i18n.t('plugins.link.urlLabel')}</label></label>
-              <input type="url" id="penman-link-url" name="url" placeholder="${editor.i18n.t('plugins.link.urlPlaceholder')}" value="${escapeHtmlAttr(initialData.url)}" dir="ltr" style="text-align: left;" required>
-            </div>
-            <div class="penman-modal-form-row">
-              <label for="penman-link-text">${editor.i18n.t('plugins.link.textLabel')}</label></label>
-              <input type="text" id="penman-link-text" name="text" placeholder="${editor.i18n.t('plugins.link.textPlaceholder')}" value="${escapeHtmlAttr(initialData.text)}">
-            </div>
-            <div style="margin-top: 10px; display: flex; gap: 10px;">
-              <div style="flex: 1;">
-                <label for="penman-link-target">${editor.i18n.t('plugins.link.targetLabel')}</label></label>
-                <select id="penman-link-target" name="target" style="width: 100%; padding: 8px; margin-top: 5px; border: 1px solid #ccc; border-radius: 3px;">
-                  <option value="" ${initialData.target === '' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetNone')}</option>
-                  <option value="_blank" ${initialData.target === '_blank' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetBlank')}</option>
-                  <option value="_self" ${initialData.target === '_self' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetSelf')}</option>
-                  <option value="_parent" ${initialData.target === '_parent' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetParent')}</option>
-                  <option value="_top" ${initialData.target === '_top' ? 'selected' : ''}>${editor.i18n.t('plugins.link.targetTop')}</option>
-                </select>
-              </div>
-              <div style="flex: 1;">
-                <label for="penman-link-rel">${editor.i18n.t('plugins.link.relLabel')}</label></label>
-                <input type="text" id="penman-link-rel" name="rel" placeholder="${editor.i18n.t('plugins.link.relPlaceholder')}" value="${escapeHtmlAttr(initialData.rel)}" dir="ltr" style="text-align: left;">
-              </div>
-            </div>
-          </div>
-        `,
+      editor.ui.createFormModal({
+        title: editor.i18n.t('plugins.link.insert'),
+        fields: [
+          {
+            type: 'url', name: 'url',
+            label: editor.i18n.t('plugins.link.urlLabel'),
+            placeholder: editor.i18n.t('plugins.link.urlPlaceholder'),
+            value: initialData.url, required: true, dir: 'ltr'
+          },
+          {
+            type: 'text', name: 'text',
+            label: editor.i18n.t('plugins.link.textLabel'),
+            placeholder: editor.i18n.t('plugins.link.textPlaceholder'),
+            value: initialData.text
+          },
+          {
+            type: 'row',
+            fields: [
+              {
+                type: 'select', name: 'target',
+                label: editor.i18n.t('plugins.link.targetLabel'),
+                value: initialData.target,
+                options: [
+                  { value: '',        label: editor.i18n.t('plugins.link.targetNone') },
+                  { value: '_blank',  label: editor.i18n.t('plugins.link.targetBlank') },
+                  { value: '_self',   label: editor.i18n.t('plugins.link.targetSelf') },
+                  { value: '_parent', label: editor.i18n.t('plugins.link.targetParent') },
+                  { value: '_top',    label: editor.i18n.t('plugins.link.targetTop') }
+                ]
+              },
+              {
+                type: 'text', name: 'rel',
+                label: editor.i18n.t('plugins.link.relLabel'),
+                placeholder: editor.i18n.t('plugins.link.relPlaceholder'),
+                value: initialData.rel, dir: 'ltr'
+              }
+            ]
+          }
+        ],
         onSubmit: (data) => {
           // Restore selection to the saved position
           editor.selection.restore();
 
           if (data.url) {
-            const safeUrl = escapeHtmlAttr(data.url);
-            const safeText = data.text ? escapeHtmlAttr(data.text) : safeUrl;
+            // Reject javascript:/vbscript:/data: URLs before touching the DOM.
+            const validatedUrl = safeUrl(data.url);
+            if (!validatedUrl) {
+              // Silently ignore unsafe URLs (could log via logger if available).
+              return;
+            }
+            const hrefAttr = escapeHtmlAttr(validatedUrl);
+            const safeText = data.text ? escapeHtmlAttr(data.text) : hrefAttr;
             const targetAttr = data.target ? ` target="${escapeHtmlAttr(data.target)}"` : '';
             const relAttr = data.rel ? ` rel="${escapeHtmlAttr(data.rel)}"` : '';
 
             if (existingLink) {
-              existingLink.setAttribute('href', data.url);
+              existingLink.setAttribute('href', validatedUrl);
               if (data.target) existingLink.setAttribute('target', data.target);
               else existingLink.removeAttribute('target');
-              
+
               if (data.rel) existingLink.setAttribute('rel', data.rel);
               else existingLink.removeAttribute('rel');
 
@@ -188,7 +197,7 @@ export function setupLinkPlugin(editor) {
             } else if (preSelectedNode) {
                // Wrap the selected node (e.g., an image figure) in the anchor tag instead of text
                const a = document.createElement('a');
-               a.setAttribute('href', data.url);
+               a.setAttribute('href', validatedUrl);
                if (data.target) a.setAttribute('target', data.target);
                if (data.rel) a.setAttribute('rel', data.rel);
 
@@ -200,7 +209,7 @@ export function setupLinkPlugin(editor) {
                editor.emit('change', editor.getContent());
             } else {
                // Normal text insertion
-               editor.insertContent(`<a href="${safeUrl}"${targetAttr}${relAttr}>${safeText}</a>`);
+               editor.insertContent(`<a href="${hrefAttr}"${targetAttr}${relAttr}>${safeText}</a>`);
             }
           }
         },

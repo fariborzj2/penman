@@ -86,9 +86,13 @@ export class DraftStorage {
         const tx = db.transaction(IDB_STORE_NAME, 'readonly');
         const req = tx.objectStore(IDB_STORE_NAME).get(key);
         req.onsuccess = () => resolve(req.result ? req.result.payload : null);
-        req.onerror = () => resolve(null);
+        req.onerror = (e) => {
+          logger.warn('[DraftStorage] IDB read failed:', e.target && e.target.error);
+          resolve(null);
+        };
       });
-    } catch {
+    } catch (err) {
+      logger.warn('[DraftStorage] IDB open failed during read:', err && err.message);
       return null;
     }
   }
@@ -100,9 +104,13 @@ export class DraftStorage {
         const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
         const req = tx.objectStore(IDB_STORE_NAME).put({ id: key, payload });
         req.onsuccess = () => resolve(true);
-        req.onerror = () => resolve(false);
+        req.onerror = (e) => {
+          logger.warn('[DraftStorage] IDB write failed:', e.target && e.target.error);
+          resolve(false);
+        };
       });
-    } catch {
+    } catch (err) {
+      logger.warn('[DraftStorage] IDB open failed during write:', err && err.message);
       return false;
     }
   }
@@ -114,9 +122,13 @@ export class DraftStorage {
         const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
         const req = tx.objectStore(IDB_STORE_NAME).delete(key);
         req.onsuccess = () => resolve(true);
-        req.onerror = () => resolve(false);
+        req.onerror = (e) => {
+          logger.warn('[DraftStorage] IDB delete failed:', e.target && e.target.error);
+          resolve(false);
+        };
       });
-    } catch {
+    } catch (err) {
+      logger.warn('[DraftStorage] IDB open failed during delete:', err && err.message);
       return false;
     }
   }

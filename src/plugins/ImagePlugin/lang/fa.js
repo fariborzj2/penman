@@ -55,5 +55,11 @@ export default {
     "aborted": "درخواست لغو شد.",
     "parseError": "پاسخ نامعتبر از سرور دریافت شد.",
     "unauthorized": "دسترسی رد شد. لطفاً مجوزهای خود را بررسی کنید."
-  }
+  },
+  "alignLeft":          "چپ‌چین",
+  "alignCenter":        "وسط‌چین",
+  "alignRight":         "راست‌چین",
+  "editImage":          "ویرایش تصویر",
+  "deleteImage":        "حذف تصویر",
+  "confirmDeleteImage": "این تصویر حذف شود؟"
 };

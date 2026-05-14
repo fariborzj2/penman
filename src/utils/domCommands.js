@@ -17,6 +17,8 @@
  * without relying on execCommand.
  */
 
+import { stripUnsafeAttributes } from './html.js';
+
 /**
  * Inserts a fragment of HTML at the current selection. If the selection is
  * non-collapsed, its contents are first deleted.
@@ -36,12 +38,17 @@ export function insertHTMLAtSelection(html) {
   const range = sel.getRangeAt(0);
   range.deleteContents();
 
-  // Parse the HTML into a fragment without executing scripts. The browser
-  // strips scripts when adopting nodes via DOMParser + adoptNode, but we
-  // additionally remove any <script> tags defensively.
+  // Parse the HTML into a fragment without executing scripts. We then strip:
+  //  - <script> elements (defensively, since some browsers neutralize them
+  //    on adopt but not all do consistently for inert templates)
+  //  - on* event-handler attributes on any descendant element
+  //  - javascript:/vbscript:/file:/etc. URLs in href/src/action/formaction
+  // This is a defense-in-depth layer; callers that already pass sanitized
+  // HTML lose nothing, callers that didn't are protected from XSS.
   const template = document.createElement('template');
   template.innerHTML = html;
   template.content.querySelectorAll('script').forEach(s => s.remove());
+  stripUnsafeAttributes(template.content);
   const fragment = template.content;
 
   // Remember the last inserted node so we can position the cursor after it.

@@ -1,0 +1,38 @@
+# Patterns used by `npm publish` / `npm pack` when filtering files included
+# in the package. Combined with the `files` whitelist in package.json: a file
+# must pass BOTH to be shipped.
+#
+# Tests, dev tooling, demo assets — keep them out of the published package.
+
+# Test files anywhere in the tree
+*.test.js
+*.spec.js
+__tests__/
+__mocks__/
+
+# Working / scratch files at repo root
+_smoke-*.mjs
+test-*.mjs
+verify_ui.py
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.log
+.vscode/
+.idea/
+node_modules/
+coverage/
+
+# Local config and dev assets that aren't needed at runtime
+.gitignore
+.npmignore
+.eslintrc*
+.prettierrc*
+
+# Public demo assets (not needed by library consumers)
+public/
+docs/
+server/
+index.html
+vite.config.js

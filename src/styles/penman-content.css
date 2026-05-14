@@ -19,8 +19,10 @@
  */
 
 .penman-editor-area {
+  /* Light defaults — see the bottom of this file for dark overrides. */
   --pmc-text:            #1e2a3a;
   --pmc-text-muted:      #64748b;
+  --pmc-text-soft:       #475569;
   --pmc-heading:         #0f172a;
   --pmc-link:            #4f6ef7;
   --pmc-link-hover:      #3a57e8;
@@ -30,6 +32,31 @@
   --pmc-bg-soft:         #f8f9fc;
   --pmc-bg-active:       rgba(79, 110, 247, 0.08);
   --pmc-accent-soft:     rgba(79, 110, 247, 0.10);
+
+  /* Inline-element colors */
+  --pmc-mark-bg:         #fef08a;
+  --pmc-mark-text:       inherit;
+  --pmc-inline-code:     #be185d;
+
+  /* Hover-state hints */
+  --pmc-hr-hover:        #94a3b8;
+  --pmc-image-hover:     #c8d0e0;
+  --pmc-image-shadow:    rgba(15, 23, 42, 0.06);
+
+  /* Callout block colors (light) */
+  --pmc-green-text:      #166534;
+  --pmc-green-bg:        #f0fdf4;
+  --pmc-green-accent:    #22c55e;
+  --pmc-blue-text:       #1e3a8a;
+  --pmc-blue-bg:         #eff6ff;
+  --pmc-blue-accent:     #3b82f6;
+  --pmc-orange-text:     #9a3412;
+  --pmc-orange-bg:       #fff7ed;
+  --pmc-orange-accent:   #f97316;
+  --pmc-red-text:        #7f1d1d;
+  --pmc-red-bg:          #fef2f2;
+  --pmc-red-accent:      #ef4444;
+
   --pmc-radius:          8px;
   --pmc-radius-sm:       6px;
 }
@@ -87,10 +114,10 @@
 .penman-editor-area h3 { font-size: 1.3em; }
 .penman-editor-area h4 { font-size: 1.1em; }
 .penman-editor-area h5 { font-size: 1em; }
-.penman-editor-area h6 { font-size: 0.9em; color: #475569; }
+.penman-editor-area h6 { font-size: 0.9em; color: var(--pmc-text-soft); }
 
 .penman-editor-area strong, .penman-editor-area b { font-weight: 700; color: var(--pmc-heading); }
-.penman-editor-area mark              { background: #fef08a; color: inherit; padding: 0 2px; border-radius: 2px; }
+.penman-editor-area mark              { background: var(--pmc-mark-bg); color: var(--pmc-mark-text); padding: 0 2px; border-radius: 2px; }
 .penman-editor-area small             { font-size: 0.85em; color: var(--pmc-text-muted); }
 .penman-editor-area sub, .penman-editor-area sup { font-size: 0.72em; line-height: 0; }
 
@@ -102,7 +129,7 @@
   border-radius: 4px;
   background: var(--pmc-bg-soft);
   border: 1px solid var(--pmc-border);
-  color: #be185d;
+  color: var(--pmc-inline-code);
   direction: ltr;
 }
 
@@ -113,7 +140,7 @@
   padding: 2px 6px;
   border-radius: 4px;
   border: 1px solid var(--pmc-border-strong);
-  background: linear-gradient(180deg, #fff 0%, var(--pmc-bg-soft) 100%);
+  background: linear-gradient(180deg, var(--pmc-bg) 0%, var(--pmc-bg-soft) 100%);
   box-shadow: 0 1px 0 var(--pmc-border-strong);
   color: var(--pmc-heading);
 }
@@ -144,7 +171,7 @@
   background: var(--pmc-bg-soft);
   border-left: 4px solid var(--pmc-link);
   border-radius: 0 var(--pmc-radius-sm) var(--pmc-radius-sm) 0;
-  color: #475569;
+  color: var(--pmc-text-soft);
   font-style: italic;
 }
 .penman-editor-area blockquote p:last-child { margin-bottom: 0; }
@@ -187,7 +214,7 @@
   border-radius: 1px;
 }
 .penman-editor-area hr:hover::before {
-  background: #94a3b8;
+  background: var(--pmc-hr-hover);
 }
 .penman-editor-area hr.penman-selected-node {
   outline: 2px solid var(--pmc-link) !important;
@@ -236,7 +263,7 @@
 }
 .penman-editor-area th {
   font-weight: 600;
-  color: #374151;
+  color: var(--pmc-heading);
   background: var(--pmc-bg-soft);
 }
 .penman-editor-area table p { margin: 0; }
@@ -286,8 +313,8 @@
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 .penman-image:hover {
-  border-color: #c8d0e0;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-color: var(--pmc-image-hover);
+  box-shadow: 0 2px 8px var(--pmc-image-shadow);
 }
 .penman-image.penman-align-center { text-align: center; margin-left: auto; margin-right: auto; }
 .penman-image.penman-align-left   { text-align: left;   margin-left: 0; }
@@ -319,7 +346,7 @@ figcaption.penman-image-caption {
 }
 figcaption.penman-image-caption:empty::before {
   content: attr(data-placeholder);
-  color: #a0aec0;
+  color: var(--pmc-text-muted);
   cursor: text;
   pointer-events: none;
 }
@@ -337,10 +364,10 @@ figcaption.penman-image-caption:empty::before {
   font-size: 14px;
 }
 
-.green-block  { color: #166534; background: #f0fdf4; border-right: 3px solid #22c55e; }
-.blue-block   { color: #1e3a8a; background: #eff6ff; border-right: 3px solid #3b82f6; }
-.orange-block { color: #9a3412; background: #fff7ed; border-right: 3px solid #f97316; }
-.red-block    { color: #7f1d1d; background: #fef2f2; border-right: 3px solid #ef4444; }
+.green-block  { color: var(--pmc-green-text);  background: var(--pmc-green-bg);  border-right: 3px solid var(--pmc-green-accent); }
+.blue-block   { color: var(--pmc-blue-text);   background: var(--pmc-blue-bg);   border-right: 3px solid var(--pmc-blue-accent); }
+.orange-block { color: var(--pmc-orange-text); background: var(--pmc-orange-bg); border-right: 3px solid var(--pmc-orange-accent); }
+.red-block    { color: var(--pmc-red-text);    background: var(--pmc-red-bg);    border-right: 3px solid var(--pmc-red-accent); }
 
 [dir="ltr"] .green-block,
 [dir="ltr"] .blue-block,
@@ -350,10 +377,10 @@ figcaption.penman-image-caption:empty::before {
   border-left: 3px solid;
   border-radius: var(--pmc-radius-sm) 0 0 var(--pmc-radius-sm);
 }
-[dir="ltr"] .green-block  { border-left-color: #22c55e; }
-[dir="ltr"] .blue-block   { border-left-color: #3b82f6; }
-[dir="ltr"] .orange-block { border-left-color: #f97316; }
-[dir="ltr"] .red-block    { border-left-color: #ef4444; }
+[dir="ltr"] .green-block  { border-left-color: var(--pmc-green-accent); }
+[dir="ltr"] .blue-block   { border-left-color: var(--pmc-blue-accent); }
+[dir="ltr"] .orange-block { border-left-color: var(--pmc-orange-accent); }
+[dir="ltr"] .red-block    { border-left-color: var(--pmc-red-accent); }
 
 /* ═══════════════════════════════════════════════
    11. SUGGESTED POSTS PLUGIN
@@ -369,7 +396,7 @@ figcaption.penman-image-caption:empty::before {
 .penman-suggested-posts-wrapper-title {
   font-size: 12px;
   font-weight: 700;
-  color: #374151;
+  color: var(--pmc-heading);
   margin-bottom: 8px;
   padding-bottom: 6px;
   border-bottom: 1px solid var(--pmc-border);
@@ -482,7 +509,7 @@ figure.penman-media-block.penman-selected-node {
 .penman-editor-area:empty::before,
 .penman-editor-area > p:only-child:empty::before {
   content: attr(data-placeholder);
-  color: #a0aec0;
+  color: var(--pmc-text-muted);
   pointer-events: none;
 }
 
@@ -498,4 +525,118 @@ figure.penman-embed-block.penman-selected-node {
   outline: 2.5px solid var(--pmc-link);
   outline-offset: 4px;
   border-radius: var(--pmc-radius);
+}
+
+
+/* ═══════════════════════════════════════════════
+   16. DARK THEME OVERRIDES
+   ═══════════════════════════════════════════════
+   Activation matrix (mirrors penman-ui.css):
+     [data-theme="dark"]   → force dark
+     [data-theme="light"]  → force light (suppresses auto)
+     no attribute / auto   → follow @media (prefers-color-scheme: dark)
+
+   We re-assign --pmc-* variables on .penman-editor-area when the closest
+   themed ancestor is dark. CSS specificity stays low so component-level
+   rules above still win.
+
+   The code block (pre) is intentionally NOT overridden — its dark
+   background was already designed for both themes (VS Code Dark+ tokens).
+
+   Callout blocks switch to tinted backgrounds with brighter accent text
+   so they remain legible on dark surfaces while keeping semantic meaning
+   (red still reads as danger, etc.).
+*/
+
+/* MANUAL: explicit dark on container or page. */
+[data-theme="dark"] .penman-editor-area,
+.penman-wrapper[data-theme="dark"] .penman-editor-area {
+  --pmc-text:            #e2e8f0;
+  --pmc-text-muted:      #94a3b8;
+  --pmc-text-soft:       #cbd5e1;
+  --pmc-heading:         #f1f5f9;
+  --pmc-link:            #8aa3ff;
+  --pmc-link-hover:      #a6b8ff;
+  --pmc-border:          #2e3650;
+  --pmc-border-strong:   #475569;
+  --pmc-bg:              #1a1f2e;
+  --pmc-bg-soft:         #232a3d;
+  --pmc-bg-active:       rgba(138, 163, 255, 0.14);
+  --pmc-accent-soft:     rgba(138, 163, 255, 0.12);
+
+  --pmc-mark-bg:         rgba(250, 204, 21, 0.25);
+  --pmc-mark-text:       #fef3c7;
+  --pmc-inline-code:     #f9a8d4;
+
+  --pmc-hr-hover:        #64748b;
+  --pmc-image-hover:     #475569;
+  --pmc-image-shadow:    rgba(0, 0, 0, 0.4);
+
+  /* Callouts: softer tints + brighter accent text */
+  --pmc-green-text:      #86efac;
+  --pmc-green-bg:        rgba(34, 197, 94, 0.10);
+  --pmc-green-accent:    #4ade80;
+  --pmc-blue-text:       #93c5fd;
+  --pmc-blue-bg:         rgba(59, 130, 246, 0.10);
+  --pmc-blue-accent:     #60a5fa;
+  --pmc-orange-text:     #fdba74;
+  --pmc-orange-bg:       rgba(249, 115, 22, 0.10);
+  --pmc-orange-accent:   #fb923c;
+  --pmc-red-text:        #fca5a5;
+  --pmc-red-bg:          rgba(239, 68, 68, 0.10);
+  --pmc-red-accent:      #f87171;
+}
+
+/* Selection band — also needs to be re-tinted for dark */
+[data-theme="dark"] .penman-editor-area::selection,
+[data-theme="dark"] .penman-editor-area *::selection,
+.penman-wrapper[data-theme="dark"] .penman-editor-area::selection,
+.penman-wrapper[data-theme="dark"] .penman-editor-area *::selection {
+  background: rgba(138, 163, 255, 0.25);
+}
+
+/* AUTO: follow system preference unless explicitly set to "light". */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area,
+  .penman-wrapper:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area {
+    --pmc-text:            #e2e8f0;
+    --pmc-text-muted:      #94a3b8;
+    --pmc-text-soft:       #cbd5e1;
+    --pmc-heading:         #f1f5f9;
+    --pmc-link:            #8aa3ff;
+    --pmc-link-hover:      #a6b8ff;
+    --pmc-border:          #2e3650;
+    --pmc-border-strong:   #475569;
+    --pmc-bg:              #1a1f2e;
+    --pmc-bg-soft:         #232a3d;
+    --pmc-bg-active:       rgba(138, 163, 255, 0.14);
+    --pmc-accent-soft:     rgba(138, 163, 255, 0.12);
+
+    --pmc-mark-bg:         rgba(250, 204, 21, 0.25);
+    --pmc-mark-text:       #fef3c7;
+    --pmc-inline-code:     #f9a8d4;
+
+    --pmc-hr-hover:        #64748b;
+    --pmc-image-hover:     #475569;
+    --pmc-image-shadow:    rgba(0, 0, 0, 0.4);
+
+    --pmc-green-text:      #86efac;
+    --pmc-green-bg:        rgba(34, 197, 94, 0.10);
+    --pmc-green-accent:    #4ade80;
+    --pmc-blue-text:       #93c5fd;
+    --pmc-blue-bg:         rgba(59, 130, 246, 0.10);
+    --pmc-blue-accent:     #60a5fa;
+    --pmc-orange-text:     #fdba74;
+    --pmc-orange-bg:       rgba(249, 115, 22, 0.10);
+    --pmc-orange-accent:   #fb923c;
+    --pmc-red-text:        #fca5a5;
+    --pmc-red-bg:          rgba(239, 68, 68, 0.10);
+    --pmc-red-accent:      #f87171;
+  }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area::selection,
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area *::selection,
+  .penman-wrapper:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area::selection,
+  .penman-wrapper:not([data-theme="light"]):not([data-theme="dark"]) .penman-editor-area *::selection {
+    background: rgba(138, 163, 255, 0.25);
+  }
 }

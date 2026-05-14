@@ -1,5 +1,9 @@
 /**
  * Media Modal UI
+ *
+ * Tab-based modal for inserting/editing media. Visual styling lives in
+ * penman-ui.css under the "MediaPlugin — modal" section so dark mode
+ * cascades through CSS variables.
  */
 
 export class MediaModal {
@@ -10,167 +14,108 @@ export class MediaModal {
   }
 
   open() {
-    // Preserve selection to restore or replace target
     if (this.editor.selection && typeof this.editor.selection.save === 'function') {
       this.editor.selection.save();
     }
-    
+
+    const i18n = this.editor.i18n;
     const isEditMode = !!this.existingData;
 
     const modal = this.editor.ui.createModal({
-      title: isEditMode ? this.editor.i18n.t('plugins.media.editTitle') : this.editor.i18n.t('plugins.media.insertTitle'),
+      title: isEditMode ? i18n.t('plugins.media.editTitle') : i18n.t('plugins.media.insertTitle'),
       width: '650px',
       hideFooter: true,
       body: `
-        <style>
-          .penman-media-preview-area {
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            background: #f9f9f9;
-            min-height: 200px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 15px;
-            position: relative;
-            overflow: hidden;
-          }
-          .penman-media-preview-area:after {
-            content: "";
-            display: block;
-            padding-top: 56.25%;
-          }
-          .penman-media-preview-area iframe,
-          .penman-media-preview-area video {
-            width: 100%;
-            height: 100%;
-            position: absolute;
-            top: 0;
-            left: 0;
-          }
-          .penman-media-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 12px;
-            background: #e0e0e0;
-            color: #333;
-            margin-left: 10px;
-            text-transform: capitalize;
-          }
-          .penman-media-tabs {
-            display: flex;
-            border-bottom: 1px solid #ccc;
-            margin-bottom: 15px;
-          }
-          .penman-media-tab {
-            padding: 8px 16px;
-            cursor: pointer;
-            border-bottom: 2px solid transparent;
-            font-weight: 500;
-          }
-          .penman-media-tab.active {
-            border-bottom-color: #006ce6;
-            color: #006ce6;
-          }
-          .penman-media-tab-content {
-            display: none;
-          }
-          .penman-media-tab-content.active {
-            display: block;
-          }
-        </style>
-        
         <div class="penman-media-tabs" id="penman-media-tabs">
-          <div class="penman-media-tab" data-tab="direct">${this.editor.i18n.t('plugins.media.directTab')}</div>
-          <div class="penman-media-tab active" data-tab="embed">${this.editor.i18n.t('plugins.media.embedTab')}</div>
+          <div class="penman-media-tab" data-tab="direct">${i18n.t('plugins.media.directTab')}</div>
+          <div class="penman-media-tab active" data-tab="embed">${i18n.t('plugins.media.embedTab')}</div>
         </div>
 
-        <div style="padding: 0 15px 15px 15px;">
-          
+        <div class="penman-media-pane">
+
           <!-- Direct Link Tab -->
           <div id="tab-direct" class="penman-media-tab-content">
-            <div style="margin-bottom: 10px;">
-              <label style="display:block; font-weight: 500;">${this.editor.i18n.t('plugins.media.directUrlLabel')}</label>
-              <input type="text" id="penman-media-direct-url" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.directPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" />
+            <div class="penman-media-row">
+              <label>${i18n.t('plugins.media.directUrlLabel')}</label>
+              <input type="text" id="penman-media-direct-url" class="penman-input" placeholder="${i18n.t('plugins.media.directPlaceholder')}" dir="ltr" />
             </div>
-            
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-              <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.titleOptionalLabel')}</label>
-                <input type="text" id="penman-media-title" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.mediaTitlePlaceholder')}" style="width: 100%; box-sizing: border-box;" />
+
+            <div class="penman-media-row-flex">
+              <div>
+                <label>${i18n.t('plugins.media.titleOptionalLabel')}</label>
+                <input type="text" id="penman-media-title" class="penman-input" placeholder="${i18n.t('plugins.media.mediaTitlePlaceholder')}" />
               </div>
-              <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.posterOptionalLabel')}</label>
-                <input type="text" id="penman-media-poster" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.posterPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" />
+              <div>
+                <label>${i18n.t('plugins.media.posterOptionalLabel')}</label>
+                <input type="text" id="penman-media-poster" class="penman-input" placeholder="${i18n.t('plugins.media.posterPlaceholder')}" dir="ltr" />
               </div>
             </div>
 
-            <div style="display: flex; gap: 15px; margin-bottom: 10px;">
-              <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-controls" checked style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.showControls')}
+            <div class="penman-media-checkbox-row">
+              <label class="penman-media-checkbox-label">
+                <input type="checkbox" id="penman-media-controls" checked> ${i18n.t('plugins.media.showControls')}
               </label>
-              <label style="font-size: 13px; display: inline-flex; align-items: center;">
-                <input type="checkbox" id="penman-media-autoplay" style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.autoplay')}
+              <label class="penman-media-checkbox-label">
+                <input type="checkbox" id="penman-media-autoplay"> ${i18n.t('plugins.media.autoplay')}
               </label>
             </div>
           </div>
 
           <!-- Embed Tab -->
           <div id="tab-embed" class="penman-media-tab-content active">
-            <div style="margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between;">
-              <label style="display:block; font-weight: 500;">${this.editor.i18n.t('plugins.media.mediaUrlLabel')}</label>
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <label style="font-size: 12px; display: inline-flex; align-items: center;">
-                  <input type="checkbox" id="penman-media-autodetect" checked style="margin-right: 5px;"> ${this.editor.i18n.t('plugins.media.autoDetectProvider')}
+            <div class="penman-media-embed-header">
+              <label>${i18n.t('plugins.media.mediaUrlLabel')}</label>
+              <div class="penman-media-embed-options">
+                <label class="penman-media-checkbox-label">
+                  <input type="checkbox" id="penman-media-autodetect" checked> ${i18n.t('plugins.media.autoDetectProvider')}
                 </label>
-                <span id="penman-media-provider-badge" class="penman-media-badge" style="display: none;"></span>
+                <span id="penman-media-provider-badge" class="penman-media-badge" hidden></span>
               </div>
             </div>
-            <input type="text" id="penman-media-url" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.embedPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box; margin-bottom: 10px;" />
-            
-            <div style="margin-bottom: 10px;">
-              <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.titleOptionalLabel')}</label>
-              <input type="text" id="penman-media-embed-title" class="penman-input" placeholder="${this.editor.i18n.t('plugins.media.embedTitlePlaceholder')}" style="width: 100%; box-sizing: border-box;" />
+            <input type="text" id="penman-media-url" class="penman-input" placeholder="${i18n.t('plugins.media.embedPlaceholder')}" dir="ltr" />
+
+            <div class="penman-media-row">
+              <label>${i18n.t('plugins.media.titleOptionalLabel')}</label>
+              <input type="text" id="penman-media-embed-title" class="penman-input" placeholder="${i18n.t('plugins.media.embedTitlePlaceholder')}" />
             </div>
 
-            <div style="display: flex; gap: 10px; margin-bottom: 10px;">
-              <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.aspectRatio')}</label>
-                <select id="penman-media-aspect" class="penman-input" style="width: 100%;">
-                  <option value="16/9">${this.editor.i18n.t('plugins.media.aspect169')}</option>
-                  <option value="4/3">${this.editor.i18n.t('plugins.media.aspect43')}</option>
+            <div class="penman-media-row-flex">
+              <div>
+                <label>${i18n.t('plugins.media.aspectRatio')}</label>
+                <select id="penman-media-aspect" class="penman-input">
+                  <option value="16/9">${i18n.t('plugins.media.aspect169')}</option>
+                  <option value="4/3">${i18n.t('plugins.media.aspect43')}</option>
                 </select>
               </div>
-              <div style="flex: 1;">
-                <label style="display:block; font-size: 12px; margin-bottom: 4px;">${this.editor.i18n.t('plugins.media.typeLabel')}</label>
-                <select id="penman-media-type" class="penman-input" style="width: 100%;" disabled>
-                  <option value="auto">${this.editor.i18n.t('plugins.media.typeAuto')}</option>
-                  <option value="video">${this.editor.i18n.t('plugins.media.typeVideo')}</option>
-                  <option value="audio">${this.editor.i18n.t('plugins.media.typeAudio')}</option>
-                  <option value="embed">${this.editor.i18n.t('plugins.media.typeEmbed')}</option>
+              <div>
+                <label>${i18n.t('plugins.media.typeLabel')}</label>
+                <select id="penman-media-type" class="penman-input" disabled>
+                  <option value="auto">${i18n.t('plugins.media.typeAuto')}</option>
+                  <option value="video">${i18n.t('plugins.media.typeVideo')}</option>
+                  <option value="audio">${i18n.t('plugins.media.typeAudio')}</option>
+                  <option value="embed">${i18n.t('plugins.media.typeEmbed')}</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <div id="penman-media-error" style="color: #dc3545; font-size: 13px; display: none; margin-bottom: 10px;"></div>
+          <div id="penman-media-error" class="penman-media-error" hidden></div>
 
-          <label style="display:block; font-weight: 500; margin-top: 15px;">${this.editor.i18n.t('plugins.media.livePreview')}</label>
+          <label class="penman-media-preview-label">${i18n.t('plugins.media.livePreview')}</label>
           <div id="penman-media-preview" class="penman-media-preview-area">
-            <span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>
+            <span class="penman-media-preview-placeholder">${i18n.t('plugins.media.invalidUrlPreview')}</span>
           </div>
 
         </div>
         <div class="penman-modal-footer">
-          <button type="button" class="penman-btn" id="penman-media-cancel">${this.editor.i18n.t('plugins.media.cancel')}</button>
-          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>${isEditMode ? this.editor.i18n.t('plugins.media.update') : this.editor.i18n.t('plugins.media.insert')}</button>
+          <button type="button" class="penman-btn" id="penman-media-cancel">${i18n.t('plugins.media.cancel')}</button>
+          <button type="button" class="penman-btn penman-btn-primary" id="penman-media-submit" disabled>${isEditMode ? i18n.t('plugins.media.update') : i18n.t('plugins.media.insert')}</button>
         </div>
       `
     });
 
     const el = modal.element || modal.modalElement;
-    
+
     const tabs = el.querySelectorAll('.penman-media-tab');
     const tabContents = el.querySelectorAll('.penman-media-tab-content');
 
@@ -201,42 +146,47 @@ export class MediaModal {
       activeTab = this.existingData.provider === 'direct' ? 'direct' : 'embed';
     }
 
-    // Initialize tabs states visually based on activeTab
     tabs.forEach(t => {
-       if (t.getAttribute('data-tab') === activeTab) t.classList.add('active');
-       else t.classList.remove('active');
+      t.classList.toggle('active', t.getAttribute('data-tab') === activeTab);
     });
     tabContents.forEach(c => {
-       if (c.id === `tab-${activeTab}`) c.classList.add('active');
-       else c.classList.remove('active');
+      c.classList.toggle('active', c.id === `tab-${activeTab}`);
     });
 
-    // Tab Switching Logic
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         tabs.forEach(t => t.classList.remove('active'));
         tabContents.forEach(c => c.classList.remove('active'));
-        
+
         tab.classList.add('active');
         activeTab = tab.getAttribute('data-tab');
         el.querySelector(`#tab-${activeTab}`).classList.add('active');
-        
+
         updatePreview();
       });
     });
 
+    // Use a small helper to render placeholders/errors into the preview area
+    // using themed CSS classes (no inline color).
+    const renderPreviewMessage = (key, kind) => {
+      const klass = kind === 'error' ? 'penman-media-preview-error' : 'penman-media-preview-placeholder';
+      preview.innerHTML = `<span class="${klass}">${i18n.t(key)}</span>`;
+    };
+    const showError = (msgKey) => {
+      errorDiv.textContent = i18n.t(msgKey);
+      errorDiv.hidden = false;
+    };
+    const hideError = () => { errorDiv.hidden = true; errorDiv.textContent = ''; };
+
     const updatePreview = () => {
-      errorDiv.style.display = 'none';
+      hideError();
       submitBtn.disabled = true;
       currentMediaData = null;
-      badge.style.display = 'none';
+      badge.hidden = true;
 
       if (activeTab === 'embed') {
         const url = urlInput.value.trim();
-        if (!url) {
-          preview.innerHTML = `<span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>`;
-          return;
-        }
+        if (!url) { renderPreviewMessage('plugins.media.invalidUrlPreview'); return; }
 
         let finalData = null;
 
@@ -245,45 +195,40 @@ export class MediaModal {
           if (data && data.provider !== 'direct') {
             finalData = data;
             badge.textContent = data.provider;
-            badge.style.display = 'inline-block';
+            badge.hidden = false;
           } else {
-            preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.invalidEmbedUrl')}</span>`;
-            errorDiv.textContent = this.editor.i18n.t('plugins.media.invalidEmbedUrlMsg');
-            errorDiv.style.display = 'block';
+            renderPreviewMessage('plugins.media.invalidEmbedUrl', 'error');
+            showError('plugins.media.invalidEmbedUrlMsg');
           }
         } else {
-          const customData = this.registry.process(url); 
+          const customData = this.registry.process(url);
           if (customData && customData.provider === 'custom') {
             finalData = customData;
           } else {
-            preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.domainNotWhitelisted')}</span>`;
-            errorDiv.textContent = this.editor.i18n.t('plugins.media.domainNotWhitelistedMsg');
-            errorDiv.style.display = 'block';
+            renderPreviewMessage('plugins.media.domainNotWhitelisted', 'error');
+            showError('plugins.media.domainNotWhitelistedMsg');
           }
         }
 
         if (finalData) {
-          currentMediaData = { 
-              ...finalData, 
-              aspectRatio: aspectSelect.value,
-              title: embedTitleInput.value.trim() 
+          currentMediaData = {
+            ...finalData,
+            aspectRatio: aspectSelect.value,
+            title: embedTitleInput.value.trim()
           };
-          
+
           let iframeHtml = `<iframe src="${finalData.embedUrl}" frameborder="0" allow="autoplay; fullscreen" loading="lazy"`;
           if (currentMediaData.title) {
-             iframeHtml += ` title="${currentMediaData.title}"`;
+            iframeHtml += ` title="${currentMediaData.title}"`;
           }
           iframeHtml += `></iframe>`;
-          
+
           preview.innerHTML = iframeHtml;
           submitBtn.disabled = false;
         }
       } else if (activeTab === 'direct') {
         const url = directUrlInput.value.trim();
-        if (!url) {
-          preview.innerHTML = `<span style="color: #888;">${this.editor.i18n.t('plugins.media.invalidUrlPreview')}</span>`;
-          return;
-        }
+        if (!url) { renderPreviewMessage('plugins.media.invalidUrlPreview'); return; }
 
         const data = this.registry.process(url);
         if (data && data.provider === 'direct') {
@@ -295,22 +240,21 @@ export class MediaModal {
             autoplay: directAutoplayCb.checked,
             aspectRatio: '16/9'
           };
-          
+
           if (data.kind === 'video') {
-             let html = `<video src="${data.embedUrl}" style="width: 100%; height: 100%;"`;
-             if (currentMediaData.controls) html += ' controls';
-             if (currentMediaData.autoplay) html += ' autoplay muted';
-             if (currentMediaData.poster) html += ` poster="${currentMediaData.poster}"`;
-             html += '></video>';
-             preview.innerHTML = html;
+            let html = `<video src="${data.embedUrl}"`;
+            if (currentMediaData.controls) html += ' controls';
+            if (currentMediaData.autoplay) html += ' autoplay muted';
+            if (currentMediaData.poster) html += ` poster="${currentMediaData.poster}"`;
+            html += '></video>';
+            preview.innerHTML = html;
           } else {
-             preview.innerHTML = `<audio src="${data.embedUrl}" controls style="width: 80%;"></audio>`;
+            preview.innerHTML = `<audio src="${data.embedUrl}" controls style="width: 80%;"></audio>`;
           }
           submitBtn.disabled = false;
         } else {
-          preview.innerHTML = `<span style="color: #dc3545;">${this.editor.i18n.t('plugins.media.invalidDirectUrl')}</span>`;
-          errorDiv.textContent = this.editor.i18n.t('plugins.media.invalidDirectUrlMsg');
-          errorDiv.style.display = 'block';
+          renderPreviewMessage('plugins.media.invalidDirectUrl', 'error');
+          showError('plugins.media.invalidDirectUrlMsg');
         }
       }
     };
@@ -331,35 +275,33 @@ export class MediaModal {
     submitBtn.addEventListener('click', () => {
       if (currentMediaData) {
         if (this.editor.selection && typeof this.editor.selection.restore === 'function') {
-           this.editor.selection.restore();
+          this.editor.selection.restore();
         }
-        
+
         if (isEditMode && this.existingData.node) {
-           // Ensure the ID is preserved when updating
-           currentMediaData.id = this.existingData.id;
-           this.editor.media.updateNode(this.existingData.node, currentMediaData);
+          currentMediaData.id = this.existingData.id;
+          this.editor.media.updateNode(this.existingData.node, currentMediaData);
         } else {
-           this.editor.media.insertNode(currentMediaData);
+          this.editor.media.insertNode(currentMediaData);
         }
         modal.close();
       }
     });
 
-    // Pre-fill data if in edit mode
     if (isEditMode) {
-       if (this.existingData.provider === 'direct') {
-           directUrlInput.value = this.existingData.src || '';
-           directTitleInput.value = this.existingData.title || '';
-           directPosterInput.value = this.existingData.poster || '';
-           directControlsCb.checked = this.existingData.controls;
-           directAutoplayCb.checked = this.existingData.autoplay;
-       } else {
-           urlInput.value = this.existingData.src || '';
-           embedTitleInput.value = this.existingData.title || '';
-           aspectSelect.value = this.existingData.aspectRatio || '16/9';
-           autodetectCb.checked = this.existingData.provider !== 'custom';
-       }
-       updatePreview();
+      if (this.existingData.provider === 'direct') {
+        directUrlInput.value = this.existingData.src || '';
+        directTitleInput.value = this.existingData.title || '';
+        directPosterInput.value = this.existingData.poster || '';
+        directControlsCb.checked = this.existingData.controls;
+        directAutoplayCb.checked = this.existingData.autoplay;
+      } else {
+        urlInput.value = this.existingData.src || '';
+        embedTitleInput.value = this.existingData.title || '';
+        aspectSelect.value = this.existingData.aspectRatio || '16/9';
+        autodetectCb.checked = this.existingData.provider !== 'custom';
+      }
+      updatePreview();
     }
 
     setTimeout(() => urlInput.focus(), 10);

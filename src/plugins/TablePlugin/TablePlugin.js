@@ -6,6 +6,7 @@ import { TableGrid } from './TableGrid.js';
 import { TableMenu } from './TableMenu.js';
 import { ColorPicker } from '../../ui/ColorPicker.js';
 import { uniqueId } from '../../utils/uniqueId.js';
+import { escapeHtml as escapeHTML } from '../../utils/html.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
@@ -21,12 +22,7 @@ export function setupTablePlugin(editor) {
   }
 
 
-  function escapeHTML(str) {
-      if (!str) return '';
-      return str.toString().replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  }
-
-
+  // escapeHTML is imported from utils/html.js (aliased above)
   editor.commands.register('OPEN_TABLE_PROPERTIES_MODAL', {
       execute: (editor) => {
           const tableNode = selectionManager.activeTableNode;
@@ -40,48 +36,35 @@ export function setupTablePlugin(editor) {
           const currentDir = escapeHTML(tableNode.getAttribute('dir') || '');
           const currentAlign = escapeHTML(tableNode.style.marginLeft === 'auto' ? (tableNode.style.marginRight === 'auto' ? 'center' : 'right') : 'left');
 
-          editor.ui.createModal({
+          editor.ui.createFormModal({
               title: editor.i18n.t('plugins.table.properties'),
-              body: `
-                <div style="padding: 15px">
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.widthLabel')}</label>
-                        <input type="text" name="width" value="${currentWidth}" placeholder="${editor.i18n.t('plugins.table.widthPlaceholder')}" dir="ltr">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.borderLabel')}</label>
-                        <input type="text" name="border" value="${currentBorder}" placeholder="${editor.i18n.t('plugins.table.borderPlaceholder')}" dir="ltr">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.borderColorLabel')}</label>
-                        <input type="text" name="borderColor" value="${currentBorderColor}" placeholder="${editor.i18n.t('plugins.table.borderColorPlaceholder')}" dir="ltr">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.cellPaddingLabel')}</label>
-                        <input type="text" name="cellPadding" value="${currentCellPadding}" placeholder="${editor.i18n.t('plugins.table.cellPaddingPlaceholder')}" dir="ltr">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.cellSpacingLabel')}</label>
-                        <input type="text" name="cellSpacing" value="${currentCellSpacing}" placeholder="${editor.i18n.t('plugins.table.cellSpacingPlaceholder')}" dir="ltr">
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.directionLabel')}</label>
-                        <select name="dir">
-                            <option value="" ${!currentDir ? 'selected' : ''}>${editor.i18n.t('plugins.table.defaultDir')}</option>
-                            <option value="ltr" ${currentDir === 'ltr' ? 'selected' : ''}>${editor.i18n.t('plugins.table.ltr')}</option>
-                            <option value="rtl" ${currentDir === 'rtl' ? 'selected' : ''}>${editor.i18n.t('plugins.table.rtl')}</option>
-                        </select>
-                    </div>
-                    <div class="penman-modal-form-row">
-                        <label>${editor.i18n.t('plugins.table.alignmentLabel')}</label>
-                        <select name="textAlign">
-                            <option value="left" ${currentAlign === 'left' ? 'selected' : ''}>${editor.i18n.t('plugins.table.alignLeft')}</option>
-                            <option value="center" ${currentAlign === 'center' ? 'selected' : ''}>${editor.i18n.t('plugins.table.alignCenter')}</option>
-                            <option value="right" ${currentAlign === 'right' ? 'selected' : ''}>${editor.i18n.t('plugins.table.alignRight')}</option>
-                        </select>
-                    </div>
-                </div>
-              `,
+              fields: [
+                  { type: 'text', name: 'width',       label: editor.i18n.t('plugins.table.widthLabel'),       value: currentWidth,       placeholder: editor.i18n.t('plugins.table.widthPlaceholder'),       dir: 'ltr' },
+                  { type: 'text', name: 'border',      label: editor.i18n.t('plugins.table.borderLabel'),      value: currentBorder,      placeholder: editor.i18n.t('plugins.table.borderPlaceholder'),      dir: 'ltr' },
+                  { type: 'text', name: 'borderColor', label: editor.i18n.t('plugins.table.borderColorLabel'), value: currentBorderColor, placeholder: editor.i18n.t('plugins.table.borderColorPlaceholder'), dir: 'ltr' },
+                  { type: 'text', name: 'cellPadding', label: editor.i18n.t('plugins.table.cellPaddingLabel'), value: currentCellPadding, placeholder: editor.i18n.t('plugins.table.cellPaddingPlaceholder'), dir: 'ltr' },
+                  { type: 'text', name: 'cellSpacing', label: editor.i18n.t('plugins.table.cellSpacingLabel'), value: currentCellSpacing, placeholder: editor.i18n.t('plugins.table.cellSpacingPlaceholder'), dir: 'ltr' },
+                  {
+                      type: 'select', name: 'dir',
+                      label: editor.i18n.t('plugins.table.directionLabel'),
+                      value: currentDir,
+                      options: [
+                          { value: '',    label: editor.i18n.t('plugins.table.defaultDir') },
+                          { value: 'ltr', label: editor.i18n.t('plugins.table.ltr') },
+                          { value: 'rtl', label: editor.i18n.t('plugins.table.rtl') }
+                      ]
+                  },
+                  {
+                      type: 'select', name: 'textAlign',
+                      label: editor.i18n.t('plugins.table.alignmentLabel'),
+                      value: currentAlign,
+                      options: [
+                          { value: 'left',   label: editor.i18n.t('plugins.table.alignLeft') },
+                          { value: 'center', label: editor.i18n.t('plugins.table.alignCenter') },
+                          { value: 'right',  label: editor.i18n.t('plugins.table.alignRight') }
+                      ]
+                  }
+              ],
               onSubmit: (data) => {
                   const propsToSet = {};
                   if (data.width !== undefined) propsToSet.width = data.width;
@@ -119,15 +102,32 @@ export function setupTablePlugin(editor) {
   editor.commands.register('INSERT_TABLE', {
     execute: (editor, { rows = 2, cols = 2 } = {}) => {
       const tableId = uniqueId('t-');
-      let html = `<table data-table-id="${tableId}" border="1" bordercolor="#ccc" style="width: 100%; border-collapse: collapse; border-style: solid;"><tbody>`;
-      for(let r=0; r<rows; r++) {
-         html += `<tr>`;
-         for(let c=0; c<cols; c++) {
-             html += `<td data-cell-id="${uniqueId('c-')}" style="border-width: 1px; border-style: solid; border-color: #ccc; padding: 5px;"><p><br></p></td>`;
-         }
-         html += `</tr>`;
+
+      // No default border colors/widths or padding on cells. Tables get their
+      // theme-aware border from penman-content.css (.penman-editor-area table,
+      // td, th). Users can still override per-table via the Properties modal,
+      // which writes its own attributes.
+
+      let headerRow = '<tr>';
+      for (let c = 0; c < cols; c++) {
+        headerRow += `<th data-cell-id="${uniqueId('c-')}"><p><br></p></th>`;
       }
-      html += `</tbody></table>`;
+      headerRow += '</tr>';
+
+      let bodyRows = '';
+      for (let r = 1; r < rows; r++) {
+        bodyRows += '<tr>';
+        for (let c = 0; c < cols; c++) {
+          bodyRows += `<td data-cell-id="${uniqueId('c-')}"><p><br></p></td>`;
+        }
+        bodyRows += '</tr>';
+      }
+
+      const html =
+        `<table data-table-id="${tableId}">` +
+          `<thead>${headerRow}</thead>` +
+          `<tbody>${bodyRows}</tbody>` +
+        `</table>`;
 
       editor.insertContent(html);
     }
@@ -159,18 +159,17 @@ export function setupTablePlugin(editor) {
                selectionManager.clearSelection();
            } else {
                tx.rollback();
-               editor.ui.createModal({
+               editor.ui.createFormModal({
                  title: editor.i18n.t('plugins.table.mergeError'),
-                 body: `<p style="padding: 15px 15px 5px;">${editor.i18n.t('plugins.table.mergeError')}</p>`,
-                 hideFooter: false,
-                 submitText: editor.i18n.t('ui.ok') || 'OK',
-                 cancelText: null,
+                 fields: [
+                   { type: 'html', html: `<p>${editor.i18n.t('plugins.table.mergeError')}</p>` }
+                 ],
                  buttons: [{
                    text: editor.i18n.t('ui.ok') || 'OK',
                    classNames: 'penman-btn-primary',
                    onClick: (_e, modal) => modal.close()
                  }]
-               }).open();
+               });
            }
        }
     }
@@ -209,27 +208,32 @@ export function setupTablePlugin(editor) {
 
           tableMenu.bindEvents(dropdown.panelElement, selectionManager);
 
-          // Disable context-sensitive buttons if no table is active
+          // Disable the 4 parent group buttons (Cell / Row / Column / Table)
+          // when the caret isn't inside a table. They are flyout triggers,
+          // so disabling the trigger also prevents the side-panel from
+          // opening. A data-tooltip via the shared Tooltip service explains
+          // why the item is greyed out.
           const isTableActive = !!selectionManager.activeTableNode;
-
-          const itemsToToggle = [
-              '[data-cmd="table_delete"]',
-              '[data-cmd="SELECT_TABLE"]',
-              '.penman-menu-item-cell',
-              '.penman-menu-item-row',
-              '.penman-menu-item-column',
-              '.penman-menu-item-props'
-          ];
-
-          itemsToToggle.forEach(selector => {
-              const el = dropdown.panelElement.querySelector(selector);
-              if (el) {
-                  if (isTableActive) {
-                      el.style.opacity = '1';
-                      el.style.pointerEvents = 'auto';
-                  } else {
-                      el.style.opacity = '0.5';
-                      el.style.pointerEvents = 'none';
+          const reasonNotInTable = editor.i18n.t('plugins.table.disabledReasonNoTable');
+          const flyoutContainers = dropdown.panelElement.querySelectorAll(
+              '.penman-menu-flyout.penman-menu-item--contextual'
+          );
+          flyoutContainers.forEach(container => {
+              const trigger = container.querySelector('.penman-menu-flyout-trigger');
+              if (isTableActive) {
+                  container.classList.remove('penman-menu-item--disabled');
+                  if (trigger) {
+                      trigger.disabled = false;
+                      trigger.removeAttribute('aria-disabled');
+                      trigger.removeAttribute('data-tooltip');
+                  }
+              } else {
+                  container.classList.add('penman-menu-item--disabled');
+                  if (trigger) {
+                      trigger.disabled = true;
+                      trigger.setAttribute('aria-disabled', 'true');
+                      trigger.setAttribute('data-tooltip', reasonNotInTable);
+                      trigger.setAttribute('data-tooltip-placement', 'top');
                   }
               }
           });

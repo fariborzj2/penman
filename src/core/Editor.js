@@ -116,6 +116,10 @@ export class Editor extends EventEmitter {
       this.container.classList.add('penman-rtl');
     }
 
+    // Theme: 'dark' | 'light' | 'auto'  (default 'auto').
+    // 'auto' leaves data-theme unset so CSS follows prefers-color-scheme.
+    this.setTheme(this.options.theme || 'auto');
+
     // Create main container
     this.mainContainer = document.createElement('div');
     this.mainContainer.className = 'penman-main';
@@ -131,11 +135,12 @@ export class Editor extends EventEmitter {
     // aria-label/title, its associated <label>, or a sensible default.
     this.editableArea.setAttribute('role', 'textbox');
     this.editableArea.setAttribute('aria-multiline', 'true');
+    const i18nLabel = this.i18n && this.i18n.t('ui.editorAriaLabel');
     const ariaLabel = this.options.ariaLabel
       || this.textarea.getAttribute('aria-label')
       || this.textarea.getAttribute('title')
       || (this.textarea.labels && this.textarea.labels[0] && this.textarea.labels[0].textContent.trim())
-      || 'Rich text editor';
+      || (i18nLabel && i18nLabel !== 'ui.editorAriaLabel' ? i18nLabel : 'Rich text editor');
     this.editableArea.setAttribute('aria-label', ariaLabel);
     if (this.textarea.id) {
       // Maintain the textarea ↔ editor relationship for assistive tech.
@@ -661,6 +666,56 @@ export class Editor extends EventEmitter {
 
   _syncToTextarea() {
     this.textarea.value = this.editableArea.innerHTML;
+  }
+
+  /**
+   * Switch the editor's color theme.
+   *
+   *   editor.setTheme('dark')   → force dark, regardless of system preference
+   *   editor.setTheme('light')  → force light
+   *   editor.setTheme('auto')   → follow system preference (default)
+   *
+   * The setting is stored as `data-theme` on the editor wrapper. CSS variables
+   * cascade from this attribute, so all chrome (toolbar, modals, dropdowns)
+   * picks up the new theme without re-rendering.
+   *
+   * Modal overlays attach to <body>, not the wrapper — we mirror the attribute
+   * onto :root (<html>) so dialogs inherit the same theme.
+   *
+   * @param {'dark' | 'light' | 'auto'} value
+   */
+  setTheme(value) {
+    const normalized = value === 'dark' || value === 'light' ? value : 'auto';
+    this.theme = normalized;
+    if (!this.container) return;
+
+    if (normalized === 'auto') {
+      this.container.removeAttribute('data-theme');
+      // Only clear :root if WE were the ones who set it (avoid stomping on
+      // a page-wide preference set by host application).
+      if (document.documentElement.getAttribute('data-theme-source') === 'penman') {
+        document.documentElement.removeAttribute('data-theme');
+        document.documentElement.removeAttribute('data-theme-source');
+      }
+    } else {
+      this.container.setAttribute('data-theme', normalized);
+      // Propagate to <html> so modal overlays (which render under <body>)
+      // pick up the same variables. We tag the source so we know it's safe
+      // to clear later.
+      if (!document.documentElement.hasAttribute('data-theme')
+          || document.documentElement.getAttribute('data-theme-source') === 'penman') {
+        document.documentElement.setAttribute('data-theme', normalized);
+        document.documentElement.setAttribute('data-theme-source', 'penman');
+      }
+    }
+    this.emit('themeChange', normalized);
+  }
+
+  /**
+   * Returns the current theme setting ('dark' | 'light' | 'auto').
+   */
+  getTheme() {
+    return this.theme || 'auto';
   }
 
   /**

@@ -120,25 +120,39 @@ export function setupImagePlugin(editor) {
   });
   function createFloatingUI() {
     floatingUI = new FloatingUI(editor, { offset: 10, placement: 'top' });
+    // All labels go through i18n; tooltips through the shared Tooltip service
+    // (data-tooltip), so the floating toolbar visually matches the main toolbar
+    // and is properly announced to screen readers.
+    const labels = {
+      alignLeft:   editor.i18n.t('plugins.image.alignLeft'),
+      alignCenter: editor.i18n.t('plugins.image.alignCenter'),
+      alignRight:  editor.i18n.t('plugins.image.alignRight'),
+      editImage:   editor.i18n.t('plugins.image.editImage'),
+      deleteImage: editor.i18n.t('plugins.image.deleteImage'),
+    };
     const html = `
-      <div class="penman-image-toolbar" style="background: white; border: 1px solid #e0e0e0; padding: 4px; border-radius: 6px; display: flex; align-items: center; gap: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); position: relative;">
-        <!-- Arrow Tail -->
-        <div class="penman-floating-tail-inner" style="position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 6px solid transparent; border-right: 6px solid transparent; border-top: 6px solid white; z-index: 2;"></div>
-        <div class="penman-floating-tail-outer" style="position: absolute; bottom: -7px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 7px solid transparent; border-right: 7px solid transparent; border-top: 7px solid #e0e0e0; z-index: 1;"></div>
+      <div class="penman-image-toolbar penman-floating-toolbar">
+        <div class="penman-floating-tail-inner"></div>
+        <div class="penman-floating-tail-outer"></div>
 
-        <button type="button" class="penman-btn penman-btn-align-left" title="Align Left" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+        <button type="button" class="penman-btn penman-btn-align-left"
+                aria-label="${labels.alignLeft}" data-tooltip="${labels.alignLeft}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="12" x2="15" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <button type="button" class="penman-btn penman-btn-align-center" title="Align Center" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+        <button type="button" class="penman-btn penman-btn-align-center"
+                aria-label="${labels.alignCenter}" data-tooltip="${labels.alignCenter}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <button type="button" class="penman-btn penman-btn-align-right" title="Align Right" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+        <button type="button" class="penman-btn penman-btn-align-right"
+                aria-label="${labels.alignRight}" data-tooltip="${labels.alignRight}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"></line><line x1="9" y1="12" x2="21" y2="12"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
         </button>
-        <button type="button" class="penman-btn penman-btn-edit-image" title="Edit Image" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+        <button type="button" class="penman-btn penman-btn-edit-image"
+                aria-label="${labels.editImage}" data-tooltip="${labels.editImage}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
         </button>
-        <button type="button" class="penman-btn penman-btn-del-image" title="Delete Image" style="padding: 4px; display:flex; align-items:center; color: #111827;">
+        <button type="button" class="penman-btn penman-btn-del-image"
+                aria-label="${labels.deleteImage}" data-tooltip="${labels.deleteImage}">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="9" x2="15" y2="15"></line><line x1="15" y1="9" x2="9" y2="15"></line></svg>
         </button>
       </div>
@@ -179,13 +193,25 @@ export function setupImagePlugin(editor) {
 
     floatingUI.element.querySelector('.penman-btn-del-image').addEventListener('click', (e) => {
        e.preventDefault();
-       if (floatingUI.anchorNode) {
-          // Trigger a history snapshot before removal as per standard operations
-          editor.history.pushImmediate();
-          floatingUI.anchorNode.remove();
-          editor.emit('change', editor.getContent());
-          floatingUI.hide();
-       }
+       if (!floatingUI.anchorNode) return;
+       // Confirm before destructive removal — image delete is a single click
+       // away and undo is not always obvious to new users.
+       const target = floatingUI.anchorNode;
+       editor.ui.createFormModal({
+         title: editor.i18n.t('plugins.image.deleteImage'),
+         fields: [
+           { type: 'html', html: `<p>${editor.i18n.t('plugins.image.confirmDeleteImage')}</p>` }
+         ],
+         submitText: editor.i18n.t('ui.delete'),
+         cancelText: editor.i18n.t('ui.cancel'),
+         onSubmit: () => {
+           if (!target.parentNode) return;
+           editor.history.pushImmediate();
+           target.remove();
+           editor.emit('change', editor.getContent());
+           if (floatingUI) floatingUI.hide();
+         }
+       });
     });
     
   }
@@ -305,30 +331,6 @@ export function setupImagePlugin(editor) {
           title: editor.i18n.t('plugins.image.title'),
           hideFooter: true,
           body: `
-            <style>
-              .penman-image-tabs {
-                display: flex;
-                border-bottom: 1px solid #ccc;
-                margin-bottom: 15px;
-              }
-              .penman-image-tab {
-                padding: 8px 16px;
-                cursor: pointer;
-                border-bottom: 2px solid transparent;
-              }
-              .penman-image-tab.active {
-                border-bottom-color: #007bff;
-                color: #007bff;
-                font-weight: bold;
-              }
-              .penman-image-tab-content {
-                display: none;
-              }
-              .penman-image-tab-content.active {
-                display: block;
-              }
-            </style>
-
             <div class="penman-image-tabs">
               <div class="penman-image-tab active" data-tab="url">${editor.i18n.t('plugins.image.urlTab')}</div>
               <div class="penman-image-tab" data-tab="upload">${editor.i18n.t('plugins.image.uploadTab')}</div>
@@ -336,14 +338,14 @@ export function setupImagePlugin(editor) {
             </div>
 
             <div class="penman-image-tab-content active" id="penman-tab-url">
-              <div style="padding: 0 15px 15px">
-                <div style="margin-bottom: 10px;">
-                  <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.urlLabel')}</label>
-                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.urlPlaceholder')}" dir="ltr" style="text-align: left; width: 100%; box-sizing: border-box;" value="${defaultUrl}" />
+              <div class="penman-image-tab-pane">
+                <div class="penman-image-field">
+                  <label>${editor.i18n.t('plugins.image.urlLabel')}</label>
+                  <input type="text" id="penman-image-url-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.urlPlaceholder')}" dir="ltr" value="${defaultUrl}" />
                 </div>
-                <div style="margin-bottom: 15px;">
-                  <label style="display:block;margin-bottom:5px;">${editor.i18n.t('plugins.image.altLabel')}</label>
-                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.altPlaceholder')}" value="${defaultAlt}" style="width: 100%; box-sizing: border-box;" />
+                <div class="penman-image-field penman-image-field-last">
+                  <label>${editor.i18n.t('plugins.image.altLabel')}</label>
+                  <input type="text" id="penman-image-alt-input" class="penman-input" placeholder="${editor.i18n.t('plugins.image.altPlaceholder')}" value="${defaultAlt}" />
                 </div>
               </div>
               <div class="penman-modal-footer">
@@ -353,26 +355,24 @@ export function setupImagePlugin(editor) {
             </div>
 
             <div class="penman-image-tab-content" id="penman-tab-upload">
-              <div style="padding: 0 15px 15px">
-                <div id="penman-image-dropzone" style="margin-bottom: 15px; border: 1.5px dashed #b0b0b0; padding: 25px 20px; text-align: center; border-radius: 6px; cursor: pointer;" onclick="document.getElementById('penman-image-file-input').click()">
-
+              <div class="penman-image-tab-pane">
+                <div id="penman-image-dropzone" class="penman-image-dropzone" onclick="document.getElementById('penman-image-file-input').click()">
                   <input type="file" id="penman-image-file-input" accept="image/png, image/jpeg, image/webp" style="display: none;" multiple />
-                  <p style="margin: 0; color: #001529; font-weight: 600; font-size: 14px;">${editor.i18n.t('plugins.image.uploadPlaceholder')}</p>
+                  <p>${editor.i18n.t('plugins.image.uploadPlaceholder')}</p>
                 </div>
-                <div id="penman-image-upload-queue" style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;">
-                </div>
+                <div id="penman-image-upload-queue" class="penman-image-upload-queue"></div>
               </div>
 
-              <div class="penman-modal-footer" style="display: flex; justify-content: flex-end; gap: 10px;">
-                <button type="button" class="penman-btn" id="penman-image-upload-remove" style="background-color: #fff0f0; color: #ff4d4f; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">${editor.i18n.t('plugins.image.clearQueue')}</button>
-                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit" style="background-color: #4285f4; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;">${editor.i18n.t('plugins.image.insertSelected')}</button>
+              <div class="penman-modal-footer penman-image-modal-footer-flex">
+                <button type="button" class="penman-btn penman-image-btn-clear" id="penman-image-upload-remove">${editor.i18n.t('plugins.image.clearQueue')}</button>
+                <button type="button" class="penman-btn penman-btn-primary" id="penman-image-upload-submit">${editor.i18n.t('plugins.image.insertSelected')}</button>
               </div>
             </div>
 
             <div class="penman-image-tab-content" id="penman-tab-gallery">
-              <div style="padding: 0 15px 15px">
-                <div class="penman-gallery-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; max-height: 300px; overflow-y: auto;">
-                  <div style="text-align: center; color: #666; padding: 20px; grid-column: 1 / -1;" class="penman-gallery-empty">
+              <div class="penman-image-tab-pane">
+                <div class="penman-gallery-container penman-image-gallery">
+                  <div class="penman-gallery-empty penman-image-gallery-empty">
                     <p>${editor.i18n.t('plugins.image.loading')}</p>
                   </div>
                 </div>
@@ -623,12 +623,14 @@ export function setupImagePlugin(editor) {
                 editor.image.insertUntrustedURL(url, alt);
                 modal.close();
               } catch (err) {
-                editor.ui.createModal({
+                editor.ui.createFormModal({
                   title: editor.i18n.t('ui.error'),
-                  body: `<p style="padding: 20px;">${editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', translateError(editor, err))}</p>`,
+                  fields: [
+                    { type: 'html', html: `<p>${editor.i18n.t('plugins.image.invalidImageUrl').replace('{error}', translateError(editor, err))}</p>` }
+                  ],
                   submitText: editor.i18n.t('ui.ok'),
                   onSubmit: () => {}
-                }).open();
+                });
               }
             }
           });
@@ -955,12 +957,14 @@ export function setupImagePlugin(editor) {
                  renderQueue();
                  modal.close();
              } else {
-                 editor.ui.createModal({
+                 editor.ui.createFormModal({
                    title: editor.i18n.t('ui.info'),
-                   body: `<p style="padding: 20px;">${editor.i18n.t('plugins.image.noItemsToInsert')}</p>`,
+                   fields: [
+                     { type: 'html', html: `<p>${editor.i18n.t('plugins.image.noItemsToInsert')}</p>` }
+                   ],
                    submitText: editor.i18n.t('ui.ok'),
                    onSubmit: () => {}
-                 }).open();
+                 });
              }
           });
         }

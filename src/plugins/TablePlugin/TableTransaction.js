@@ -105,6 +105,21 @@ export class TableTransaction {
     return false;
   }
 
+  /**
+   * Detect whether a cell is "visually empty" — it has no real text and no
+   * embedded media. The default state of a new cell is `<p><br></p>`, which
+   * has no text content but renders a line of vertical space. We treat such
+   * cells as empty so they don't pollute merge output with stacked blank
+   * paragraphs.
+   */
+  _isCellEmpty(cellNode) {
+    if (!cellNode) return true;
+    // Any non-whitespace text disqualifies the cell from being empty.
+    if ((cellNode.textContent || '').replace(/\s/g, '').length > 0) return false;
+    // Any media element is meaningful even with no text.
+    return !cellNode.querySelector('img, video, audio, iframe, figure, canvas, svg, object, embed');
+  }
+
   mergeCells(cellIds) {
     if (!this.grid.isPerfectRectangle(cellIds)) {
       return false;
@@ -117,34 +132,50 @@ export class TableTransaction {
     if (!anchorGridCell || !anchorGridCell.isReal) return false;
 
     const anchorNode = anchorGridCell.domNode;
-    let newContentFragment = document.createDocumentFragment();
+    const newContentFragment = document.createDocumentFragment();
     const absorbedData = [];
 
+    // Walk every absorbed cell. Cells whose only content is `<p><br></p>` or
+    // whitespace contribute nothing to the merged output — their DOM is
+    // simply removed.
     cellIds.forEach(id => {
-      if (id !== anchorGridCell.id) {
-        const gridCell = this.grid.getCellById(id);
-        if (gridCell && gridCell.isReal) {
-          const content = gridCell.domNode.innerHTML.trim();
-          if (content) {
-            while (gridCell.domNode.firstChild) {
-              newContentFragment.appendChild(gridCell.domNode.firstChild);
-            }
-          }
+      if (id === anchorGridCell.id) return;
+      const gridCell = this.grid.getCellById(id);
+      if (!gridCell || !gridCell.isReal) return;
 
-          absorbedData.push({
-            id: id,
-            r: gridCell.rowIndex,
-            c: gridCell.colIndex,
-            rs: gridCell.rowSpan,
-            cs: gridCell.colSpan
-          });
-
-          gridCell.domNode.remove();
+      if (!this._isCellEmpty(gridCell.domNode)) {
+        while (gridCell.domNode.firstChild) {
+          newContentFragment.appendChild(gridCell.domNode.firstChild);
         }
       }
+
+      absorbedData.push({
+        id: id,
+        r: gridCell.rowIndex,
+        c: gridCell.colIndex,
+        rs: gridCell.rowSpan,
+        cs: gridCell.colSpan
+      });
+
+      gridCell.domNode.remove();
     });
 
-    anchorNode.appendChild(newContentFragment);
+    // Decide what the anchor cell should end up containing.
+    const anchorWasEmpty = this._isCellEmpty(anchorNode);
+    const hasIncoming = newContentFragment.childNodes.length > 0;
+
+    if (hasIncoming) {
+      // At least one absorbed cell had real content. If the anchor itself
+      // was empty (only a `<p><br></p>`), clear it before appending so we
+      // don't keep a stray blank paragraph at the top.
+      if (anchorWasEmpty) anchorNode.innerHTML = '';
+      anchorNode.appendChild(newContentFragment);
+    } else if (anchorWasEmpty) {
+      // No content anywhere. Normalize the anchor to exactly one
+      // `<p><br></p>` so the editor always has a focusable line.
+      anchorNode.innerHTML = '<p><br></p>';
+    }
+    // else: anchor had content, no extras incoming — leave anchor as-is.
 
     if (absorbedData.length > 0) {
       const existingDescriptor = anchorNode.getAttribute('data-merge-descriptor');
@@ -347,7 +378,7 @@ export class TableTransaction {
         td.setAttribute('data-cell-id', TableGrid.generateCellId());
 
         const tableBorder = this.table.getAttribute('border') || '1';
-        const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
+        const tableBorderColor = this.table.getAttribute('bordercolor') || '';
         const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
 
         td.style.borderWidth = tableBorder + 'px';

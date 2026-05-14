@@ -1,4 +1,5 @@
 import { uniqueId } from '../../utils/uniqueId.js';
+import { escapeHtml as sharedEscapeHtml } from '../../utils/html.js';
 
 export function setupMarkdownPlugin(editor) {
   editor.on('keyup', (e) => {
@@ -33,13 +34,11 @@ export function setupMarkdownPlugin(editor) {
   });
 }
 
+// Local wrapper that tolerates `undefined`/`null` (markdown sometimes calls
+// with optional capture groups). Delegates to the shared escape.
 function escapeHtml(unsafe) {
-    return unsafe
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+  if (unsafe === null || unsafe === undefined) return '';
+  return sharedEscapeHtml(unsafe);
 }
 
 function parseMarkdownToHTML(text) {

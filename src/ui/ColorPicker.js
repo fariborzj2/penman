@@ -27,7 +27,8 @@ export class ColorPicker {
     ];
 
     this._createDOM();
-    this._injectStyles();
+    // Styles live in penman-ui.css under "ColorPicker" — that lets dark
+    // theme variables cascade through. No runtime <style> injection.
   }
 
   _createDOM() {
@@ -97,72 +98,6 @@ export class ColorPicker {
             e.preventDefault();
         }
     });
-  }
-
-  _injectStyles() {
-    if (document.getElementById('penman-color-picker-styles')) return;
-
-    const style = document.createElement('style');
-    style.id = 'penman-color-picker-styles';
-    style.innerHTML = `
-      .penman-color-picker {
-        width: 174px;
-        background: #fff;
-        border-radius: 4px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
-        font-family: inherit;
-        padding: 8px;
-        box-sizing: border-box;
-      }
-      .penman-color-picker-header {
-        display: flex;
-        margin-bottom: 8px;
-      }
-      .penman-color-picker-hex {
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        outline: none;
-        font-size: 14px;
-        width: 100%;
-        padding: 5px;
-        direction: ltr;
-      }
-      .penman-color-picker-palette {
-        display: grid;
-        grid-template-columns: repeat(10, 1fr);
-        gap: 2px;
-      }
-      .penman-color-picker-swatch {
-        width: 14px;
-        height: 14px;
-        border: 1px solid rgba(0,0,0,0.1);
-        border-radius: 4px;
-        cursor: pointer;
-        padding: 0;
-        position: relative;
-        overflow: hidden;
-      }
-      .penman-color-picker-swatch[data-color="transparent"] {
-        background-image: linear-gradient(45deg, #ccc 25%, transparent 25%), linear-gradient(-45deg, #ccc 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #ccc 75%), linear-gradient(-45deg, transparent 75%, #ccc 75%);
-        background-size: 6px 6px;
-        background-position: 0 0, 0 3px, 3px -3px, -3px 0px;
-      }
-      .penman-color-picker-swatch[data-color="transparent"]::after {
-         content: '';
-         position: absolute;
-         top: 50%;
-         left: -2px;
-         right: -2px;
-         height: 2px;
-         background: red;
-         transform: translateY(-50%) rotate(45deg);
-      }
-      .penman-color-picker-swatch:hover {
-        border: 2px solid #454545;
-        transform: scale(1.1);
-      }
-    `;
-    document.head.appendChild(style);
   }
 
   getColor() {

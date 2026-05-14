@@ -18,6 +18,7 @@ import { setupCodeBlockPlugin } from './CodeBlockPlugin/index.js';
 import { setupMarkdownPlugin } from './MarkdownPlugin/index.js';
 import { setupEmbedPlugin } from './EmbedPlugin/index.js';
 import { setupContentAuditPlugin } from './ContentAuditPlugin/index.js';
+import { setupHelpPlugin } from './HelpPlugin/index.js';
 import { logger } from '../utils/logger.js';
 
 export const PluginManager = {
@@ -41,7 +42,8 @@ export const PluginManager = {
     codeblock: setupCodeBlockPlugin,
     markdown: setupMarkdownPlugin,
     embed: setupEmbedPlugin,
-    audit: setupContentAuditPlugin
+    audit: setupContentAuditPlugin,
+    help: setupHelpPlugin
   },
 
   add(name, setup) {

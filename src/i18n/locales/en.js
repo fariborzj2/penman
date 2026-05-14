@@ -34,6 +34,8 @@ export default {
     error: 'Error',
     info: 'Info',
     dialog: 'Dialog',
+    no_results: 'No results',
+    editorAriaLabel: 'Rich text editor',
     stats: 'Words: {words} | Characters: {chars}'
   }
 };

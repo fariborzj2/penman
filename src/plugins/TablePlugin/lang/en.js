@@ -35,5 +35,6 @@ export default {
   "alignCenter": "Center",
   "alignRight": "Right",
   "cellBackgroundColor": "Background Color",
-  "mergeError": "Cannot merge: Selected cells do not form a perfect rectangle."
+  "mergeError": "Cannot merge: Selected cells do not form a perfect rectangle.",
+  "disabledReasonNoTable": "Place your cursor inside a table to use this action."
 };

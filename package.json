@@ -1,7 +1,7 @@
 {
   "name": "penman-editor",
   "version": "0.1.0",
-  "description": "A framework-agnostic, zero-dependency Vanilla JavaScript rich text editor (WYSIWYG).",
+  "description": "A framework-agnostic, modular vanilla JavaScript rich text editor (WYSIWYG) with first-class RTL/Persian support, dark mode, and a sanitizer-first content pipeline.",
   "type": "module",
   "main": "dist/penman.umd.js",
   "module": "dist/penman.es.js",
@@ -16,15 +16,27 @@
     "./dist/*": "./dist/*",
     "./styles/*": "./src/styles/*"
   },
+  "sideEffects": [
+    "*.css",
+    "src/styles/*"
+  ],
   "files": [
     "dist",
     "src",
     "README.md",
-    "LICENSE"
+    "CHANGELOG.md",
+    "LICENSE",
+    "!src/**/*.test.js",
+    "!src/**/*.spec.js",
+    "!**/__tests__/**",
+    "!**/__mocks__/**",
+    "!**/.gitkeep",
+    "!**/.DS_Store"
   ],
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "prepublishOnly": "npm run test && npm run build",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "node test-e2e.mjs",
@@ -32,6 +44,12 @@
   },
   "author": "Fariborz J. <fariborzj2@gmail.com>",
   "license": "MIT",
+  "engines": {
+    "node": ">=16"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "keywords": [
     "editor",
     "wysiwyg",
@@ -43,6 +61,8 @@
     "html-editor",
     "rtl",
     "persian",
+    "farsi",
+    "dark-mode",
     "penman"
   ],
   "devDependencies": {

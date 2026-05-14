@@ -55,5 +55,11 @@ export default {
     "aborted": "Request was cancelled.",
     "parseError": "Invalid response received from server.",
     "unauthorized": "Access denied. Please check your permissions."
-  }
+  },
+  "alignLeft":          "Align left",
+  "alignCenter":        "Align center",
+  "alignRight":         "Align right",
+  "editImage":          "Edit image",
+  "deleteImage":        "Delete image",
+  "confirmDeleteImage": "Delete this image?"
 };

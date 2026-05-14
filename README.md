@@ -4,17 +4,22 @@
 
 # Penman Editor
 
-A framework-agnostic, dependency-light Vanilla JavaScript rich text editor (WYSIWYG) with strong sanitization, first-class RTL/Persian support, and a plugin-based architecture.
+A framework-agnostic, modular vanilla-JavaScript rich text editor (WYSIWYG) with first-class RTL/Persian support, dark mode, and a sanitizer-first content pipeline.
 
-## Features
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![npm](https://img.shields.io/badge/npm-v0.1.0-blue.svg)](https://www.npmjs.com/package/penman-editor)
 
-- Zero framework lock-in — works with any (or no) framework
-- Strict HTML sanitizer with a schema-driven allowlist of tags, attributes, classes, and inline styles
-- Pluggable: bold/italic/underline, headings, block types, lists, tables, images & gallery, embeds, code blocks (CodeMirror + highlight.js), find/replace, markdown shortcuts, drafts, source view, suggested posts
-- Built-in RTL/LTR direction handling and ZWNJ-aware Persian text normalization
-- Modal, floating toolbar, and color-picker primitives ready for plugin use
-- Selection/history managers with snapshot transactions for atomic edits
-- Optional Node server with safe upload handling (MIME allowlist + size limits + CORS allowlist)
+## Highlights
+
+- **Zero framework lock-in** — works with React, Vue, Svelte, Angular, or no framework at all.
+- **Modular plugins** — each plugin is a self-contained folder. Delete the folder, delete the plugin (strings, icons, toolbar entries all go with it).
+- **Strict allowlist sanitizer** — every paste / `setContent` / source-view round-trip is filtered against a schema. `javascript:` / `vbscript:` / `data:text/*` URLs are stripped even with whitespace or case obfuscation.
+- **Dark mode** — `data-theme="dark"` attribute, system-preference fallback, and live theme switching (CodeMirror syntax tokens re-theme on the fly).
+- **RTL/Persian** — direction detection, ZWNJ-aware normalization, RTL-flipped icons, and Persian translations shipped with every plugin.
+- **20 built-in plugins** — bold/italic/underline/strikethrough, headings, block types, font size, lists, tables, images & gallery, embeds, media (video/audio), code blocks (CodeMirror + highlight.js), find/replace, markdown shortcuts, drafts (auto-save to IndexedDB/localStorage), source view, color picker, content audit, suggested posts, help dialog, and more.
+- **Themed UI primitives** — `FormModal` (declarative form schema), `DropdownMenu` (items + search), `Tooltip` (shared service for all toolbar buttons), `ColorPicker`, `FloatingUI`.
+- **Selection / history managers** with snapshot transactions for atomic edits.
+- **Optional Node server** with safe upload handling (MIME allowlist, size cap, CORS allowlist).
 
 ## Installation
 
@@ -26,24 +31,41 @@ npm install penman-editor
 
 ```html
 <textarea id="my-editor"></textarea>
+
+<link rel="stylesheet" href="node_modules/penman-editor/src/styles/penman-ui.css">
+<link rel="stylesheet" href="node_modules/penman-editor/src/styles/penman-content.css">
+
 <script type="module">
   import penman from 'penman-editor';
 
   const editor = penman.init({
     selector: '#my-editor',
-    toolbar: 'bold italic underline | h1 h2 | ul ol | link image table | sourcecode',
+    lang: 'en',
+    theme: 'auto',
     plugins: [
-      // optional plugin instances or factories
+      'format', 'list', 'blocktype', 'fontsize', 'link', 'image',
+      'media', 'embed', 'table', 'codeblock', 'sourcecode',
+      'markdown', 'findreplace', 'color', 'direction', 'help'
     ],
+    toolbar: {
+      rows: [
+        ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'table', 'sourcecode', 'help'],
+        ['bold', 'italic', 'underline', 'strikethrough', 'link', 'unlink',
+         'justifyleft', 'justifycenter', 'justifyright', 'bullist', 'numlist', 'textcolor']
+      ]
+    }
   });
 
-  // Read / write content
-  const html = editor.getContent();
+  // Read / write
   editor.setContent('<p>Hello, world.</p>');
+  const html = editor.getContent();
+
+  // Switch theme at runtime
+  editor.setTheme('dark');
 </script>
 ```
 
-If you load the UMD build directly in the browser, expose it as a global:
+Or via UMD build:
 
 ```html
 <script src="penman.umd.js"></script>
@@ -66,33 +88,74 @@ If you load the UMD build directly in the browser, expose it as a global:
 | `editor.setContent(html)` | Replace content. Input is sanitized before insertion. |
 | `editor.insertContent(html)` | Insert HTML at the current selection. |
 | `editor.focus()` | Move focus to the editable area. |
+| `editor.setTheme(value)` | `'dark' \| 'light' \| 'auto'` — controls `data-theme` on the wrapper. |
+| `editor.getTheme()` | Returns the current theme setting. |
+| `editor.execCommand(name, ...args)` | Run any registered command. |
+| `editor.on(event, fn)` / `editor.off(event, fn)` / `editor.once(event, fn)` | Event subscription. |
 | `editor.destroy()` | Fully tear down the instance, removing all listeners and references. |
+
+### Events
+
+- `init` — fired after `_createUI` and plugins finish initializing.
+- `change` — content changed (debounced via history snapshots).
+- `selectionChange` — selection moved.
+- `themeChange` — `setTheme()` was called.
+- `nodeSelected` — a widget (image, embed, table) was selected.
+- `destroy` — instance is being torn down.
 
 ### Configuration options
 
 ```js
 penman.init({
-  selector: '#my-editor',          // required
-  toolbar: 'bold italic | h1 h2',  // space/pipe-separated button names
-  plugins: [/* ... */],            // additional plugins
-  blockTypes: [/* ... */],         // optional override of default block types
+  selector: '#my-editor',         // required (or per-element via resolveConfig)
+  lang: 'en',                     // 'en' | 'fa' (or any language registered by a plugin)
+  theme: 'auto',                  // 'dark' | 'light' | 'auto' (default)
+  direction: 'auto',              // 'rtl' | 'ltr' | 'auto'
+  height: 300,                    // editable area height in px
+  toolbar: { rows: [[...], ...] },// multi-row toolbar
+  plugins: [/* names or factories */],
+  blockTypes: [/* override defaults */],
+  imageUploadFn: (file, onProgress) => Promise<{ url, alt }>,
+  auditIgnoreH1: false,
   resolveConfig(el, defaultConfig) {
-    // optional per-element configuration callback
     return { ...defaultConfig, toolbar: el.dataset.toolbar };
-  },
+  }
 });
 ```
 
+## Dark mode
+
+Penman ships a complete dark theme. Activation matrix:
+
+| Attribute on `<html>` or `.penman-wrapper` | Result |
+| --- | --- |
+| `data-theme="dark"` | Force dark (overrides system) |
+| `data-theme="light"` | Force light (overrides system) |
+| `data-theme="auto"` or not set | Follow `prefers-color-scheme` |
+
+The runtime API:
+
+```js
+editor.setTheme('dark');
+editor.setTheme('light');
+editor.setTheme('auto');
+editor.on('themeChange', t => console.log('Theme is now', t));
+```
+
+CSS variables (`--pm-*` for chrome, `--pmc-*` for content) cascade through the entire UI so even third-party plugins inherit the theme by default.
+
 ## Sanitization model
 
-Every HTML round-trip — paste, `setContent`, source view — passes through `Sanitizer`. The sanitizer is allowlist-driven:
+Every HTML round-trip — paste, `setContent`, source view — passes through `Sanitizer`:
 
-- Tags not present in `allowedTags` are unwrapped.
-- Attributes not configured for a tag are stripped.
-- `href` is restricted to `http:`, `https:`, `mailto:`, `tel:`, fragment identifiers, and relative URLs. All other schemes (`javascript:`, `data:`, `vbscript:`, `blob:`, `file:`) are stripped — including obfuscation via whitespace, control characters, or case.
-- `iframe` `src` is restricted to `http:` / `https:` only.
-- Inline styles are tag-aware: only the properties listed in `nativeStylesByTag` (and configured `blockTypes`) survive.
-- A protected scope (`data-penman-core="true"`) preserves attributes for internal widgets only; it is never honoured for content arriving from outside before normal sanitization has run.
+- Tags not in `allowedTags` are unwrapped (or stripped for `<script>`/`<style>`).
+- Attributes not configured for a tag are removed.
+- `href` accepts `http:` / `https:` / `mailto:` / `tel:` / fragments / relative URLs; everything else is stripped, including obfuscated forms.
+- `iframe` `src` is restricted to `http:` / `https:`.
+- Inline styles are tag-aware: only properties listed in `nativeStylesByTag` (and configured `blockTypes`) survive.
+- A protected scope (`data-penman-core="true"`) preserves attributes for internal widgets only; it's never honoured for content arriving from outside before sanitization has run.
+
+Additionally, `insertHTMLAtSelection` (used by paste, markdown auto-conversion, etc.) strips `on*` event-handler attributes and validates URL-bearing attributes via `safeUrl()` as a defense-in-depth layer.
 
 ## Server (optional)
 
@@ -116,6 +179,14 @@ npm run test:coverage  # unit tests with coverage report
 npm run build          # produces dist/penman.{es,umd}.js with sourcemaps
 ```
 
+## Browser support
+
+Modern evergreen browsers (Chrome / Edge / Firefox / Safari ≥ 2 versions). Uses `Selection`, `Range`, ES2020, custom properties, `:focus-visible`. Node 16+ for the build step.
+
+## Contributing
+
+Issues and pull requests are welcome at <https://github.com/fariborzj2/penman/issues>.
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).

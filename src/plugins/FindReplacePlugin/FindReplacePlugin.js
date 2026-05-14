@@ -227,40 +227,43 @@ export function setupFindReplacePlugin(editor) {
       return false;
     };
 
-    const modalHtml = `
-      <div style="padding: 15px;">
-        <div class="penman-modal-form-row">
-          <label for="fr-find">${editor.i18n.t('plugins.findReplace.find')}</label>
-          <input type="text" id="fr-find" placeholder="${editor.i18n.t('plugins.findReplace.findPlaceholder')}" value="${initialFindText.replace(/"/g, '&quot;')}">
-        </div>
-        <div class="penman-modal-form-row">
-          <label for="fr-replace">${editor.i18n.t('plugins.findReplace.replace')}</label>
-          <input type="text" id="fr-replace" placeholder="${editor.i18n.t('plugins.findReplace.replacePlaceholder')}">
-        </div>
-        <div class="penman-modal-checkbox-group" style="margin-bottom: 0px;">
-          <label><input type="checkbox" id="fr-match-case"> ${editor.i18n.t('plugins.findReplace.matchCase')}</label>
-          <label><input type="checkbox" id="fr-normalize-rtl" checked> ${editor.i18n.t('plugins.findReplace.ignoreDiacritics')}</label>
-          <label><input type="checkbox" id="fr-all-words"> ${editor.i18n.t('plugins.findReplace.allWords')}</label>
-        </div>
-      </div>
-    `;
-
     let updateButtonsState;
     let executeSearch;
 
-    const modal = editor.ui.createModal({
+    // FindReplace has many action buttons (Next/Prev/Find/Replace/ReplaceAll)
+    // rather than a single submit — we use FormModal for consistent field
+    // layout and provide a custom `buttons` array for the footer.
+    const formModal = editor.ui.createFormModal({
       title: editor.i18n.t('plugins.findReplace.title'),
-      body: modalHtml,
+      fields: [
+        {
+          type: 'text', name: 'find',
+          label: editor.i18n.t('plugins.findReplace.find'),
+          placeholder: editor.i18n.t('plugins.findReplace.findPlaceholder'),
+          value: initialFindText
+        },
+        {
+          type: 'text', name: 'replace',
+          label: editor.i18n.t('plugins.findReplace.replace'),
+          placeholder: editor.i18n.t('plugins.findReplace.replacePlaceholder')
+        },
+        {
+          type: 'row',
+          fields: [
+            { type: 'checkbox', name: 'matchCase',    label: editor.i18n.t('plugins.findReplace.matchCase') },
+            { type: 'checkbox', name: 'normalizeRtl', label: editor.i18n.t('plugins.findReplace.ignoreDiacritics'), checked: true },
+            { type: 'checkbox', name: 'allWords',     label: editor.i18n.t('plugins.findReplace.allWords') }
+          ]
+        }
+      ],
       buttons: [
         {
           text: editor.i18n.t('plugins.findReplace.next'), id: 'fr-btn-next', align: 'left', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
             currentIndex = (currentIndex + 1) % results.length;
-            const elModal = modal.modalElement;
-            highlightResult(currentIndex,
-              elModal.querySelector('#fr-all-words').checked,
-              elModal.querySelector('#fr-normalize-rtl').checked);
+            const d = formModal.collect();
+            highlightResult(currentIndex, d.allWords, d.normalizeRtl);
           }
         },
         {
@@ -268,10 +271,8 @@ export function setupFindReplacePlugin(editor) {
           onClick: () => {
             if (results.length === 0) return;
             currentIndex = (currentIndex - 1 + results.length) % results.length;
-            const elModal = modal.modalElement;
-            highlightResult(currentIndex,
-              elModal.querySelector('#fr-all-words').checked,
-              elModal.querySelector('#fr-normalize-rtl').checked);
+            const d = formModal.collect();
+            highlightResult(currentIndex, d.allWords, d.normalizeRtl);
           }
         },
         {
@@ -285,9 +286,9 @@ export function setupFindReplacePlugin(editor) {
           text: editor.i18n.t('plugins.findReplace.replace'), id: 'fr-btn-replace', align: 'right', disabled: true,
           onClick: () => {
             if (results.length === 0 || currentIndex < 0 || currentIndex >= results.length) return;
-            const elModal = modal.modalElement;
-            const replacement = elModal.querySelector('#fr-replace').value;
-            const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
+            const d = formModal.collect();
+            const replacement = d.replace;
+            const normalizeRTL = d.normalizeRtl;
 
             const currentResult = results[currentIndex];
             const originalStart = currentResult.globalStart;
@@ -300,17 +301,13 @@ export function setupFindReplacePlugin(editor) {
               editor._syncToTextarea();
               editor.emit('change', editor.getContent());
 
-              performSearch(
-                elModal.querySelector('#fr-find').value,
-                elModal.querySelector('#fr-match-case').checked,
-                normalizeRTL
-              );
+              performSearch(d.find, d.matchCase, normalizeRTL);
 
               if (results.length > 0) {
                 let nextIdx = results.findIndex(r => r.globalStart >= originalStart);
                 if (nextIdx === -1) nextIdx = 0;
                 currentIndex = nextIdx;
-                highlightResult(currentIndex, elModal.querySelector('#fr-all-words').checked, normalizeRTL);
+                highlightResult(currentIndex, d.allWords, normalizeRTL);
               } else {
                 currentIndex = -1;
                 const finalMapper = new TextMapper(editor.editableArea, normalizeRTL);
@@ -335,9 +332,9 @@ export function setupFindReplacePlugin(editor) {
           text: editor.i18n.t('plugins.findReplace.replaceAll'), id: 'fr-btn-replace-all', align: 'right', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
-            const elModal = modal.modalElement;
-            const replacement = elModal.querySelector('#fr-replace').value;
-            const normalizeRTL = elModal.querySelector('#fr-normalize-rtl').checked;
+            const d = formModal.collect();
+            const replacement = d.replace;
+            const normalizeRTL = d.normalizeRtl;
 
             // FIX: Use pushImmediate (takeSnapshot does not exist on HistoryManager)
             // Push a snapshot BEFORE the replacement to allow undo
@@ -388,7 +385,8 @@ export function setupFindReplacePlugin(editor) {
             results = [];
             currentIndex = -1;
             updateButtonsState();
-            elModal.querySelector('#fr-find').focus();
+            const findEl = formModal.getField('find');
+            if (findEl) findEl.focus();
           }
         }
       ],
@@ -398,18 +396,18 @@ export function setupFindReplacePlugin(editor) {
       }
     });
 
-    activeModal = modal;
-    const elModal = modal.modalElement;
+    activeModal = formModal;
+    const elModal = formModal.modalElement;
 
-    const inputFind = elModal.querySelector('#fr-find');
-    const cbMatchCase = elModal.querySelector('#fr-match-case');
-    const cbAllWords = elModal.querySelector('#fr-all-words');
-    const cbNormalizeRTL = elModal.querySelector('#fr-normalize-rtl');
+    const inputFind    = formModal.getField('find');
+    const cbMatchCase  = formModal.getField('matchCase');
+    const cbAllWords   = formModal.getField('allWords');
+    const cbNormalizeRTL = formModal.getField('normalizeRtl');
 
-    const btnReplace = elModal.querySelector('#fr-btn-replace');
+    const btnReplace    = elModal.querySelector('#fr-btn-replace');
     const btnReplaceAll = elModal.querySelector('#fr-btn-replace-all');
-    const btnNext = elModal.querySelector('#fr-btn-next');
-    const btnPrev = elModal.querySelector('#fr-btn-prev');
+    const btnNext       = elModal.querySelector('#fr-btn-next');
+    const btnPrev       = elModal.querySelector('#fr-btn-prev');
 
     updateButtonsState = () => {
       const hasResults = results.length > 0;

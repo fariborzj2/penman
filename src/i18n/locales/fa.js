@@ -34,6 +34,8 @@ export default {
     error: 'خطا',
     info: 'اطلاعات',
     dialog: 'پنجره',
+    no_results: 'نتیجه‌ای یافت نشد',
+    editorAriaLabel: 'ویرایشگر متن غنی',
     stats: 'تعداد کلمات: {words} | تعداد کاراکترها: {chars}'
   }
 };

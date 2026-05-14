@@ -18,7 +18,7 @@ export function setupBlockTypePlugin(editor) {
     { name: 'Heading 5', cmd: 'h5', i18nKey: 'plugins.blockType.heading5' },
     { name: 'Heading 6', cmd: 'h6', i18nKey: 'plugins.blockType.heading6' },
     { name: 'Blockquote', cmd: 'blockquote', i18nKey: 'plugins.blockType.blockquote' },
-    { name: 'Success', cmd: 'div', class: 'green-block', i18nKey: 'plugins.blockType.success', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e' } },
+    { name: 'Success', cmd: 'div', class: 'green-block', i18nKey: 'plugins.blockType.success', optionStyle: { color: '#166534', background: '#dcfce7', fontWeight: 'bold', borderRight: '3px solid #22c55e'} },
     { name: 'Info', cmd: 'div', class: 'blue-block', i18nKey: 'plugins.blockType.info', optionStyle: { color: '#1e3a8a', background: '#dbeafe', fontWeight: 'bold', borderRight: '3px solid #3b82f6' } },
     { name: 'Warning', cmd: 'div', class: 'orange-block', i18nKey: 'plugins.blockType.warning', optionStyle: { color: '#9a3412', background: '#ffedd5', fontWeight: 'bold', borderRight: '3px solid #f97316' } },
     { name: 'Danger', cmd: 'div', class: 'red-block', i18nKey: 'plugins.blockType.danger', optionStyle: { color: '#7f1d1d', background: '#fee2e2', fontWeight: 'bold', borderRight: '3px solid #ef4444' } }
@@ -384,7 +384,7 @@ export function setupBlockTypePlugin(editor) {
 
           item.addEventListener('click', (e) => {
             e.preventDefault();
-            
+
             // Execute our new custom command
             editor.execCommand('SET_BLOCK_TYPE', block);
 

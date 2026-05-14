@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Penman Editor</title>
+  <link rel="shortcut icon" href="public/favicon.png" type="image/x-icon">
   <style>
     *, *::before, *::after { box-sizing: border-box; }
 
@@ -84,9 +85,97 @@
     .editor-card-body {
       padding: 16px;
     }
+
+    /* ───── Theme toggle (top-right floating control) ───────────────────── */
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      inset-inline-end: 18px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 999px;
+      padding: 4px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    }
+    .theme-toggle button {
+      all: unset;
+      box-sizing: border-box;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #64748b;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .theme-toggle button:hover { background: rgba(15, 23, 42, 0.04); color: #1e2a3a; }
+    .theme-toggle button[aria-pressed="true"] {
+      background: #1e2a3a;
+      color: #f8fafc;
+    }
+    .theme-toggle svg { width: 16px; height: 16px; }
+
+    /* When the page is in dark mode (manual or system), restyle the demo
+       page surface to match — so the editors don't sit on a bright page. */
+    :root[data-theme="dark"] body {
+      background: linear-gradient(135deg, #0b1020 0%, #0e1428 50%, #11132a 100%);
+    }
+    :root[data-theme="dark"] .page-header h1,
+    :root[data-theme="dark"] .editor-card-header h2 { color: #e2e8f0; }
+    :root[data-theme="dark"] .page-header p { color: #94a3b8; }
+    :root[data-theme="dark"] .editor-card {
+      background: #1a1f2e;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    :root[data-theme="dark"] .editor-card-header { border-bottom-color: #252d42; }
+    :root[data-theme="dark"] .badge-rtl { background: #1e3a5f; color: #93c5fd; }
+    :root[data-theme="dark"] .badge-ltr { background: #1e3a2f; color: #86efac; }
+    :root[data-theme="dark"] .theme-toggle {
+      background: rgba(20, 25, 40, 0.85);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    :root[data-theme="dark"] .theme-toggle button { color: #94a3b8; }
+    :root[data-theme="dark"] .theme-toggle button:hover { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; }
+    :root[data-theme="dark"] .theme-toggle button[aria-pressed="true"] {
+      background: #f8fafc; color: #0f172a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]):not([data-theme="dark"]) body {
+        background: linear-gradient(135deg, #0b1020 0%, #0e1428 50%, #11132a 100%);
+      }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .editor-card {
+        background: #1a1f2e;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .page-header h1,
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .editor-card-header h2 { color: #e2e8f0; }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .page-header p { color: #94a3b8; }
+    }
   </style>
 </head>
 <body>
+  <!-- Theme toggle: cycles light → auto → dark.
+       Aria-pressed reflects the active option for screen readers. -->
+  <div class="theme-toggle" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-label="Light theme" title="Light">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </button>
+    <button type="button" data-theme-set="auto" aria-label="Auto (system)" title="Auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+    </button>
+    <button type="button" data-theme-set="dark" aria-label="Dark theme" title="Dark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
   <div class="main">
     <div class="page-header">
       <img src="public/penman-logo.png" alt="Penman" style="width: 280px; height: auto; margin: 0 auto 16px; display: block;" />
@@ -125,13 +214,13 @@
     // Define the global default configurations
     const penmanDefaults = {
       lang: 'fa',
-      plugins: ['embed', 'link', 'draft', 'suggestedposts', 'format', 'list', 'blocktype', 'fontsize', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction', 'media', 'codeblock', 'markdown', 'audit'],
+      plugins: ['embed', 'link', 'draft', 'suggestedposts', 'format', 'list', 'blocktype', 'fontsize', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction', 'media', 'codeblock', 'markdown', 'audit','help'],
       // The page title (H1) is stored in a separate input outside the editor,
       // so the audit should not require / complain about H1 inside the body.
       auditIgnoreH1: true,
       toolbar: {
         rows: [
-          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'embed', 'table', 'suggestedposts', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr', 'codeblock', 'audit'],
+          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'embed', 'table', 'suggestedposts', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr', 'codeblock', 'audit','help'],
           ['bold', 'italic', 'underline','strikethrough', 'superscript', 'subscript', 'justifyright', 'justifycenter', 'justifyleft', 'justifyfull', 'bullist', 'numlist', 'indentlist', 'outdentlist', 'link', 'unlink', 'removeformat', 'textcolor', 'highlight'],
         ]
       },
@@ -188,6 +277,44 @@
     });
 
     const allInstances = penman.getAll();
+
+    // ───── Wire up the page-level theme toggle ──────────────────────────
+    // The toggle has three pills: Light / Auto / Dark. Clicking a pill:
+    //   1. Sets data-theme on <html> (or removes it for auto) so the demo
+    //      page restyles itself via the CSS rules above.
+    //   2. Calls editor.setTheme() on every editor so their chrome (toolbar,
+    //      modals, dropdowns) re-themes in unison.
+    //   3. Persists the choice in localStorage so reloads remember it.
+    (function setupThemeToggle() {
+      const KEY = 'penman-demo-theme';
+      const buttons = document.querySelectorAll('.theme-toggle [data-theme-set]');
+      const root = document.documentElement;
+
+      function apply(theme) {
+        if (theme === 'auto') {
+          root.removeAttribute('data-theme');
+          root.removeAttribute('data-theme-source');
+        } else {
+          root.setAttribute('data-theme', theme);
+          // Tag the source so Editor.setTheme() doesn't clobber it later.
+          root.setAttribute('data-theme-source', 'penman');
+        }
+        allInstances.forEach(ed => {
+          if (ed && typeof ed.setTheme === 'function') ed.setTheme(theme);
+        });
+        buttons.forEach(b => {
+          b.setAttribute('aria-pressed', String(b.dataset.themeSet === theme));
+        });
+        try { localStorage.setItem(KEY, theme); } catch (_) { /* ignore */ }
+      }
+
+      buttons.forEach(b => {
+        b.addEventListener('click', () => apply(b.dataset.themeSet));
+      });
+
+      const saved = (() => { try { return localStorage.getItem(KEY); } catch (_) { return null; } })();
+      apply(saved && ['light', 'dark', 'auto'].includes(saved) ? saved : 'auto');
+    })();
 
     allInstances.forEach(instance => {
       // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
