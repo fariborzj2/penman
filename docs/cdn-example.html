@@ -59,15 +59,15 @@
   </div>
 
   <h2 style="margin-top: 40px;">How to embed it</h2>
-  <pre><code>&lt;textarea id="my-editor"&gt;&lt;/textarea&gt;
+  <pre><code><textarea id="my-editor"></textarea>
 
-&lt;!-- jsDelivr (auto-mirrors npm) --&gt;
-&lt;script src="https://cdn.jsdelivr.net/npm/penman-editor@0.1.0/dist/penman.umd.js"&gt;&lt;/script&gt;
+<!-- jsDelivr (auto-mirrors npm) -->
+<script src="https://cdn.jsdelivr.net/npm/penman-editor@0.1.0/dist/penman.umd.js"></script>
 
-&lt;!-- or unpkg --&gt;
-&lt;!-- &lt;script src="https://unpkg.com/penman-editor@0.1.0/dist/penman.umd.js"&gt;&lt;/script&gt; --&gt;
+<!-- or unpkg -->
+<!-- <script src="https://unpkg.com/penman-editor@0.1.0/dist/penman.umd.js"></script> -->
 
-&lt;script&gt;
+<script>
   const editor = penman.init({
     selector: '#my-editor',
     lang:    'en',
@@ -75,7 +75,7 @@
     plugins: ['format', 'list', 'blocktype', 'link', 'image', 'table', 'sourcecode', 'help'],
     toolbar: 'bold italic underline | blocktype | bullist numlist | link image table | sourcecode help'
   });
-&lt;/script&gt;</code></pre>
+</script></code></pre>
 
   <!-- ───────────────── Actual CDN load ───────────────── -->
   <!-- NOTE: in production replace @0.1.0 with your pinned version. -->
