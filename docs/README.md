@@ -1,12 +1,31 @@
 # Penman Documentation
 
-This folder is the canonical reference for every part of the editor — architecture, public API, security model, plugins, and the legacy spec history that informed the current design.
+This folder is the canonical reference for the editor — architecture, public API, security model, and every plugin. Two doc sets:
+
+1. **Architecture & general** (8 docs) — how the editor is built and how to use / extend it.
+2. **Per-plugin** (21 docs) — one README per shipped plugin, accurate to the current code.
 
 If you only need three docs to get started, read these in order:
 
-1. **[Public API](20-public-api.md)** — methods, events, options.
-2. **[Architecture](02-architecture.md)** — how core / commands / plugins fit together.
-3. **The plugin you'll use** — pick from the table below.
+1. [`07-public-api.md`](07-public-api.md) — methods, events, options.
+2. [`02-architecture.md`](02-architecture.md) — how core, commands, plugins fit together.
+3. The plugin you'll use — pick from the table further down.
+
+---
+
+## Architecture & general docs
+
+| # | Doc | Scope |
+|---|---|---|
+| 1 | [Overview](01-overview.md) | Product positioning, design goals, what's bundled, what's out of scope. |
+| 2 | [Architecture](02-architecture.md) | Layers, folder layout, init sequence, command flow, plugin registration flow. |
+| 3 | [Core Engine](03-core-engine.md) | Editor class, Selection, Commands, History, smart paste, block breakout, textarea sync. |
+| 4 | [Plugin System](04-plugin-system.md) | Plugin folder shape, registration contract, i18n/icon conventions, author rules, testing. |
+| 5 | [Security & Sanitization](05-security.md) | Sanitizer allowlist, `safeUrl()`, `stripUnsafeAttributes`, threat model, reporting issues. |
+| 6 | [UI System](06-ui-system.md) | Toolbar (responsive), Modal, FormModal, Dropdown, DropdownMenu, Tooltip, ColorPicker, FloatingUI, theming. |
+| 7 | [Public API](07-public-api.md) | Complete `penman.*` and `editor.*` surface, events catalog, plugin sub-APIs, versioning. |
+| 8 | [Roadmap & Limits](08-roadmap-and-limits.md) | What v0.1 ships, known limitations with concrete migration triggers, future ideas, stability commitments. |
+| — | [`cdn-example.html`](cdn-example.html) | Copy-paste demo of CDN usage (one `<script>` tag, no build step). |
 
 ---
 
@@ -40,49 +59,15 @@ Every plugin is self-contained: dropping `plugins: ['X']` into `penman.init()` i
 
 ---
 
-## Architecture & general docs
-
-These are conceptual / historical references. The plugin READMEs above are the up-to-date source of truth for runtime behaviour.
-
-| Doc | Scope |
-|---|---|
-| [00-overview.md](00-overview.md) | High-level pitch and feature matrix. |
-| [01-product-brief.md](01-product-brief.md) | Product goals: who is this editor for, what's in vs. out of scope. |
-| [02-architecture.md](02-architecture.md) | Folder layout, runtime layers, plugin lifecycle. |
-| [03-core-engine.md](03-core-engine.md) | `Editor` class internals, initialization phases. |
-| [04-selection-system.md](04-selection-system.md) | `SelectionManager` — save / restore / select node / cell-selection coordination. |
-| [05-command-system.md](05-command-system.md) | `CommandManager` — register / queryState / execute, fallback whitelist. |
-| [06-plugin-system.md](06-plugin-system.md) | How plugins register strings, icons, commands, toolbar items. |
-| [07-history-undo-redo.md](07-history-undo-redo.md) | Snapshot transactions, `pushImmediate`, debounced commits. |
-| [08-security-sanitization.md](08-security-sanitization.md) | The sanitizer allowlist, URL validation, defense-in-depth. |
-| [09-toolbar-ui.md](09-toolbar-ui.md) | Toolbar layout / overflow / multi-row rendering. |
-| [10-roadmap.md](10-roadmap.md) | What's shipped vs. planned. |
-| [11-developer-rules.md](11-developer-rules.md) | Code style, plugin authoring conventions. |
-| [12-implementation-plan.md](12-implementation-plan.md) | Original phased build plan (historical). |
-| [13-minimal-ir-architecture.md](13-minimal-ir-architecture.md) | The "minimal IR" concept that drove the design. |
-| [14-technical-debt-and-limitations.md](14-technical-debt-and-limitations.md) | Known limits, deliberately-not-fixed items. |
-| [15-new-plugins-spec.md](15-new-plugins-spec.md) | Historical spec — superseded by plugin READMEs. |
-| [16-find-replace-plugin-spec.md](16-find-replace-plugin-spec.md) | Original FindReplace spec — see plugin README for current state. |
-| [17-table-plugin-spec.md](17-table-plugin-spec.md) | Original Table spec — see plugin README for current state. |
-| [18-color-picker-spec.md](18-color-picker-spec.md) | Original ColorPicker spec — see plugin README + `src/ui/ColorPicker.js`. |
-| [19-image-plugin-spec.md](19-image-plugin-spec.md) | Original Image spec — see plugin README. |
-| [20-public-api.md](20-public-api.md) | The public surface: `penman.*`, `editor.*`, events. |
-| [21-responsive-toolbar-spec.md](21-responsive-toolbar-spec.md) | Overflow / wrap behaviour of the toolbar. |
-| [23-smart-paste-spec.md](23-smart-paste-spec.md) | URL paste → auto-link behaviour. |
-| [24-block-breakout-spec.md](24-block-breakout-spec.md) | Enter-to-exit behaviour inside blockquote / heading / code. |
-| [cdn-example.html](cdn-example.html) | Copy-paste demo of CDN usage (one `<script>` tag). |
-
----
-
-## Plugin doc template
+## Doc template (for new plugins)
 
 Every plugin README follows the same layout so consumers can scan quickly:
 
-1. **One-liner** — what it does and what it does NOT do.
+1. **One-liner** — what it does (and what it doesn't).
 2. **Activate** — minimal `penman.init(...)` snippet to turn it on.
 3. **What it registers** — table of commands, buttons, dropdowns, i18n namespace, icons.
 4. **Behaviour** — interesting runtime details (keyboard shortcuts, edge cases, security).
 5. **Options** — config table when the plugin reads from `editor.options`.
 6. **Boundaries** — explicit list of what's intentionally out of scope.
 
-If you're authoring a new plugin, copy the layout of any existing plugin README.
+If you're authoring a new plugin, copy the layout of any existing plugin README. The full author contract is in [`04-plugin-system.md`](04-plugin-system.md).
