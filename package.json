@@ -34,7 +34,8 @@
     "!**/__tests__/**",
     "!**/__mocks__/**",
     "!**/.gitkeep",
-    "!**/.DS_Store"
+    "!**/.DS_Store",
+    "!NPM_README.md"
   ],
   "scripts": {
     "dev": "vite",

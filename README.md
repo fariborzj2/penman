@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/penman-logo.png" alt="Penman" width="360" />
+  <img src="public/penman-logo.svg" alt="Penman" width="360" />
 </p>
 
 # Penman Editor
@@ -7,7 +7,7 @@
 A framework-agnostic, modular vanilla-JavaScript rich text editor (WYSIWYG) with first-class RTL/Persian support, dark mode, and a sanitizer-first content pipeline.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![npm](https://img.shields.io/badge/npm-v0.1.0-blue.svg)](https://www.npmjs.com/package/penman-editor)
+[![npm](https://img.shields.io/npm/v/penman-editor.svg)](https://www.npmjs.com/package/penman-editor)
 
 ## Highlights
 
@@ -16,7 +16,7 @@ A framework-agnostic, modular vanilla-JavaScript rich text editor (WYSIWYG) with
 - **Strict allowlist sanitizer** — every paste / `setContent` / source-view round-trip is filtered against a schema. `javascript:` / `vbscript:` / `data:text/*` URLs are stripped even with whitespace or case obfuscation.
 - **Dark mode** — `data-theme="dark"` attribute, system-preference fallback, and live theme switching (CodeMirror syntax tokens re-theme on the fly).
 - **RTL/Persian** — direction detection, ZWNJ-aware normalization, RTL-flipped icons, and Persian translations shipped with every plugin.
-- **20 built-in plugins** — bold/italic/underline/strikethrough, headings, block types, font size, lists, tables, images & gallery, embeds, media (video/audio), code blocks (CodeMirror + highlight.js), find/replace, markdown shortcuts, drafts (auto-save to IndexedDB/localStorage), source view, color picker, content audit, suggested posts, help dialog, and more.
+- **21 built-in plugins** — bold/italic/underline/strikethrough, headings, block types, font size, lists, tables, images & gallery, embeds, media (video/audio), code blocks (CodeMirror + highlight.js), find/replace, markdown shortcuts, drafts (auto-save to IndexedDB/localStorage), source view, color picker, content audit, suggested posts, help dialog, and more.
 - **Themed UI primitives** — `FormModal` (declarative form schema), `DropdownMenu` (items + search), `Tooltip` (shared service for all toolbar buttons), `ColorPicker`, `FloatingUI`.
 - **Selection / history managers** with snapshot transactions for atomic edits.
 - **Optional Node server** with safe upload handling (MIME allowlist, size cap, CORS allowlist).
@@ -172,6 +172,17 @@ Every HTML round-trip — paste, `setContent`, source view — passes through `S
 
 Additionally, `insertHTMLAtSelection` (used by paste, markdown auto-conversion, etc.) strips `on*` event-handler attributes and validates URL-bearing attributes via `safeUrl()` as a defense-in-depth layer.
 
+## Documentation
+
+Architecture, security model, public API, and per-plugin guides live in [`docs/`](docs/). Highlights:
+
+- [`docs/01-overview.md`](docs/01-overview.md) — product goals, what's bundled, what's out of scope.
+- [`docs/02-architecture.md`](docs/02-architecture.md) — layers, init sequence, command flow.
+- [`docs/04-plugin-system.md`](docs/04-plugin-system.md) — authoring contract, registration, testing.
+- [`docs/05-security.md`](docs/05-security.md) — sanitizer, URL validation, threat model.
+- [`docs/07-public-api.md`](docs/07-public-api.md) — complete `penman.*` and `editor.*` surface.
+- [`docs/README.md`](docs/README.md) — index with one-liners + links to every plugin's README.
+
 ## Server (optional)
 
 `server/server.js` ships a minimal Express server for image uploads with a MIME allowlist, configurable size cap, CORS allowlist, and environment-variable URL base.
@@ -187,6 +198,8 @@ npm run server
 ## Development
 
 ```bash
+git clone https://github.com/fariborzj2/penman.git
+cd penman
 npm install
 npm run dev            # vite dev server
 npm test               # unit tests (vitest)
@@ -200,7 +213,7 @@ Modern evergreen browsers (Chrome / Edge / Firefox / Safari ≥ 2 versions). Use
 
 ## Contributing
 
-Issues and pull requests are welcome at <https://github.com/fariborzj2/penman/issues>.
+Issues and pull requests are welcome at <https://github.com/fariborzj2/penman/issues>. Please read [`docs/04-plugin-system.md`](docs/04-plugin-system.md) before submitting plugin contributions — the author contract is non-negotiable for shipped plugins.
 
 ## License
 
