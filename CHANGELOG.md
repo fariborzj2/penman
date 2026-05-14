@@ -110,3 +110,8 @@ First public release.
 - README refreshed for v0.1 features.
 - `.gitignore` and `.npmignore` clean up working files from the published
   package and from git history.
+- **CDN distribution** — `dist/penman.umd.js` bundles CSS into JS via
+  `vite-plugin-css-injected-by-js`. A single `<script src=".../penman.umd.js">`
+  on jsDelivr / unpkg is enough to get a fully styled editor — no separate
+  stylesheet link. `package.json` exposes `unpkg`, `jsdelivr`, and `browser`
+  fields. `docs/cdn-example.html` ships a copy-paste demo.

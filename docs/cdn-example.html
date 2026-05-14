@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!--
+  Penman Editor — Minimal CDN Example
+  ===================================
+
+  This is the smallest possible page that gets you a fully working Penman
+  editor with toolbar, plugins, dark mode, and Persian/RTL support.
+
+  No build step, no npm install. Just open this file in a browser and start
+  editing.
+
+  In production, swap the version pin (@0.1.0) for a specific release so
+  your page never breaks if the editor publishes a backwards-incompatible
+  change. Don't use @latest in production.
+-->
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penman Editor — CDN demo</title>
+  <style>
+    body {
+      max-width: 860px;
+      margin: 40px auto;
+      padding: 0 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      color: #1e2a3a;
+      background: #f8fafc;
+    }
+    h1   { margin: 0 0 6px; font-size: 22px; }
+    p.lead { color: #64748b; margin: 0 0 24px; }
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: 0 4px 24px rgba(15, 23, 42, 0.06);
+    }
+    pre {
+      background: #0f172a;
+      color: #e2e8f0;
+      padding: 14px 16px;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.55;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Penman Editor — CDN demo</h1>
+  <p class="lead">One script tag. No npm. No CSS link. CSS auto-injects on load.</p>
+
+  <div class="card">
+    <textarea id="my-editor">
+      <h2>Hello, Penman!</h2>
+      <p>Try the toolbar — <strong>bold</strong>, <em>italic</em>, links, lists, tables, images, even a help dialog (toolbar button or <kbd>F1</kbd>).</p>
+    </textarea>
+  </div>
+
+  <h2 style="margin-top: 40px;">How to embed it</h2>
+  <pre><code>&lt;textarea id="my-editor"&gt;&lt;/textarea&gt;
+
+&lt;!-- jsDelivr (auto-mirrors npm) --&gt;
+&lt;script src="https://cdn.jsdelivr.net/npm/penman-editor@0.1.0/dist/penman.umd.js"&gt;&lt;/script&gt;
+
+&lt;!-- or unpkg --&gt;
+&lt;!-- &lt;script src="https://unpkg.com/penman-editor@0.1.0/dist/penman.umd.js"&gt;&lt;/script&gt; --&gt;
+
+&lt;script&gt;
+  const editor = penman.init({
+    selector: '#my-editor',
+    lang:    'en',
+    theme:   'auto',
+    plugins: ['format', 'list', 'blocktype', 'link', 'image', 'table', 'sourcecode', 'help'],
+    toolbar: 'bold italic underline | blocktype | bullist numlist | link image table | sourcecode help'
+  });
+&lt;/script&gt;</code></pre>
+
+  <!-- ───────────────── Actual CDN load ───────────────── -->
+  <!-- NOTE: in production replace @0.1.0 with your pinned version. -->
+  <script src="https://cdn.jsdelivr.net/npm/penman-editor@0.1.0/dist/penman.umd.js"></script>
+  <script>
+    penman.init({
+      selector: '#my-editor',
+      lang:    'en',
+      theme:   'auto',
+      plugins: [
+        'format', 'list', 'blocktype', 'fontsize', 'removeformat',
+        'link', 'image', 'media', 'embed', 'table', 'hr', 'findreplace',
+        'sourcecode', 'codeblock', 'color', 'direction', 'markdown',
+        'audit', 'help'
+      ],
+      toolbar: {
+        rows: [
+          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'table', 'sourcecode', 'help'],
+          ['bold', 'italic', 'underline', 'strikethrough', 'link', 'unlink',
+           'bullist', 'numlist', 'textcolor', 'highlight', 'removeformat']
+        ]
+      }
+    });
+  </script>
+
+</body>
+</html>

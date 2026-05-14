@@ -23,55 +23,70 @@ A framework-agnostic, modular vanilla-JavaScript rich text editor (WYSIWYG) with
 
 ## Installation
 
-```bash
-npm install penman-editor
-```
+### Option A — CDN (no build step)
 
-## Quick start
+The fastest way to try Penman. CSS is bundled into the JS, so a single
+`<script>` tag is enough.
 
 ```html
 <textarea id="my-editor"></textarea>
 
-<link rel="stylesheet" href="node_modules/penman-editor/src/styles/penman-ui.css">
-<link rel="stylesheet" href="node_modules/penman-editor/src/styles/penman-content.css">
+<!-- jsDelivr (auto-mirrors npm) -->
+<script src="https://cdn.jsdelivr.net/npm/penman-editor@0.1.0/dist/penman.umd.js"></script>
 
-<script type="module">
-  import penman from 'penman-editor';
+<!-- or unpkg -->
+<!-- <script src="https://unpkg.com/penman-editor@0.1.0/dist/penman.umd.js"></script> -->
 
+<script>
   const editor = penman.init({
     selector: '#my-editor',
-    lang: 'en',
-    theme: 'auto',
-    plugins: [
-      'format', 'list', 'blocktype', 'fontsize', 'link', 'image',
-      'media', 'embed', 'table', 'codeblock', 'sourcecode',
-      'markdown', 'findreplace', 'color', 'direction', 'help'
-    ],
-    toolbar: {
-      rows: [
-        ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'table', 'sourcecode', 'help'],
-        ['bold', 'italic', 'underline', 'strikethrough', 'link', 'unlink',
-         'justifyleft', 'justifycenter', 'justifyright', 'bullist', 'numlist', 'textcolor']
-      ]
-    }
+    lang:    'en',
+    theme:   'auto',
+    plugins: ['format', 'list', 'blocktype', 'link', 'image', 'table', 'sourcecode', 'help'],
+    toolbar: 'bold italic underline | blocktype | bullist numlist | link image table | sourcecode help'
   });
-
-  // Read / write
-  editor.setContent('<p>Hello, world.</p>');
-  const html = editor.getContent();
-
-  // Switch theme at runtime
-  editor.setTheme('dark');
 </script>
 ```
 
-Or via UMD build:
+> **Pin your version in production.** `@latest` makes it easy to break by
+> publishing — use a specific tag like `@0.1.0`.
 
-```html
-<script src="penman.umd.js"></script>
-<script>
-  const editor = penman.init({ selector: '#my-editor' });
-</script>
+A complete copy-paste example lives at
+[`docs/cdn-example.html`](docs/cdn-example.html).
+
+### Option B — npm
+
+```bash
+npm install penman-editor
+```
+
+```js
+import penman from 'penman-editor';     // CSS auto-injects on first load
+// or, if you prefer manual stylesheet handling:
+// import 'penman-editor/dist/penman.css';
+
+const editor = penman.init({
+  selector: '#my-editor',
+  lang: 'en',
+  theme: 'auto',
+  plugins: [
+    'format', 'list', 'blocktype', 'fontsize', 'link', 'image',
+    'media', 'embed', 'table', 'codeblock', 'sourcecode',
+    'markdown', 'findreplace', 'color', 'direction', 'help'
+  ],
+  toolbar: {
+    rows: [
+      ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'table', 'sourcecode', 'help'],
+      ['bold', 'italic', 'underline', 'strikethrough', 'link', 'unlink',
+       'justifyleft', 'justifycenter', 'justifyright', 'bullist', 'numlist', 'textcolor']
+    ]
+  }
+});
+
+editor.setContent('<p>Hello, world.</p>');
+const html = editor.getContent();
+
+editor.setTheme('dark');
 ```
 
 ## Public API
