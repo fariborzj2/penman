@@ -287,16 +287,29 @@ export function setupDraftPlugin(editor) {
     const draft = await manager.load();
     if (!draft) return;
 
-    const currentContent = editor.getContent();
+    // Determine the "server-rendered initial" state for comparison. We use
+    // textarea.defaultValue (the value baked into the original HTML) rather
+    // than textarea.value or editor.getContent(): both of those can be
+    // polluted by the browser's form auto-recovery on F5, which restores the
+    // textarea to whatever the user last typed. Comparing against the
+    // polluted value would silently treat the recovered text as "the
+    // server's version", make draft.content match it, and skip the banner —
+    // which is exactly the bug users hit: storage clearly contains a draft
+    // but the recovery UI never appears on reload.
+    const rawInitial = (editor.textarea && editor.textarea.defaultValue) || '';
+    const serverInitial = rawInitial.trim() || '<p></p>';
 
-    // Draft is byte-for-byte identical to current editor state → nothing to recover
-    if (draft.content === currentContent) {
-      manager.seedBaseContent(currentContent);
+    // Draft is byte-for-byte identical to what the server originally sent
+    // down → there's nothing to recover. Note we deliberately don't fall
+    // back to comparing against the current editor content; see comment
+    // above.
+    if (draft.content === serverInitial) {
+      manager.seedBaseContent(editor.getContent());
       return;
     }
 
-    // Server content comparison — if a server version was provided, skip recovery
-    // when the server version is at least as recent as the draft.
+    // Server content comparison — if a server version was provided, skip
+    // recovery when the server version is at least as recent as the draft.
     if (cfg.serverContent !== null && typeof draft.lastSavedAt === 'number') {
       if (draft.lastSavedAt <= cfg.serverTs) {
         await manager.remove();
