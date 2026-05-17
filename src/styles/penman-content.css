@@ -99,7 +99,7 @@
 .penman-editor-area h4,
 .penman-editor-area h5,
 .penman-editor-area h6 {
-  margin: 1.4em 0 0.5em 0;
+  margin: 0.5em 0 0.5em 0;
   line-height: 1.3;
   color: var(--pmc-heading);
   font-weight: 700;
