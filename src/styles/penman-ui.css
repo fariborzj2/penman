@@ -1445,6 +1445,16 @@
 
 .penman-codeblock-figure .cb-gutter {
   flex: 0 0 auto;
+  /* Stack the line-number spans vertically as a hard structural rule rather
+   * than relying on each span's `display: block`. Host pages can ship CSS
+   * resets that re-set spans to `display: inline` with higher specificity
+   * (or before our injected styles land), and the symptom is all the
+   * numbers collapsing into one row like "1234567". A flex column on the
+   * parent makes each child its own row regardless of the child's display
+   * value, so the layout can't be undone from outside. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
   min-width: 38px;
   padding: 12px 8px 12px 10px;
   background: var(--cb-bg-gutter);
@@ -1479,8 +1489,14 @@
   user-select: none;
 }
 .penman-codeblock-figure .cb-ln {
+  /* `display: block` is kept as a belt-and-braces — the parent's flex
+   * column already forces each .cb-ln onto its own row, but if the host
+   * page somehow detaches the gutter from flex (e.g. wraps it), the
+   * spans still stack instead of running together. */
   display: block;
+  flex: 0 0 auto;
   height: 1.65em;
+  line-height: 1.65em;
   pointer-events: none;
 }
 

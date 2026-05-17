@@ -487,9 +487,21 @@ function updateGutter(figure) {
   // Only rebuild when the line count actually changed.
   if (gutter.__cbCount === count) return;
   gutter.__cbCount = count;
-  let html = '';
-  for (let i = 1; i <= count; i++) html += `<span class="cb-ln">${i}</span>`;
-  gutter.innerHTML = html;
+
+  // Build with real DOM nodes rather than an innerHTML string. innerHTML
+  // can run through host-page input filters / mutation observers / theme
+  // engines that occasionally merge adjacent inline elements; constructing
+  // each <span> as its own element node keeps them structurally distinct
+  // and immune to that class of side-effect.
+  gutter.textContent = '';
+  const frag = document.createDocumentFragment();
+  for (let i = 1; i <= count; i++) {
+    const ln = document.createElement('span');
+    ln.className = 'cb-ln';
+    ln.textContent = String(i);
+    frag.appendChild(ln);
+  }
+  gutter.appendChild(frag);
 }
 
 // Find every codeblock-shaped node and run hydrate() on it. Also wraps
