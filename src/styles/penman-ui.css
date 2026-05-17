@@ -392,7 +392,7 @@
   width: calc(100% - 16px);
   margin: 0 8px 6px 8px !important;
   font-family: inherit;
-  direction: ltr;
+  direction: auto;
   padding: 6px 10px;
   background: var(--pm-bg);
   color: var(--pm-text);
