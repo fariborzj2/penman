@@ -285,31 +285,30 @@ export function setupDraftPlugin(editor) {
 
   async function checkForExistingDraft() {
     const draft = await manager.load();
+
+    // Diagnostic log — visible in the browser console so the user can verify
+    // the load result without instrumenting their own build. Cheap and one-
+    // shot (only fires on plugin init).
+    try {
+      // eslint-disable-next-line no-console
+      console.info('[Penman/Draft] checkForExistingDraft', {
+        documentId,
+        storageKey: manager.storageKey,
+        hasDraft: !!draft,
+        draftLength: draft && draft.content ? draft.content.length : 0,
+        draftSavedAt: draft && draft.lastSavedAt
+          ? new Date(draft.lastSavedAt).toISOString()
+          : null
+      });
+    } catch (_) { /* noop */ }
+
     if (!draft) return;
 
-    // Determine the "server-rendered initial" state for comparison. We use
-    // textarea.defaultValue (the value baked into the original HTML) rather
-    // than textarea.value or editor.getContent(): both of those can be
-    // polluted by the browser's form auto-recovery on F5, which restores the
-    // textarea to whatever the user last typed. Comparing against the
-    // polluted value would silently treat the recovered text as "the
-    // server's version", make draft.content match it, and skip the banner —
-    // which is exactly the bug users hit: storage clearly contains a draft
-    // but the recovery UI never appears on reload.
-    const rawInitial = (editor.textarea && editor.textarea.defaultValue) || '';
-    const serverInitial = rawInitial.trim() || '<p></p>';
-
-    // Draft is byte-for-byte identical to what the server originally sent
-    // down → there's nothing to recover. Note we deliberately don't fall
-    // back to comparing against the current editor content; see comment
-    // above.
-    if (draft.content === serverInitial) {
-      manager.seedBaseContent(editor.getContent());
-      return;
-    }
-
-    // Server content comparison — if a server version was provided, skip
-    // recovery when the server version is at least as recent as the draft.
+    // Server content comparison — if the host explicitly provided a known
+    // server-side timestamp AND content, skip recovery when the server
+    // version is at least as recent as the draft. This is the only
+    // "suppress banner" path we keep, because it's explicitly opted into
+    // by the integrating app (it knows when a publish landed).
     if (cfg.serverContent !== null && typeof draft.lastSavedAt === 'number') {
       if (draft.lastSavedAt <= cfg.serverTs) {
         await manager.remove();
@@ -317,7 +316,24 @@ export function setupDraftPlugin(editor) {
       }
     }
 
-    // Show recovery UI — do NOT auto-restore.
+    // Show the recovery banner whenever a draft is present. We used to
+    // compare draft.content against the current editor state and short-
+    // circuit on a match — but that comparison was fragile in three
+    // different ways:
+    //   1. Browsers (Chrome / Firefox F5) auto-restore <textarea> values
+    //      across reloads, so the "current" content was actually the
+    //      previously-typed user content, making it equal to the draft
+    //      and suppressing the banner.
+    //   2. textarea.defaultValue (the HTML-baked initial value) and the
+    //      saved draft.content differ in whitespace / attribute order /
+    //      browser-specific normalisation — no comparison is byte-stable.
+    //   3. getContent() now strips runtime chrome that draft.content
+    //      (saved from raw innerHTML) still contains, so they almost
+    //      never match for non-trivial documents.
+    // Showing the banner unconditionally when a draft exists is the
+    // only behaviour that's reliable across all of those conditions.
+    // Hosts that need finer control should call `editor.draft.clear()`
+    // after a successful save / publish, or pass `draftServerTimestamp`.
     showRecoveryBanner(draft);
   }
 
