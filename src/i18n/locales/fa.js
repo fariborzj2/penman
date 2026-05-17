@@ -14,10 +14,10 @@ export default {
     strikethrough: 'خط‌خورده',
     superscript: 'بالانویس',
     subscript: 'پایین‌نویس',
-    justifyLeft: 'چپ‌چین',
-    justifyCenter: 'وسط‌چین',
-    justifyRight: 'راست‌چین',
-    justifyFull: 'تراز کامل'
+    justifyleft: 'چپ‌چین',
+    justifycenter: 'وسط‌چین',
+    justifyright: 'راست‌چین',
+    justifyfull: 'تراز کامل'
   },
 
   // UI Elements

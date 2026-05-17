@@ -19,6 +19,7 @@ import { setupMarkdownPlugin } from './MarkdownPlugin/index.js';
 import { setupEmbedPlugin } from './EmbedPlugin/index.js';
 import { setupContentAuditPlugin } from './ContentAuditPlugin/index.js';
 import { setupHelpPlugin } from './HelpPlugin/index.js';
+import { setupBidiIsolatePlugin } from './BidiIsolatePlugin/index.js';
 import { logger } from '../utils/logger.js';
 
 export const PluginManager = {
@@ -43,7 +44,8 @@ export const PluginManager = {
     markdown: setupMarkdownPlugin,
     embed: setupEmbedPlugin,
     audit: setupContentAuditPlugin,
-    help: setupHelpPlugin
+    help: setupHelpPlugin,
+    bidiisolate: setupBidiIsolatePlugin
   },
 
   add(name, setup) {

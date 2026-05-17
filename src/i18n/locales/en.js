@@ -14,10 +14,10 @@ export default {
     strikethrough: 'Strikethrough',
     superscript: 'Superscript',
     subscript: 'Subscript',
-    justifyLeft: 'Align Left',
-    justifyCenter: 'Align Center',
-    justifyRight: 'Align Right',
-    justifyFull: 'Justify'
+    justifyleft: 'Align Left',
+    justifycenter: 'Align Center',
+    justifyright: 'Align Right',
+    justifyfull: 'Justify'
   },
 
   // UI Elements

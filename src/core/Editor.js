@@ -587,6 +587,13 @@ export class Editor extends EventEmitter {
           if (remainingText.length === 0) {
             e.preventDefault();
             const p = document.createElement('p');
+            // Propping BR: an empty <p> collapses to zero height in every
+            // major browser, so without this the new paragraph would be
+            // invisible and the cursor would appear to "snap back" to the
+            // end of the previous block. The BR gives the line a measurable
+            // height; setStart(p, 0) then lands *before* the BR, which is
+            // what users perceive as the cursor sitting on a new line.
+            p.innerHTML = '<br>';
             if (blockNode.nextSibling) {
               blockNode.parentNode.insertBefore(p, blockNode.nextSibling);
             } else {
@@ -739,8 +746,15 @@ export class Editor extends EventEmitter {
     clone.querySelectorAll('*').forEach(el => {
       internalAttrs.forEach(attr => el.removeAttribute(attr));
       internalClasses.forEach(cls => el.classList.remove(cls));
-      // Remove empty class attributes left behind
-      if (el.hasAttribute('class') && el.className.trim() === '') {
+      // Remove empty class attributes left behind.
+      //
+      // IMPORTANT: read via getAttribute, not el.className. On SVG
+      // elements `className` is an SVGAnimatedString (object) — calling
+      // `.trim()` on it throws. Inline SVG icons inside the editor body
+      // (used by several plugins) used to crash this path on first
+      // getContent. Strings via getAttribute work for both HTML and SVG.
+      const classAttr = el.getAttribute('class');
+      if (classAttr !== null && classAttr.trim() === '') {
         el.removeAttribute('class');
       }
     });

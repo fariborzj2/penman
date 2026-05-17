@@ -133,8 +133,30 @@ export function setupDraftPlugin(editor) {
   manager.seedBaseContent(editor.getContent());
 
   // ── Status bar ────────────────────────────────────────────────────────────
+  //
+  // The status DOM element is updated *via a state machine*, not on every
+  // keystroke. We track the current displayed state in `statusState` and
+  // only touch the DOM when that state actually changes. This is the
+  // single biggest reason the previous implementation felt laggy: it was
+  // rewriting textContent + className on every input event, which forces
+  // style recalc/paint on each character.
   let statusEl    = null;
   let statusTimer = null;
+  let statusState = 'idle'; // 'idle' | 'saving' | 'saved'
+
+  // i18n strings — read once at setup, refreshed lazily if language changes.
+  // i18n.t() can return the key itself when missing; we keep a safe fallback.
+  function t(key, fallback) {
+    if (!editor.i18n) return fallback;
+    const v = editor.i18n.t(key);
+    return v && v !== key ? v : fallback;
+  }
+  let labels = {
+    saving:    t('plugins.draft.saving',     'Saving…'),
+    saved:     t('plugins.draft.draftSaved', 'Draft saved'),
+    restored:  t('plugins.draft.draftRestored', 'Draft restored'),
+    discarded: t('plugins.draft.draftDiscarded', 'Draft discarded')
+  };
 
   function mountStatusBar() {
     if (!editor.footer) return;
@@ -143,16 +165,47 @@ export function setupDraftPlugin(editor) {
     editor.footer.appendChild(statusEl);
   }
 
-  function setStatus(text, cssClass = '', autoHideMs = 4000) {
+  // Render the current status into the DOM. Pure: no-op if nothing changed,
+  // so it's cheap to call repeatedly. autoHideMs schedules a transition back
+  // to 'idle' after the given delay (used for transient "saved" toasts).
+  function renderStatus(nextState, autoHideMs = 0) {
     if (!statusEl) return;
+    if (statusState === nextState) return; // skip DOM write — same state
+    statusState = nextState;
+
+    if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+
+    if (nextState === 'saving') {
+      statusEl.textContent = labels.saving;
+      statusEl.className = 'penman-draft-status pds-saving';
+    } else if (nextState === 'saved') {
+      statusEl.textContent = labels.saved;
+      statusEl.className = 'penman-draft-status pds-saved';
+    } else { // idle
+      statusEl.textContent = '';
+      statusEl.className = 'penman-draft-status';
+    }
+
+    if (autoHideMs > 0) {
+      statusTimer = setTimeout(() => {
+        statusTimer = null;
+        renderStatus('idle');
+      }, autoHideMs);
+    }
+  }
+
+  // Convenience for one-shot toast messages (used by recovery/discard flow,
+  // which doesn't fit the saving/saved state machine).
+  function flashMessage(text, cssClass = '', autoHideMs = 4000) {
+    if (!statusEl) return;
+    statusState = 'flash';
     if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
     statusEl.textContent = text;
     statusEl.className = `penman-draft-status${cssClass ? ` ${cssClass}` : ''}`;
     if (autoHideMs > 0) {
       statusTimer = setTimeout(() => {
-        statusEl.textContent = '';
-        statusEl.className = 'penman-draft-status';
         statusTimer = null;
+        renderStatus('idle');
       }, autoHideMs);
     }
   }
@@ -215,7 +268,7 @@ export function setupDraftPlugin(editor) {
       if (editor.history) editor.history.pushImmediate();
       manager.seedBaseContent(draft.content);
       removeBanner();
-      setStatus(editor.i18n.t('plugins.draft.draftRestored'), 'pds-saved');
+      flashMessage(labels.restored, 'pds-saved');
       if (typeof cfg.onRestore === 'function') cfg.onRestore(draft);
     });
 
@@ -223,7 +276,7 @@ export function setupDraftPlugin(editor) {
       await manager.remove();
       manager.seedBaseContent(editor.getContent());
       removeBanner();
-      setStatus(editor.i18n.t('plugins.draft.draftDiscarded'));
+      flashMessage(labels.discarded);
       if (typeof cfg.onDiscard === 'function') cfg.onDiscard(draft);
     });
   }
@@ -256,25 +309,59 @@ export function setupDraftPlugin(editor) {
   }
 
   // ── Auto-save on content change ───────────────────────────────────────────
-  // The `change` event receives the current HTML string as its first argument.
+  //
+  // Performance contract: this handler runs on every `change` (i.e. every
+  // input event). It MUST stay cheap. Everything that's non-trivial — DOM
+  // writes, i18n lookups, getContent() — moves out of the hot path:
+  //
+  //   • Status DOM is touched at most twice per save cycle (saving → saved),
+  //     not once per keystroke.
+  //   • The latest content reference is kept in a closure variable so we
+  //     don't need to read it again at save-time.
+  //   • The "saved" transition fires from a single trailing timer that we
+  //     don't reset on every keystroke — only when typing actually pauses.
+  //
+  // The DraftManager already debounces writes; we just trust it.
+  let latestContent      = null;
+  let latestTitle        = '';
+  let savedToastTimer    = null;  // schedules the "saved" toast after debounce
+  let pendingSavedEmit   = false; // gate the onSave callback to once per cycle
 
   function onEditorChange(content) {
-    if (!content || !content.trim()) return;
+    // Cheap guard — avoid full string trim. `content` is the editor's
+    // innerHTML; empty editors emit '<p><br></p>' which is truthy but
+    // semantically empty. The DraftManager handles its own min-length
+    // check, so we only short-circuit on falsy/blank to skip needless work.
+    if (!content) return;
 
-    const title = cfg.getTitle();
-    setStatus(editor.i18n.t('plugins.draft.saving'), 'pds-saving', 0);
+    latestContent = content;
+    // getTitle() may do its own DOM work; users supplying a heavy callback
+    // shouldn't pay for it on every keystroke either. We snapshot lazily
+    // (once per "saving" state entry) to keep the hot path trivial.
+    if (statusState !== 'saving') {
+      latestTitle = cfg.getTitle();
+      renderStatus('saving');
+      pendingSavedEmit = true;
+    }
 
-    manager.scheduleSave(content, title);
+    // Schedule the actual storage write. DraftManager debounces internally,
+    // so this is just a timer reset — O(1).
+    manager.scheduleSave(latestContent, latestTitle);
 
-    // Update status after the debounce window has elapsed
-    if (statusTimer) clearTimeout(statusTimer);
-    statusTimer = setTimeout(() => {
-      statusTimer = null;
-      setStatus(editor.i18n.t('plugins.draft.draftSaved'), 'pds-saved');
-      if (typeof cfg.onSave === 'function') {
-        cfg.onSave({ content: editor.getContent(), documentId });
+    // Schedule the "saved" toast / onSave callback exactly once per pause.
+    // Resetting this timer on every keystroke is cheap (clear+set), and the
+    // toast only ever paints when typing actually stops for `debounceDelay`.
+    if (savedToastTimer) clearTimeout(savedToastTimer);
+    savedToastTimer = setTimeout(() => {
+      savedToastTimer = null;
+      renderStatus('saved', 4000);
+      if (pendingSavedEmit && typeof cfg.onSave === 'function') {
+        pendingSavedEmit = false;
+        // Use latestContent (already in hand) instead of calling
+        // editor.getContent(), which clones the whole subtree.
+        cfg.onSave({ content: latestContent, documentId });
       }
-    }, cfg.debounceDelay + 150);
+    }, cfg.debounceDelay + 100);
   }
 
   editor.on('change', onEditorChange);
@@ -284,7 +371,8 @@ export function setupDraftPlugin(editor) {
   editor.on('destroy', () => {
     manager.destroy();
     removeBanner();
-    if (statusTimer) { clearTimeout(statusTimer); statusTimer = null; }
+    if (statusTimer)     { clearTimeout(statusTimer);     statusTimer = null; }
+    if (savedToastTimer) { clearTimeout(savedToastTimer); savedToastTimer = null; }
     if (statusEl && statusEl.parentNode) statusEl.parentNode.removeChild(statusEl);
   });
 

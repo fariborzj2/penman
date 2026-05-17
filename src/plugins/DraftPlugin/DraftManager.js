@@ -117,16 +117,51 @@ export class DraftManager {
   /**
    * Schedule a debounced save. Multiple calls within the debounce window
    * collapse into a single write — the most recent content wins.
+   *
+   * Performance note: when the debounce timer fires, the actual write is
+   * deferred again via requestIdleCallback (with a setTimeout fallback) so
+   * the storage hit — JSON.stringify, Blob size estimate, IDB transaction
+   * or localStorage write — never lands in the same task as a keystroke
+   * or paint. Typing with a multi-MB document stays smooth because the
+   * browser gets to render between "you typed" and "we persisted".
+   *
    * @param {string} content
    * @param {string} [title]
    */
   scheduleSave(content, title = '') {
     if (this._destroyed) return;
     this._clearTimer();
-    this._debounceTimer = setTimeout(async () => {
+    this._debounceTimer = setTimeout(() => {
       this._debounceTimer = null;
-      await this.save(content, title);
+      this._idleSave(content, title);
     }, this._debounceDelay);
+  }
+
+  /**
+   * Run save() during the next idle window so we never block the UI.
+   * Uses a 1s deadline as the upper bound — well past any reasonable
+   * frame budget but bounded so a permanently-busy main thread doesn't
+   * starve the draft.
+   * @private
+   */
+  _idleSave(content, title) {
+    if (this._destroyed) return;
+    const run = () => {
+      if (this._destroyed) return;
+      // We intentionally do not await: save() handles its own errors and
+      // we don't want to keep the idle callback alive across an async
+      // boundary that might span multiple frames.
+      this.save(content, title);
+    };
+    if (typeof requestIdleCallback === 'function') {
+      try {
+        requestIdleCallback(run, { timeout: 1000 });
+        return;
+      } catch (_) { /* fall through */ }
+    }
+    // Fallback: defer with a microtask-ish setTimeout(0). Still off the
+    // current task, which is what matters for typing perf.
+    setTimeout(run, 0);
   }
 
   /**

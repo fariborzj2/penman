@@ -200,7 +200,11 @@ export function setupTablePlugin(editor) {
   const tableMenu = new TableMenu(editor);
 
   editor.ui.registry.addDropdown('table', {
-      text: '', // No text, just icon as per standard toolbars
+      // `text` is what UIManager uses for the tooltip / aria-label. We still
+      // want the icon (not the text) to be visible on the button, so we pass
+      // `icon` explicitly to bypass the text-as-icon fallback in UIManager.
+      text: editor.i18n.t('plugins.table.title'),
+      icon: editor.ui.iconProvider.getIcon('table'),
       content: tableMenu.getHTML(),
       onOpen: (dropdown) => {
           // Save selection so it isn't lost when interacting with the dropdown
