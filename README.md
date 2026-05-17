@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/penman-logo.svg" alt="Penman" width="360" />
+  <img src="public/penman-logo.png" alt="Penman" width="360" />
 </p>
 
 # Penman Editor
