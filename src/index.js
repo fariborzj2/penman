@@ -7,8 +7,13 @@ import './styles/penman-content.css';
 // Registry for instance management
 const instances = new Map();
 
-// Global defaults for configuration
-export const penmanDefaults = {
+// Global defaults for configuration.
+//
+// Kept as a module-private constant rather than a named export so the UMD
+// bundle can use `output.exports: 'default'` (which forbids mixing default
+// and named exports). Consumers can still read these defaults via
+// `penman.defaults` on the exported object.
+const penmanDefaults = {
   plugins: [],
   toolbar: '',
   blockTypes: [

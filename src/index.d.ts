@@ -94,6 +94,6 @@ export interface PenmanAPI {
 
 declare const penman: PenmanAPI;
 export default penman;
-
-/** Default options exported separately for convenience. */
-export const penmanDefaults: EditorOptions;
+// Defaults are accessible at runtime via `penman.defaults`. The named export
+// was removed so the UMD build can attach `penman` directly to `window.penman`
+// (Rollup's `output.exports: 'default'` forbids mixing default + named).

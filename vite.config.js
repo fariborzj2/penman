@@ -54,7 +54,13 @@ export default defineConfig({
     rollupOptions: {
       output: {
         // Bundle is self-contained — no externals (no peer deps to mark).
-        globals: {}
+        globals: {},
+        // src/index.js uses `export default penman`. Without this, the UMD
+        // bundle attaches `{ default: penman }` to `window.penman`, forcing
+        // CDN users to write `penman.default.init(...)`. Setting exports to
+        // 'default' makes `window.penman` *be* the penman object, so
+        // `penman.init(...)` works as documented.
+        exports: 'default'
       }
     }
   },

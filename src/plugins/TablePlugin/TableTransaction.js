@@ -230,8 +230,8 @@ export class TableTransaction {
         td.setAttribute('data-cell-id', data.id);
         if (data.rs > 1) td.setAttribute('rowspan', data.rs);
         if (data.cs > 1) td.setAttribute('colspan', data.cs);
-        td.style.border = anchorNode.style.border || '1px solid #ccc';
-        td.style.padding = anchorNode.style.padding || '5px';
+        td.style.border = anchorNode.style.border || '';
+        td.style.padding = anchorNode.style.padding || '';
         td.innerHTML = '<p><br></p>';
 
         let inserted = false;
@@ -381,10 +381,6 @@ export class TableTransaction {
         const tableBorderColor = this.table.getAttribute('bordercolor') || '';
         const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
 
-        td.style.borderWidth = tableBorder + 'px';
-        td.style.borderStyle = 'solid';
-        td.style.borderColor = tableBorderColor;
-        td.style.padding = tableCellPadding + 'px';
         td.innerHTML = '<p><br></p>';
 
         newTr.appendChild(td);
@@ -501,10 +497,6 @@ export class TableTransaction {
         const tableBorderColor = this.table.getAttribute('bordercolor') || '#ccc';
         const tableCellPadding = this.table.getAttribute('cellpadding') || '5';
 
-        td.style.borderWidth = tableBorder + 'px';
-        td.style.borderStyle = 'solid';
-        td.style.borderColor = tableBorderColor;
-        td.style.padding = tableCellPadding + 'px';
         td.innerHTML = '<p><br></p>';
 
         const tr = this.table.querySelectorAll('tr')[r];

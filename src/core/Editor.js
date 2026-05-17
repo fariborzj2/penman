@@ -9,6 +9,38 @@ import { I18nManager } from '../i18n/I18nManager.js';
 import { setLoggerEnabled } from '../utils/logger.js';
 import { insertHTMLAtSelection, alignBlocks, isAlignmentActive } from '../utils/domCommands.js';
 
+/**
+ * Extract the raw source text from a <code> element inside a hydrated code
+ * block. The hydrated DOM substitutes <br data-penman-ui="true"> for each
+ * newline (so the visual line count matches the gutter), which is why a
+ * plain .textContent read would silently drop every line break. We walk the
+ * tree ourselves so the saved source is byte-identical to what the user
+ * typed.
+ */
+function extractCodeText(codeNode) {
+  let out = '';
+  const walk = (n) => {
+    if (n.nodeType === Node.TEXT_NODE) {
+      out += n.nodeValue;
+      return;
+    }
+    if (n.nodeType === Node.ELEMENT_NODE) {
+      const tag = n.tagName.toLowerCase();
+      if (tag === 'br') {
+        // The final propping BR is structural — drop it. Internal BRs
+        // represent real newlines and must be preserved.
+        const isTrailing = n.getAttribute('data-penman-ui') === 'true'
+                        && n === n.parentNode.lastChild;
+        if (!isTrailing) out += '\n';
+        return;
+      }
+      for (const child of n.childNodes) walk(child);
+    }
+  };
+  for (const child of codeNode.childNodes) walk(child);
+  return out;
+}
+
 export class Editor extends EventEmitter {
   constructor(options) {
     super();
@@ -627,6 +659,23 @@ export class Editor extends EventEmitter {
 
     // 4. Intercept paste to prevent un-sanitized and history-polluting native pastes
     this.editableArea.addEventListener('paste', this._boundHandlers.paste);
+
+    // 5. Right before the host form submits, replace the textarea's live
+    //    innerHTML mirror with the cleaned-up getContent() output. This is
+    //    what ends up persisted in the database, so it must NOT contain
+    //    runtime chrome (codeblock header buttons, gutter line numbers,
+    //    syntax-highlight spans, contenteditable flags, etc.). We bind on
+    //    'submit' in the capture phase so we run before any user-attached
+    //    submit handlers — they get the clean value when they read
+    //    textarea.value or FormData.
+    if (this.textarea && this.textarea.form) {
+      this._boundHandlers.formSubmit = () => {
+        try {
+          this.textarea.value = this.getContent();
+        } catch (_) { /* never block form submission on serialisation error */ }
+      };
+      this.textarea.form.addEventListener('submit', this._boundHandlers.formSubmit, true);
+    }
   }
 
   /**
@@ -672,6 +721,14 @@ export class Editor extends EventEmitter {
   }
 
   _syncToTextarea() {
+    // Hot-path sync. Kept cheap (raw innerHTML, no clone) because this runs
+    // on every input event. The raw innerHTML includes runtime chrome —
+    // codeblock header buttons, line-number gutter, syntax-highlight spans,
+    // contenteditable flags — which is fine for live form libraries that
+    // watch textarea.value (they typically re-serialise themselves), but
+    // would be wrong to actually persist. Right before the host form
+    // submits we overwrite textarea.value with the cleaned-up
+    // getContent() output via the submit-time hook in _bindEvents().
     this.textarea.value = this.editableArea.innerHTML;
   }
 
@@ -741,7 +798,33 @@ export class Editor extends EventEmitter {
     const internalClasses = [
       'penman-selected-node',
       'penman-cell-selected',
+      // TablePlugin's multi-cell selection corner handles are tagged with
+      // the parent cell using this class; the handle <div>s themselves are
+      // removed below (separate pass) because we need to drop the whole
+      // node, not just a class.
+      // ContentAuditPlugin briefly adds .penman-audit-flash to a node when
+      // the user clicks an audit issue in the modal — purely visual,
+      // removed by a setTimeout 1500ms later. If the form happens to be
+      // submitted in that window the class would otherwise leak into the
+      // saved HTML.
+      'penman-audit-flash',
     ];
+
+    // Runtime-only UI children that some plugins inject inside the editable
+    // area while interactive state is active. They get rebuilt the next
+    // time the user enters that state, so we strip them on serialise. Any
+    // future plugin that injects ephemeral chrome inside editableArea
+    // should either add itself here or use one of the marker classes above.
+    const runtimeOnlySelectors = [
+      // TablePlugin: corner handles on multi-cell selection boundary cells.
+      '.penman-cell-handle-tl',
+      '.penman-cell-handle-tr',
+      '.penman-cell-handle-bl',
+      '.penman-cell-handle-br',
+    ];
+    runtimeOnlySelectors.forEach(sel => {
+      clone.querySelectorAll(sel).forEach(node => node.remove());
+    });
 
     clone.querySelectorAll('*').forEach(el => {
       internalAttrs.forEach(attr => el.removeAttribute(attr));
@@ -757,6 +840,48 @@ export class Editor extends EventEmitter {
       if (classAttr !== null && classAttr.trim() === '') {
         el.removeAttribute('class');
       }
+    });
+
+    // Code-block figures carry a lot of *runtime-only* DOM that has no
+    // business in the persisted output: the .cb-header (with Format/Copy/
+    // Delete buttons), the .cb-body wrapper, the .cb-gutter line numbers,
+    // the syntax-highlighting <span> tokens inside <code>, and the
+    // propping <br data-penman-ui> at the end of <code>. We rebuild each
+    // figure as just <figure><pre><code>…</code></pre></figure> with the
+    // raw source text — exactly the shape we sanitize back into on
+    // setContent() and that CodeBlockPlugin.hydrate() then re-decorates.
+    clone.querySelectorAll('figure[data-kind="codeblock"]').forEach(fig => {
+      const liveCode = fig.querySelector('code');
+      const lang = fig.getAttribute('data-language')
+                || (liveCode && liveCode.getAttribute('data-language'))
+                || 'javascript';
+
+      // Reconstruct the canonical persisted shape.
+      const newPre = document.createElement('pre');
+      newPre.className = 'penman-codeblock';
+      newPre.setAttribute('dir', 'ltr');
+
+      const newCode = document.createElement('code');
+      newCode.className = `code-block lang-${lang}`;
+      newCode.setAttribute('data-language', lang);
+      newCode.setAttribute('dir', 'ltr');
+
+      // Pull the raw source. We deliberately use a text-with-newlines walk
+      // rather than .textContent because the highlight DOM substitutes a
+      // <br data-penman-ui> for each '\n', and .textContent would collapse
+      // those into the empty string for BR elements. extractCodeText()
+      // mirrors the logic used during live editing so what gets saved is
+      // byte-identical to what the user typed.
+      newCode.textContent = liveCode ? extractCodeText(liveCode) : '';
+
+      newPre.appendChild(newCode);
+
+      // Wipe the figure and replace with the cleaned-up structure. We
+      // intentionally keep data-kind / data-language on the figure so the
+      // sanitizer round-trip + hydrate() can identify it next time.
+      while (fig.firstChild) fig.removeChild(fig.firstChild);
+      fig.appendChild(newPre);
+      fig.setAttribute('data-language', lang);
     });
 
     return clone.innerHTML;
@@ -1133,6 +1258,10 @@ export class Editor extends EventEmitter {
       // keydown is registered inline in _bindEvents — find and remove via stored ref
       if (this._boundHandlers.keydown) {
         this.editableArea.removeEventListener('keydown', this._boundHandlers.keydown);
+      }
+      // Form-submit hook lives on the host <form>, not the editable area.
+      if (this._boundHandlers.formSubmit && this.textarea && this.textarea.form) {
+        this.textarea.form.removeEventListener('submit', this._boundHandlers.formSubmit, true);
       }
     }
     this._boundHandlers = null;
