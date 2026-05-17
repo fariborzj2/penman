@@ -42,12 +42,30 @@ export class DraftStorage {
   // ─── IndexedDB layer ─────────────────────────────────────────────────────
 
   _openIDB() {
-    if (this._db) return Promise.resolve(this._db);
+    if (this._db) {
+      // Defensive: a previously-cached db connection may be missing our
+      // object store (older build of the plugin opened it without one, or
+      // an external tool deleted the store). Force a reopen so the upgrade
+      // path runs and the store gets recreated.
+      if (this._db.objectStoreNames.contains(IDB_STORE_NAME)) {
+        return Promise.resolve(this._db);
+      }
+      try { this._db.close(); } catch (_) { /* noop */ }
+      this._db = null;
+      this._dbPromise = null;
+    }
     if (this._dbPromise) return this._dbPromise;
 
-    this._dbPromise = new Promise((resolve, reject) => {
+    this._dbPromise = this._openIDBAt(IDB_DB_VERSION);
+    return this._dbPromise;
+  }
+
+  // Open at a specific version. Kept separate so we can re-try at version+1
+  // if we discover the existing database doesn't have our store.
+  _openIDBAt(version) {
+    return new Promise((resolve, reject) => {
       try {
-        const req = indexedDB.open(IDB_DB_NAME, IDB_DB_VERSION);
+        const req = indexedDB.open(IDB_DB_NAME, version);
 
         req.onupgradeneeded = (e) => {
           const db = e.target.result;
@@ -57,7 +75,21 @@ export class DraftStorage {
         };
 
         req.onsuccess = (e) => {
-          this._db = e.target.result;
+          const db = e.target.result;
+          // The database might already exist at this version *without* our
+          // object store — this happens when an older build of the plugin
+          // (or a partially-failed upgrade) left the db in a broken state.
+          // Detect it here and force a one-shot upgrade to the next
+          // version, which re-runs onupgradeneeded and creates the store.
+          if (!db.objectStoreNames.contains(IDB_STORE_NAME)) {
+            const nextVersion = db.version + 1;
+            try { db.close(); } catch (_) { /* noop */ }
+            this._db = null;
+            this._dbPromise = null;
+            this._openIDBAt(nextVersion).then(resolve, reject);
+            return;
+          }
+          this._db = db;
           resolve(this._db);
         };
 
@@ -75,21 +107,32 @@ export class DraftStorage {
         reject(err);
       }
     });
-
-    return this._dbPromise;
   }
 
   async _idbGet(key) {
     try {
       const db = await this._openIDB();
+      // Belt-and-braces: even after _openIDB's repair pass, the store
+      // could theoretically still be absent (e.g. the db version was
+      // already so high we can't repair). Bail to null so the localStorage
+      // fallback in get() runs instead of throwing inside the executor.
+      if (!db.objectStoreNames.contains(IDB_STORE_NAME)) return null;
       return new Promise((resolve) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readonly');
-        const req = tx.objectStore(IDB_STORE_NAME).get(key);
-        req.onsuccess = () => resolve(req.result ? req.result.payload : null);
-        req.onerror = (e) => {
-          logger.warn('[DraftStorage] IDB read failed:', e.target && e.target.error);
+        try {
+          const tx = db.transaction(IDB_STORE_NAME, 'readonly');
+          const req = tx.objectStore(IDB_STORE_NAME).get(key);
+          req.onsuccess = () => resolve(req.result ? req.result.payload : null);
+          req.onerror = (e) => {
+            logger.warn('[DraftStorage] IDB read failed:', e.target && e.target.error);
+            resolve(null);
+          };
+        } catch (err) {
+          // Synchronous throws inside the executor would otherwise produce
+          // an unhandled rejection that propagates out of _idbGet and
+          // skips the localStorage fallback. Swallow into a null result.
+          logger.warn('[DraftStorage] IDB read tx threw:', err && err.message);
           resolve(null);
-        };
+        }
       });
     } catch (err) {
       logger.warn('[DraftStorage] IDB open failed during read:', err && err.message);
@@ -100,14 +143,20 @@ export class DraftStorage {
   async _idbSet(key, payload) {
     try {
       const db = await this._openIDB();
+      if (!db.objectStoreNames.contains(IDB_STORE_NAME)) return false;
       return new Promise((resolve) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
-        const req = tx.objectStore(IDB_STORE_NAME).put({ id: key, payload });
-        req.onsuccess = () => resolve(true);
-        req.onerror = (e) => {
-          logger.warn('[DraftStorage] IDB write failed:', e.target && e.target.error);
+        try {
+          const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+          const req = tx.objectStore(IDB_STORE_NAME).put({ id: key, payload });
+          req.onsuccess = () => resolve(true);
+          req.onerror = (e) => {
+            logger.warn('[DraftStorage] IDB write failed:', e.target && e.target.error);
+            resolve(false);
+          };
+        } catch (err) {
+          logger.warn('[DraftStorage] IDB write tx threw:', err && err.message);
           resolve(false);
-        };
+        }
       });
     } catch (err) {
       logger.warn('[DraftStorage] IDB open failed during write:', err && err.message);
@@ -118,14 +167,20 @@ export class DraftStorage {
   async _idbDelete(key) {
     try {
       const db = await this._openIDB();
+      if (!db.objectStoreNames.contains(IDB_STORE_NAME)) return false;
       return new Promise((resolve) => {
-        const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
-        const req = tx.objectStore(IDB_STORE_NAME).delete(key);
-        req.onsuccess = () => resolve(true);
-        req.onerror = (e) => {
-          logger.warn('[DraftStorage] IDB delete failed:', e.target && e.target.error);
+        try {
+          const tx = db.transaction(IDB_STORE_NAME, 'readwrite');
+          const req = tx.objectStore(IDB_STORE_NAME).delete(key);
+          req.onsuccess = () => resolve(true);
+          req.onerror = (e) => {
+            logger.warn('[DraftStorage] IDB delete failed:', e.target && e.target.error);
+            resolve(false);
+          };
+        } catch (err) {
+          logger.warn('[DraftStorage] IDB delete tx threw:', err && err.message);
           resolve(false);
-        };
+        }
       });
     } catch (err) {
       logger.warn('[DraftStorage] IDB open failed during delete:', err && err.message);
@@ -171,11 +226,25 @@ export class DraftStorage {
 
   /**
    * Retrieve a stored draft. Checks IDB first, then localStorage.
+   *
+   * Wrapping the IDB read in a try/catch is critical: while _idbGet is
+   * supposed to swallow all errors and resolve to null, a malformed or
+   * upgrading database can still produce sync throws or unhandled
+   * rejections from inside Promise executors. If we let one of those
+   * escape here, the await would re-throw, the localStorage fallback
+   * would never run, and a perfectly-good draft already sitting in
+   * localStorage would look "lost" to the recovery banner.
    * @param {string} key
    * @returns {Promise<Object|null>}
    */
   async get(key) {
-    const idbValue = await this._idbGet(key);
+    let idbValue = null;
+    try {
+      idbValue = await this._idbGet(key);
+    } catch (err) {
+      logger.warn('[DraftStorage] IDB read threw — falling back to localStorage:', err && err.message);
+      idbValue = null;
+    }
     if (idbValue !== null) return idbValue;
     return this._lsGet(key);
   }
