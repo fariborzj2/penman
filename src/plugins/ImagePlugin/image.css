@@ -1,0 +1,102 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   ImagePlugin — modal body (tabs, dropzone, gallery, upload queue).
+   Extracted from penman-ui.css; loaded by ImagePlugin/index.js.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+ * ImagePlugin — modal body (tabs, dropzone, gallery, upload queue)
+ * Moved out of inline <style>/style="..." so dark theme can override.
+ * ============================================================ */
+.penman-image-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--pm-border, #e2e6f0);
+  margin-bottom: 15px;
+}
+.penman-image-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  color: var(--pm-text-muted);
+  transition: color var(--pm-duration-fast) var(--pm-ease),
+              border-color var(--pm-duration-fast) var(--pm-ease);
+}
+.penman-image-tab:hover { color: var(--pm-text); }
+.penman-image-tab.active {
+  border-bottom-color: var(--pm-accent);
+  color: var(--pm-accent);
+  font-weight: 600;
+}
+.penman-image-tab-content { display: none; }
+.penman-image-tab-content.active { display: block; }
+
+.penman-image-tab-pane {
+  padding: 0 15px 15px;
+}
+.penman-image-field {
+  margin-bottom: 10px;
+}
+.penman-image-field-last { margin-bottom: 15px; }
+.penman-image-field label {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--pm-text);
+}
+
+.penman-image-dropzone {
+  margin-bottom: 15px;
+  border: 1.5px dashed var(--pm-border);
+  background: var(--pm-bg-toolbar);
+  padding: 25px 20px;
+  text-align: center;
+  border-radius: var(--pm-radius-sm);
+  cursor: pointer;
+  transition: border-color var(--pm-duration-fast) var(--pm-ease),
+              background    var(--pm-duration-fast) var(--pm-ease);
+}
+.penman-image-dropzone:hover {
+  border-color: var(--pm-accent);
+  background: var(--pm-bg-hover);
+}
+.penman-image-dropzone p {
+  margin: 0;
+  color: var(--pm-text);
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.penman-image-upload-queue {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.penman-image-modal-footer-flex {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.penman-image-btn-clear {
+  background: var(--pm-bg-hover);
+  color: var(--pm-color-danger);
+  border: 1px solid transparent;
+  border-radius: var(--pm-radius-sm);
+  padding: 8px 16px;
+  cursor: pointer;
+}
+
+.penman-image-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 10px;
+  max-height: 300px;
+  overflow-y: auto;
+}
+.penman-image-gallery-empty {
+  text-align: center;
+  color: var(--pm-text-muted);
+  padding: 20px;
+  grid-column: 1 / -1;
+}

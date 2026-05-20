@@ -132,13 +132,89 @@ export function setupColorPlugin(editor) {
   }
 
   // UI rendering logic
+  //
+  // The hex input has a delicate interaction with the editor's selection /
+  // focus pipeline:
+  //
+  //   • Focusing the input necessarily moves focus out of the contenteditable
+  //     and clears its visible selection. The marker-based saved selection
+  //     (DOM <span> markers inserted on dropdown open) is the only reliable
+  //     reference to where the user wants the color applied.
+  //   • CommandManager.execute() restores those markers via
+  //     editor.selection.restore(), which internally calls editor.focus().
+  //     That steals focus from the input on every keystroke and would route
+  //     subsequent keystrokes back into the editor.
+  //   • CommandManager also wipes the markers as part of its restore cycle,
+  //     so a second execCommand triggered by the next keystroke has nothing
+  //     to restore from.
+  //   • The DOM mutations performed by applyStyleToSelection (cleanup +
+  //     execCommand('fontSize') + span merging) can move text nodes around,
+  //     so a freshly created marker pair may sit in an unexpected location
+  //     by the time the next call runs.
+  //
+  // To make this robust we keep an explicit JS Range alongside the marker
+  // system. The range is captured when the dropdown opens, restored to
+  // window.getSelection() right before each execCommand, and re-captured
+  // after the command applies the color. Focus is returned to the input
+  // (with its cursor position preserved) so the user can keep typing.
   const renderDropdownContent = (command) => {
     const container = document.createElement('div');
     container.className = 'penman-color-picker-container';
 
+    let savedRange = null;
+
+    const captureRange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0) return;
+      const r = sel.getRangeAt(0);
+      if (!editor.editableArea.contains(r.commonAncestorContainer)) return;
+      savedRange = r.cloneRange();
+    };
+
+    // Expose the capture hook so the dropdown's onOpen handler can call it
+    // while the user's original selection is still alive in the editor.
+    container.__captureSelectionRange = captureRange;
+
+    // Push the saved range back into the live window selection and refresh
+    // the editor's marker system so CommandManager.execute() finds what it
+    // expects. Returns true if the range was successfully restored.
+    const restoreSavedRangeToEditor = () => {
+      if (!savedRange) return false;
+      try {
+        editor.editableArea.focus();
+        const sel = window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(savedRange);
+        // Re-create markers from this range so the upcoming
+        // selection.restore() inside CommandManager finds them.
+        editor.selection.save();
+        return true;
+      } catch (_) {
+        return false;
+      }
+    };
+
     const picker = new ColorPicker({
       onChange: (hex, final) => {
+        const prevActive = document.activeElement;
+        const isHexInput = !!(prevActive && prevActive.classList
+          && prevActive.classList.contains('penman-color-picker-hex'));
+        const inputSelStart = isHexInput && typeof prevActive.selectionStart === 'number'
+          ? prevActive.selectionStart : null;
+        const inputSelEnd = isHexInput && typeof prevActive.selectionEnd === 'number'
+          ? prevActive.selectionEnd : null;
+
+        // While typing in the hex input, force-restore the saved range so
+        // execCommand reliably sees the original editor selection — even if
+        // markers were lost or moved by a previous apply cycle.
+        if (isHexInput) restoreSavedRangeToEditor();
+
         editor.execCommand(command, hex);
+
+        // After the command, the selection is at the just-styled span.
+        // Re-capture so the next keystroke applies to the same text.
+        captureRange();
+
         if (final) {
           // Close the containing dropdown by walking up to the dropdown root
           // and calling its instance method, instead of synthesizing a body
@@ -148,6 +224,19 @@ export function setupColorPlugin(editor) {
               && typeof dropdownRoot.__dropdownInstance.close === 'function') {
             dropdownRoot.__dropdownInstance.close();
           }
+          return;
+        }
+
+        if (isHexInput) {
+          // Save markers from the new selection so the marker-based path
+          // keeps working too, then hand focus back to the input.
+          try { editor.selection.save(); } catch (_) { /* noop */ }
+          try {
+            prevActive.focus();
+            if (inputSelStart != null && typeof prevActive.setSelectionRange === 'function') {
+              prevActive.setSelectionRange(inputSelStart, inputSelEnd);
+            }
+          } catch (_) { /* noop */ }
         }
       }
     });
@@ -156,11 +245,24 @@ export function setupColorPlugin(editor) {
     return container;
   };
 
+  // Capture both the marker-based selection AND an explicit JS Range when
+  // the dropdown opens. The JS Range survives DOM mutations performed by
+  // the color command and acts as the source of truth when markers go stale.
+  const captureForDropdown = (dropdown) => {
+    editor.selection.save();
+    const container = dropdown && dropdown.panelElement
+      ? dropdown.panelElement.querySelector('.penman-color-picker-container')
+      : null;
+    if (container && typeof container.__captureSelectionRange === 'function') {
+      container.__captureSelectionRange();
+    }
+  };
+
   editor.ui.registry.addDropdown('textcolor', {
     text: editor.i18n.t('plugins.color.textColor'),
     icon: editor.ui.iconProvider.getIcon('textcolor') || '<span style="font-weight:bold;color:red;">A</span>',
     render: () => renderDropdownContent('SET_TEXT_COLOR'),
-    onOpen: () => editor.selection.save(),
+    onOpen: (dropdown) => captureForDropdown(dropdown),
     onClose: () => editor.selection.clearSaved()
   });
 
@@ -168,7 +270,7 @@ export function setupColorPlugin(editor) {
     text: editor.i18n.t('plugins.color.highlight'),
     icon: editor.ui.iconProvider.getIcon('highlight') || '<span style="background-color:yellow;">H</span>',
     render: () => renderDropdownContent('SET_HIGHLIGHT_COLOR'),
-    onOpen: () => editor.selection.save(),
+    onOpen: (dropdown) => captureForDropdown(dropdown),
     onClose: () => editor.selection.clearSaved()
   });
 }

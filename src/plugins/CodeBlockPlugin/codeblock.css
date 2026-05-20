@@ -1,0 +1,303 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   CodeBlockPlugin — VS Code-style chrome around <pre><code> figures.
+   Extracted from penman-ui.css; loaded by CodeBlockPlugin.js so removing
+   the plugin removes its styles cleanly.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+ * CodeBlockPlugin — VS Code-style chrome
+ *
+ *   ┌──── .penman-codeblock-figure ───────────────────────────┐
+ *   │ ┌── .cb-header ─────────────────────────────────────┐ │
+ *   │ │  ⚡ JS ▾                          fmt   copy       │ │
+ *   │ ├────────────────────────────────────────────────────┤ │
+ *   │ │ .cb-body — flex                                    │ │
+ *   │ │  ┌──.cb-gutter──┐ ┌── pre.penman-codeblock ──────┐ │ │
+ *   │ │  │ 1            │ │ <code>… highlighted code …</code>│ │
+ *   │ │  │ 2            │ │                              │ │ │
+ *   │ │  └──────────────┘ └──────────────────────────────┘ │ │
+ *   │ └────────────────────────────────────────────────────┘ │
+ *   └────────────────────────────────────────────────────────┘
+ *
+ * Palette is driven by CSS variables so light/dark themes can swap
+ * via Penman's existing :root[data-theme] mechanism. ============== */
+
+.penman-codeblock-figure {
+  /* One Dark Pro by default (matches MiniCodeEditor). */
+  --cb-bg:           #282c34;
+  --cb-bg-header:    #21252b;
+  --cb-bg-gutter:    #21252b;
+  --cb-fg:           #abb2bf;
+  --cb-fg-muted:     #6b727f;
+  --cb-fg-strong:    #e2e8f0;
+  --cb-border:       #1b1e25;
+  --cb-accent:       #61afef;
+  --cb-action-hover: rgba(255, 255, 255, 0.08);
+  --cb-action-active:rgba(255, 255, 255, 0.14);
+  --cb-success:      #98c379;
+
+  margin: 1em 0;
+  padding: 0;
+  border-radius: var(--pm-radius-md, 8px);
+  border: 1px solid var(--cb-border);
+  background: var(--cb-bg);
+  color: var(--cb-fg);
+  overflow: hidden;
+  font-family: ui-monospace, "SF Mono", "Menlo", "Consolas",
+               "Liberation Mono", monospace;
+  /* VS Code-style left-edge accent — subtle "active tab" feel. */
+  box-shadow: inset 4px 0 0 0 var(--cb-accent);
+  /* Wrapper sits in user prose. Allow horizontal overflow inside,
+   * but never bleed outside its own rounded box. */
+  position: relative;
+}
+
+/* Light theme — One Light. Applied when document/wrapper is light. */
+:root[data-theme="light"] .penman-codeblock-figure,
+.penman-wrapper[data-theme="light"] .penman-codeblock-figure {
+  --cb-bg:           #fafafa;
+  --cb-bg-header:    #f3f4f6;
+  --cb-bg-gutter:    #f3f4f6;
+  --cb-fg:           #383a42;
+  --cb-fg-muted:     #a0a1a7;
+  --cb-fg-strong:    #1a1a1a;
+  --cb-border:       #e2e6f0;
+  --cb-accent:       #4078f2;
+  --cb-action-hover: rgba(56, 58, 66, 0.06);
+  --cb-action-active:rgba(56, 58, 66, 0.12);
+  --cb-success:      #50a14f;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────── */
+.penman-codeblock-figure .cb-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px 6px 14px;   /* extra left padding leaves room for the accent stripe */
+  background: var(--cb-bg-header);
+  border-bottom: 1px solid var(--cb-border);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  user-select: none;
+}
+
+.penman-codeblock-figure .cb-lang-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px 3px 6px;
+  border-radius: 6px;
+  background: transparent;
+  border: 0;
+  color: var(--cb-fg-strong);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+.penman-codeblock-figure .cb-lang-pill:hover  { background: var(--cb-action-hover); }
+.penman-codeblock-figure .cb-lang-pill:active { background: var(--cb-action-active); }
+.penman-codeblock-figure .cb-lang-pill .cb-lang-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--cb-accent);
+  box-shadow: 0 0 6px var(--cb-accent);
+}
+.penman-codeblock-figure .cb-lang-pill .cb-lang-caret { opacity: 0.6; }
+
+.penman-codeblock-figure .cb-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+.penman-codeblock-figure .cb-action {
+  width: 26px;
+  height: 26px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--cb-fg-muted);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+.penman-codeblock-figure .cb-action:hover  { background: var(--cb-action-hover); color: var(--cb-fg-strong); }
+.penman-codeblock-figure .cb-action:active { background: var(--cb-action-active); }
+.penman-codeblock-figure .cb-action.is-success {
+  color: var(--cb-success);
+  background: transparent;
+}
+/* Destructive action (delete) — red tint, softer until hovered. */
+.penman-codeblock-figure .cb-action.cb-action--danger {
+  color: #ff7b7d;
+}
+.penman-codeblock-figure .cb-action.cb-action--danger:hover {
+  color: #ff5b5d;
+  background: rgba(255, 91, 93, 0.12);
+}
+:root[data-theme="light"] .penman-codeblock-figure .cb-action.cb-action--danger {
+  color: #d04040;
+}
+:root[data-theme="light"] .penman-codeblock-figure .cb-action.cb-action--danger:hover {
+  color: #b32020;
+  background: rgba(208, 64, 64, 0.10);
+}
+.penman-codeblock-figure .cb-action-glyph { font-size: 14px; font-weight: 700; }
+
+/* Confirm modal: tighten the spacing on a plain-text confirmation message
+ * so it sits nicely in the modal body without any custom containers. */
+.penman-confirm-message {
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* ─── Body: gutter + code, side-by-side ─────────────────────────────── */
+.penman-codeblock-figure .cb-body {
+  display: flex;
+  align-items: stretch;
+  /* Horizontal overflow lives here, not on the figure, so the header
+   * doesn't scroll with long lines. */
+  overflow-x: auto;
+}
+
+.penman-codeblock-figure .cb-gutter {
+  flex: 0 0 auto;
+  /* Stack the line-number spans vertically as a hard structural rule rather
+   * than relying on each span's `display: block`. Host pages can ship CSS
+   * resets that re-set spans to `display: inline` with higher specificity
+   * (or before our injected styles land), and the symptom is all the
+   * numbers collapsing into one row like "1234567". A flex column on the
+   * parent makes each child its own row regardless of the child's display
+   * value, so the layout can't be undone from outside. */
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 38px;
+  padding: 12px 8px 12px 10px;
+  background: var(--cb-bg-gutter);
+  border-right: 1px solid var(--cb-border);
+  color: var(--cb-fg-muted);
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.65;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  /* Lock the gutter out of every text-interaction path:
+   *   - user-select: prevents the gutter joining a drag-selection
+   *   - pointer-events: clicks fall through to whatever's behind it
+   *     (which is nothing — the body wrapper has no caret target — so the
+   *     editor's selection logic places the caret in <code> instead)
+   *   - -webkit-user-modify / contenteditable=false on the element keep
+   *     arrow-key navigation from stepping into the numbers.
+   * Together these stop the cursor ever landing inside the gutter. */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: none;
+  caret-color: transparent;
+  -webkit-user-modify: read-only;
+}
+.penman-codeblock-figure .cb-gutter,
+.penman-codeblock-figure .cb-gutter * {
+  /* Defensive — covers browsers (older Safari) that don't fully inherit
+   * user-select onto descendants. */
+  -webkit-user-select: none;
+  user-select: none;
+}
+.penman-codeblock-figure .cb-ln {
+  /* `display: block` is kept as a belt-and-braces — the parent's flex
+   * column already forces each .cb-ln onto its own row, but if the host
+   * page somehow detaches the gutter from flex (e.g. wraps it), the
+   * spans still stack instead of running together. */
+  display: block;
+  flex: 0 0 auto;
+  height: 1.65em;
+  line-height: 1.65em;
+  pointer-events: none;
+}
+
+/* ─── The code surface ──────────────────────────────────────────────── */
+.penman-codeblock-figure > .cb-body > pre.penman-codeblock {
+  /* Override the legacy pre.penman-codeblock global rule and the inline
+   * styles the old plugin used to set. The chrome owns the surface now. */
+  background: var(--cb-bg) !important;
+  color: var(--cb-fg);
+  margin: 0;
+  padding: 12px 14px;
+  border-radius: 0;
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: inherit;
+  font-size: 12.5px;
+  line-height: 1.65;
+  white-space: pre;
+  overflow-x: visible; /* cb-body handles scroll */
+}
+.penman-codeblock-figure > .cb-body > pre.penman-codeblock > code {
+  background: transparent;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  outline: none;
+  display: block;
+  min-height: 1.65em;
+  white-space: pre;
+}
+
+/* While the figure is focused (caret inside the code element) brighten
+ * the accent stripe so the user sees which block they're editing. */
+.penman-codeblock-figure:focus-within {
+  box-shadow: inset 4px 0 0 0 var(--cb-accent),
+              0 0 0 1px var(--cb-accent);
+}
+
+/* ─── Floating language picker ──────────────────────────────────────── */
+.cb-lang-picker {
+  background: var(--pm-bg, #fff);
+  color: var(--pm-text, #1e2a3a);
+  border: 1px solid var(--pm-border, #e2e6f0);
+  border-radius: var(--pm-radius-sm, 6px);
+  box-shadow: var(--pm-shadow-md, 0 6px 20px rgba(0,0,0,0.15));
+  padding: 4px;
+  min-width: 140px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+}
+.cb-lang-picker-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  background: transparent;
+  border: 0;
+  border-radius: 4px;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+}
+.cb-lang-picker-item:hover { background: var(--pm-bg-hover, #f0f2f8); }
+.cb-lang-picker-item.is-active {
+  background: var(--pm-bg-active, #e6eafc);
+  color: var(--pm-accent, #4f6ef7);
+  font-weight: 600;
+}
+
+/* ─── Toolbar dropdown — language list ──────────────────────────────── */
+.cb-lang-list .penman-dropdown-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.cb-lang-list .cb-lang-short {
+  font-size: 10.5px;
+  color: var(--pm-text-muted, #64748b);
+  background: var(--pm-bg-hover, #f0f2f8);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: ui-monospace, monospace;
+}

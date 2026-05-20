@@ -30,6 +30,7 @@ import { getTokens, formatCode } from './syntax/index.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
+import './codeblock.css';
 
 // ─── Language registry ─────────────────────────────────────────────────
 // Single source of truth for both the toolbar dropdown and the per-block

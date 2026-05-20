@@ -1,5 +1,6 @@
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
+import './blocktype.css';
 
 export function setupBlockTypePlugin(editor) {
   // Register plugin-owned data (lang + icons). Self-contained: removing

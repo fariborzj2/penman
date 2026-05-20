@@ -1,0 +1,264 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   Word Import modal — styled to match the Penman editor's token system
+   so it adapts to light / dark themes and RTL layouts automatically.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.penman-modal.penman-wordimport-modal .penman-modal-body {
+  padding: 0;
+}
+
+.penman-wordimport {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 20px 22px 8px;
+  font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  color: var(--pm-text);
+}
+
+/* ─── Drop zone ──────────────────────────────────────────────────────── */
+
+.penman-wordimport-drop {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 18px;
+  border: 2px dashed var(--pm-border);
+  border-radius: var(--pm-radius-lg);
+  background: var(--pm-bg);
+  text-align: center;
+  cursor: pointer;
+  transition:
+    border-color var(--pm-duration-fast) var(--pm-ease),
+    background var(--pm-duration-fast) var(--pm-ease);
+}
+
+.penman-wordimport-drop:hover,
+.penman-wordimport-drop:focus-visible,
+.penman-wordimport-drop.is-dragover {
+  border-color: var(--pm-accent);
+  background: var(--pm-accent-light);
+  outline: none;
+}
+
+.penman-wordimport-drop-icon {
+  color: var(--pm-accent);
+  margin-bottom: 4px;
+}
+
+.penman-wordimport-drop-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--pm-text);
+}
+
+.penman-wordimport-drop-hint {
+  font-size: 12px;
+  color: var(--pm-text-muted);
+}
+
+.penman-wordimport-browse {
+  margin-top: 6px;
+  padding: 6px 14px;
+  font-size: 12.5px;
+}
+
+/* Hidden native file input. */
+.penman-wordimport-file {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ─── Selected file card ─────────────────────────────────────────────── */
+
+.penman-wordimport-selected {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--pm-border-subtle);
+  border-radius: var(--pm-radius-md);
+  background: var(--pm-bg-hover);
+}
+
+.penman-wordimport-selected-icon {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  color: var(--pm-accent);
+}
+
+.penman-wordimport-selected-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.penman-wordimport-selected-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--pm-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.penman-wordimport-selected-size {
+  font-size: 11.5px;
+  color: var(--pm-text-muted);
+}
+
+.penman-wordimport-selected-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: transparent;
+  border: 0;
+  color: var(--pm-text-muted);
+  cursor: pointer;
+  transition: background var(--pm-duration-fast) var(--pm-ease),
+              color var(--pm-duration-fast) var(--pm-ease);
+}
+
+.penman-wordimport-selected-remove:hover {
+  background: var(--pm-bg);
+  color: #dc2626;
+}
+
+/* ─── Sections (mode + options) ──────────────────────────────────────── */
+
+.penman-wordimport-section {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.penman-wordimport-section > legend {
+  padding: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pm-text-muted);
+}
+
+/* Radio list (insertion mode) */
+
+.penman-wordimport-radio {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  margin: 0 0 6px;
+  border: 1px solid var(--pm-border-subtle);
+  border-radius: var(--pm-radius-md);
+  cursor: pointer;
+  transition: border-color var(--pm-duration-fast) var(--pm-ease),
+              background var(--pm-duration-fast) var(--pm-ease);
+}
+
+.penman-wordimport-radio:hover {
+  border-color: var(--pm-border);
+  background: var(--pm-bg-hover);
+}
+
+.penman-wordimport-radio input[type="radio"] {
+  margin: 3px 0 0;
+  accent-color: var(--pm-accent);
+  flex: 0 0 auto;
+}
+
+.penman-wordimport-radio input[type="radio"]:checked + .penman-wordimport-radio-text .penman-wordimport-radio-title {
+  color: var(--pm-accent);
+}
+
+.penman-wordimport-radio-text {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.penman-wordimport-radio-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--pm-text);
+  margin-bottom: 2px;
+}
+
+.penman-wordimport-radio-desc {
+  font-size: 11.5px;
+  color: var(--pm-text-muted);
+  line-height: 1.45;
+}
+
+/* Checkbox list (options) */
+
+.penman-wordimport-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  margin: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--pm-text);
+}
+
+.penman-wordimport-check input[type="checkbox"] {
+  accent-color: var(--pm-accent);
+}
+
+/* ─── Status area ────────────────────────────────────────────────────── */
+
+.penman-wordimport-status {
+  min-height: 22px;
+  font-size: 12.5px;
+  color: var(--pm-text-muted);
+  padding-top: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.penman-wordimport-status.is-busy {
+  color: var(--pm-accent);
+}
+
+.penman-wordimport-status.is-error {
+  color: #b91c1c;
+  background: rgba(239, 68, 68, 0.10);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--pm-radius-sm);
+  padding: 8px 10px;
+  line-height: 1.45;
+}
+
+.penman-wordimport-spinner {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--pm-accent);
+}
+
+/* ─── Responsive ────────────────────────────────────────────────────── */
+
+@media (max-width: 520px) {
+  .penman-wordimport {
+    padding: 14px 14px 4px;
+    gap: 14px;
+  }
+  .penman-wordimport-drop {
+    padding: 20px 12px;
+  }
+  .penman-wordimport-radio {
+    padding: 9px 10px;
+  }
+}

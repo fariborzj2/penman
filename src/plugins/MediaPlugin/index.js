@@ -9,6 +9,7 @@ import { MediaModal } from './ui/MediaModal.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
+import './media.css';
 
 export function setupMediaPlugin(editor) {
   // Register plugin-owned data (lang + icons). Self-contained: removing

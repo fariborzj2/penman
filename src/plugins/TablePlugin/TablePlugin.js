@@ -10,6 +10,7 @@ import { escapeHtml as escapeHTML } from '../../utils/html.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
+import './table.css';
 
 export function setupTablePlugin(editor) {
   // Register plugin-owned data (lang + icons). Self-contained: removing

@@ -257,20 +257,30 @@ export function setupFindReplacePlugin(editor) {
         }
       ],
       buttons: [
-        {
-          text: editor.i18n.t('plugins.findReplace.next'), id: 'fr-btn-next', align: 'left', disabled: true,
-          onClick: () => {
-            if (results.length === 0) return;
-            currentIndex = (currentIndex + 1) % results.length;
-            const d = formModal.collect();
-            highlightResult(currentIndex, d.allWords, d.normalizeRtl);
-          }
-        },
+        // Prev comes BEFORE next in the array so flex layout places the
+        // ← / → glyphs pointing outward in both directions:
+        //   • LTR (en): footer reads L→R as [prev ←][next →] → outward.
+        //   • RTL (fa): flex reverses children, so visually L→R reads
+        //     [next ←][prev →] — and because the localised arrows are
+        //     mirrored to match reading direction, the visible result is
+        //     still arrows pointing outward.
+        // Swapping the order back to next-then-prev makes the arrows point
+        // INWARD ("→ ←"), which reads as collapsing/menu-style controls
+        // rather than pagination — that's the bug we're fixing here.
         {
           text: editor.i18n.t('plugins.findReplace.prev'), id: 'fr-btn-prev', align: 'left', disabled: true,
           onClick: () => {
             if (results.length === 0) return;
             currentIndex = (currentIndex - 1 + results.length) % results.length;
+            const d = formModal.collect();
+            highlightResult(currentIndex, d.allWords, d.normalizeRtl);
+          }
+        },
+        {
+          text: editor.i18n.t('plugins.findReplace.next'), id: 'fr-btn-next', align: 'left', disabled: true,
+          onClick: () => {
+            if (results.length === 0) return;
+            currentIndex = (currentIndex + 1) % results.length;
             const d = formModal.collect();
             highlightResult(currentIndex, d.allWords, d.normalizeRtl);
           }
@@ -408,6 +418,23 @@ export function setupFindReplacePlugin(editor) {
     const btnReplaceAll = elModal.querySelector('#fr-btn-replace-all');
     const btnNext       = elModal.querySelector('#fr-btn-next');
     const btnPrev       = elModal.querySelector('#fr-btn-prev');
+
+    // The Next/Prev buttons show only an arrow glyph (no text), so we apply
+    // a descriptive title + aria-label so screen readers and tooltips still
+    // announce the action. Keys come from the plugin's i18n bundle and adapt
+    // to whichever locale is active.
+    const nextLabel = editor.i18n.t('plugins.findReplace.nextLabel');
+    const prevLabel = editor.i18n.t('plugins.findReplace.prevLabel');
+    if (btnNext) {
+      btnNext.title = nextLabel;
+      btnNext.setAttribute('aria-label', nextLabel);
+      btnNext.classList.add('penman-findreplace-arrow-btn');
+    }
+    if (btnPrev) {
+      btnPrev.title = prevLabel;
+      btnPrev.setAttribute('aria-label', prevLabel);
+      btnPrev.classList.add('penman-findreplace-arrow-btn');
+    }
 
     updateButtonsState = () => {
       const hasResults = results.length > 0;

@@ -1,0 +1,65 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SuggestedPostsPlugin — items list inside the modal + small button
+   helpers used only by this plugin.
+   ═══════════════════════════════════════════════════════════════════════ */
+.psp-items-list { margin-bottom: 4px; }
+.psp-items-wrap {
+  border: 1px solid var(--pm-border-subtle, #e2e8f0);
+  border-radius: var(--pm-radius-sm, 6px);
+  overflow: hidden;
+}
+.psp-items-header {
+  padding: 6px 10px;
+  background: var(--pm-bg-toolbar, #f8fafc);
+  font-size: 12px;
+  color: var(--pm-text-muted, #64748b);
+  border-bottom: 1px solid var(--pm-border-subtle, #e2e8f0);
+}
+.psp-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.psp-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--pm-border-subtle, #f0f0f0);
+  font-size: 13px;
+}
+.psp-item:last-child { border-bottom: 0; }
+.psp-item-body { flex: 1; min-width: 0; overflow: hidden; }
+.psp-item-title {
+  font-weight: 500;
+  color: var(--pm-text, #222);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.psp-item-url {
+  color: var(--pm-text-muted, #888);
+  font-size: 11px;
+  direction: ltr;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.penman-btn-icon {
+  background: none;
+  border: 0;
+  padding: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  color: inherit;
+}
+/* Status colors — kept as semantic constants since editor/danger meaning
+   should not invert between light/dark. We do soften them in dark via
+   the explicit override block at the bottom of penman-ui.css. */
+.psp-edit-btn { color: var(--pm-color-info, #4285f4); }
+.psp-delete-btn { color: var(--pm-color-danger, #dc3545); }
+.penman-btn-warning {
+  background: var(--pm-color-warning, #fd7e14) !important;
+  color: var(--pm-text-on-accent, #fff) !important;
+}

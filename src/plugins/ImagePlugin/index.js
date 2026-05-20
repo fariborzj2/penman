@@ -9,6 +9,7 @@ import { logger } from '../../utils/logger.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
+import './image.css';
 
 /**
  * Translates internal gallery/upload error codes — and browser-native network

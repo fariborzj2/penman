@@ -1,0 +1,373 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   SourceCodePlugin — all plugin-local CSS in one file.
+
+   Section 1: Modal body (toolbar header, search/replace strip, container)
+   Section 2: MiniCodeEditor (the zero-dep code view embedded in the modal)
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+ * SourceCodePlugin — modal body styles
+ * ============================================================ */
+.penman-source-code-modal-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+.penman-source-code-header {
+  display: flex;
+  gap: 8px;
+  padding: 10px 15px;
+  border-bottom: 1px solid var(--pm-border-subtle, #e2e8f0);
+}
+.penman-source-code-search {
+  flex: 1;
+  padding: 6px;
+  font-family: monospace;
+  border: 1px solid var(--pm-border, #d1d5db);
+  border-radius: var(--pm-radius-sm, 4px);
+}
+.penman-source-code-header .penman-btn {
+  border: 1px solid var(--pm-border, #d1d5db);
+  border-radius: var(--pm-radius-sm, 3px);
+  padding: 4px;
+  background: var(--pm-bg, #fff);
+  cursor: pointer;
+}
+.penman-source-code-container {
+  text-align: left;
+  flex: 1 1 auto;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+}
+.penman-source-code-container > .pm-mce {
+  flex: 1 1 auto;
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+}
+
+/* Format / Replace toggle buttons in the modal header inherit the
+ * existing .penman-btn look; just give them a tiny extra polish. */
+.penman-source-code-header .pm-btn-format,
+.penman-source-code-header .pm-btn-replace {
+  font-size: 12px;
+  padding: 4px 10px;
+}
+
+/* Optional second row for Find/Replace controls. Hidden by default;
+ * the plugin toggles `.is-open` on the header when the user invokes
+ * the Replace action (Ctrl+H or the Replace button). */
+.penman-source-code-replace-row {
+  display: none;
+  gap: 8px;
+  padding: 8px 15px;
+  border-bottom: 1px solid var(--pm-border-subtle, #e2e8f0);
+}
+.penman-source-code-header.is-open + .penman-source-code-replace-row {
+  display: flex;
+}
+.penman-source-code-replace-row input {
+  flex: 1;
+  padding: 6px;
+  font-family: monospace;
+  border: 1px solid var(--pm-border, #d1d5db);
+  border-radius: var(--pm-radius-sm, 4px);
+  background: var(--pm-bg);
+  color: var(--pm-text);
+}
+
+/* ============================================================
+ * SourceCodePlugin — MiniCodeEditor (zero-dep code view)
+ *
+ * The editor stacks three layers in one scrolling pane:
+ *   <pre class="pm-mce-pre">    coloured spans, behind, pointer-events:none
+ *   <textarea class="pm-mce-ta"> transparent text, on top, captures input
+ *   <div class="pm-mce-gutter">  line numbers, outside the pane, transform-synced
+ *
+ * Palette: One Light by default, One Dark Pro under [data-theme="dark"].
+ * Colours are hardcoded here (not via --pm-* tokens) because they're a
+ * single, intentionally-designed scheme rather than skinnable chrome.
+ * ============================================================ */
+
+/* Theme is driven by a class on the editor's root: `.pm-mce-light` or
+ * `.pm-mce-dark`. MiniCodeEditor.setTheme() applies one of these (and
+ * resolves `auto` against the system preference at the time of the call),
+ * staying in sync via the host editor's themeChange event. We deliberately
+ * avoid `:root[data-theme=…]` here — that approach fought with the modal
+ * being rendered outside .penman-wrapper and lost in too many edge cases.
+ *
+ * The `.pm-mce` block sets layout + the LIGHT palette as the safe default
+ * so the editor still looks right if (somehow) no class is applied. */
+.pm-mce {
+  /* One Light palette */
+  --mce-bg:           #fafafa;
+  --mce-fg:           #383a42;
+  --mce-gutter-bg:    #f3f4f6;
+  --mce-gutter-fg:    #9d9d9f;
+  --mce-gutter-active:#383a42;
+  --mce-line-active:  rgba(56, 58, 66, 0.06);
+  --mce-caret:        #4f6ef7;
+  --mce-selection:    rgba(79, 110, 247, 0.2);
+  --mce-border:       var(--pm-border, #e2e6f0);
+
+  --mce-tag:     #e45649;
+  --mce-attr:    #c18401;
+  --mce-string:  #50a14f;
+  --mce-comment: #a0a1a7;
+  --mce-punct:   #383a42;
+  --mce-keyword: #a626a4;
+  --mce-number:  #986801;
+  --mce-doctype: #0184bc;
+  --mce-entity:  #0184bc;
+
+  --mce-bracket-bg:     rgba(79, 110, 247, 0.15);
+  --mce-bracket-border: #4f6ef7;
+  --mce-search-bg:      rgba(255, 200, 0, 0.35);
+  --mce-search-active-bg: #ffb700;
+  --mce-search-active-fg: #1a1a1a;
+
+  display: flex;
+  background: var(--mce-bg);
+  color: var(--mce-fg);
+  border: 1px solid var(--mce-border);
+  border-radius: var(--pm-radius-sm, 6px);
+  overflow: hidden;
+
+  /* Editors should use a real monospace stack. ui-monospace picks up
+   * SF Mono on macOS, Consolas on Windows, etc., without any web font. */
+  font-family: ui-monospace, "SF Mono", "Menlo", "Consolas",
+               "Liberation Mono", "Roboto Mono", monospace;
+  font-size: 13.5px;
+  line-height: 1.55;
+  tab-size: 2;
+  -moz-tab-size: 2;
+}
+
+/* Explicit light — same palette, kept distinct so toggling between
+ * classes always changes something (avoids no-op transitions). */
+.pm-mce.pm-mce-light {
+  --mce-bg:           #fafafa;
+  --mce-fg:           #383a42;
+  --mce-gutter-bg:    #f3f4f6;
+  --mce-gutter-fg:    #9d9d9f;
+  --mce-gutter-active:#383a42;
+  --mce-line-active:  rgba(56, 58, 66, 0.06);
+  --mce-caret:        #4f6ef7;
+  --mce-selection:    rgba(79, 110, 247, 0.2);
+
+  --mce-tag:     #e45649;
+  --mce-attr:    #c18401;
+  --mce-string:  #50a14f;
+  --mce-comment: #a0a1a7;
+  --mce-punct:   #383a42;
+  --mce-keyword: #a626a4;
+  --mce-number:  #986801;
+  --mce-doctype: #0184bc;
+  --mce-entity:  #0184bc;
+
+  --mce-bracket-bg:     rgba(79, 110, 247, 0.15);
+  --mce-bracket-border: #4f6ef7;
+  --mce-search-bg:      rgba(255, 200, 0, 0.35);
+  --mce-search-active-bg: #ffb700;
+  --mce-search-active-fg: #1a1a1a;
+}
+
+/* Dark — One Dark Pro. */
+.pm-mce.pm-mce-dark {
+  --mce-bg:           #282c34;
+  --mce-fg:           #abb2bf;
+  --mce-gutter-bg:    #21252b;
+  --mce-gutter-fg:    #4b5263;
+  --mce-gutter-active:#c0c5cf;
+  --mce-line-active:  rgba(255, 255, 255, 0.04);
+  --mce-caret:        #61afef;
+  --mce-selection:    rgba(97, 175, 239, 0.25);
+
+  --mce-tag:     #e06c75;
+  --mce-attr:    #d19a66;
+  --mce-string:  #98c379;
+  --mce-comment: #5c6370;
+  --mce-punct:   #abb2bf;
+  --mce-keyword: #c678dd;
+  --mce-number:  #d19a66;
+  --mce-doctype: #56b6c2;
+  --mce-entity:  #56b6c2;
+
+  --mce-bracket-bg:     rgba(97, 175, 239, 0.18);
+  --mce-bracket-border: #61afef;
+  --mce-search-bg:      rgba(229, 192, 123, 0.30);
+  --mce-search-active-bg: #e5c07b;
+  --mce-search-active-fg: #282c34;
+}
+
+/* Gutter column */
+.pm-mce-gutter {
+  flex: 0 0 auto;
+  min-width: 48px;
+  overflow: hidden;
+  background: var(--mce-gutter-bg);
+  border-right: 1px solid var(--mce-border);
+  user-select: none;
+}
+.pm-mce-gutter-inner {
+  padding: 12px 10px 12px 14px;
+  text-align: right;
+  color: var(--mce-gutter-fg);
+  font-variant-numeric: tabular-nums;
+  /* Drives vertical sync — set by JS on every pane scroll. */
+  will-change: transform;
+}
+.pm-mce-ln {
+  display: block;
+  height: 1.55em;  /* matches editor line-height */
+  font-size: inherit;
+  line-height: inherit;
+}
+.pm-mce-ln-active {
+  color: var(--mce-gutter-active);
+  font-weight: 600;
+}
+
+/* Scrolling pane that holds the highlight overlay + textarea */
+.pm-mce-pane {
+  flex: 1 1 auto;
+  position: relative;
+  overflow: auto;
+  background: var(--mce-bg);
+}
+.pm-mce-pane::-webkit-scrollbar { width: 12px; height: 12px; }
+.pm-mce-pane::-webkit-scrollbar-track { background: transparent; }
+.pm-mce-pane::-webkit-scrollbar-thumb {
+  background: rgba(127, 127, 127, 0.3);
+  border-radius: 6px;
+  border: 3px solid var(--mce-bg);
+}
+
+/* Shared rules — keep <pre> and <textarea> aligned to the pixel.
+ *
+ * IMPORTANT: we use tag.class selectors here (specificity 0,1,1) so we
+ * outrank the generic `.penman-modal-body textarea { … }` rule defined
+ * earlier in this file. Without this, the modal's default textarea
+ * styling (white background, 38px height, 8/12 padding) overlays the
+ * colored <pre> and the user sees plain unstyled text instead of
+ * syntax-highlighted code. The modal-scoped block further down acts as
+ * belt-and-braces against future regressions. */
+pre.pm-mce-pre,
+textarea.pm-mce-ta {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  tab-size: inherit;
+  white-space: pre;
+  word-wrap: normal;
+  word-break: normal;
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+}
+
+/* The highlight layer — paints colored tokens; never receives clicks. */
+pre.pm-mce-pre {
+  display: block;
+  min-width: 100%;
+  min-height: 100%;
+  pointer-events: none;
+  background: transparent;
+  color: var(--mce-fg);
+  /* Some browsers set a default `pre { background: #f4f4f4 }` via UA
+   * stylesheet; the explicit transparent above + this `unset` defeats
+   * any cascading reset that might paint behind the spans. */
+  -webkit-text-fill-color: var(--mce-fg);
+}
+/* Force a stable color even if the page sets <pre> styles globally. */
+pre.pm-mce-pre code,
+pre.pm-mce-pre span { font: inherit; -webkit-text-fill-color: currentColor; }
+
+/* The interactive layer — transparent text, visible caret. */
+textarea.pm-mce-ta {
+  position: absolute;
+  top: 0; left: 0;
+  /* JS sets explicit width/height to match the <pre> so clicks anywhere
+   * in the content area hit the textarea, even past the viewport. */
+  width: 100%;
+  height: 100%;
+  min-width: 100%;
+  min-height: 100%;
+  background: transparent;
+  color: transparent;
+  /* Safari ignores `color: transparent` on textareas without this. */
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--mce-caret);
+  resize: none;
+  outline: none;
+  overflow: hidden;
+  box-shadow: none;
+}
+textarea.pm-mce-ta::selection { background: var(--mce-selection); color: transparent; -webkit-text-fill-color: transparent; }
+textarea.pm-mce-ta::-moz-selection { background: var(--mce-selection); color: transparent; }
+.pm-mce.pm-mce-focused { box-shadow: inset 0 0 0 1px var(--mce-caret); }
+
+/* ─── Belt-and-braces: explicitly neutralise the modal-body's generic
+ * textarea styling for our editor instance. Adding `.penman-modal-body`
+ * to the selector raises specificity to 0,2,1 — high enough to win
+ * unconditionally, even if a future stylesheet reorders things. */
+.penman-modal-body pre.pm-mce-pre,
+.penman-modal-body textarea.pm-mce-ta {
+  margin: 0;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: 0;
+  height: auto;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+}
+.penman-modal-body textarea.pm-mce-ta {
+  background: transparent;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  caret-color: var(--mce-caret);
+  box-shadow: none;
+}
+.penman-modal-body textarea.pm-mce-ta:focus {
+  border: 0;
+  box-shadow: none;
+}
+
+/* ─── Token classes ─────────────────────────────────────────────────── */
+pre.pm-mce-pre .tk-tag         { color: var(--mce-tag); -webkit-text-fill-color: var(--mce-tag); }
+/* Tag delimiters share the tag-name color so `<div>` reads as a single
+ * visual unit, the same convention VS Code / Sublime use. */
+pre.pm-mce-pre .tk-bracket-tag { color: var(--mce-tag); -webkit-text-fill-color: var(--mce-tag); opacity: 0.85; }
+pre.pm-mce-pre .tk-attr        { color: var(--mce-attr); -webkit-text-fill-color: var(--mce-attr); }
+pre.pm-mce-pre .tk-string      { color: var(--mce-string); -webkit-text-fill-color: var(--mce-string); }
+pre.pm-mce-pre .tk-comment     { color: var(--mce-comment); -webkit-text-fill-color: var(--mce-comment); font-style: italic; }
+pre.pm-mce-pre .tk-punct       { color: var(--mce-punct); -webkit-text-fill-color: var(--mce-punct); }
+pre.pm-mce-pre .tk-keyword     { color: var(--mce-keyword); -webkit-text-fill-color: var(--mce-keyword); font-weight: 600; }
+pre.pm-mce-pre .tk-number      { color: var(--mce-number); -webkit-text-fill-color: var(--mce-number); }
+pre.pm-mce-pre .tk-doctype     { color: var(--mce-doctype); -webkit-text-fill-color: var(--mce-doctype); font-style: italic; }
+pre.pm-mce-pre .tk-entity      { color: var(--mce-entity); -webkit-text-fill-color: var(--mce-entity); }
+
+/* Bracket / tag pair highlight (added on top of the regular token color). */
+pre.pm-mce-pre .tk-bracket {
+  background: var(--mce-bracket-bg);
+  border-bottom: 1px solid var(--mce-bracket-border);
+  border-radius: 2px;
+}
+
+/* Search match highlights. */
+pre.pm-mce-pre .tk-search {
+  background: var(--mce-search-bg);
+  border-radius: 2px;
+}
+pre.pm-mce-pre .tk-search-active {
+  background: var(--mce-search-active-bg);
+  color: var(--mce-search-active-fg) !important;
+  -webkit-text-fill-color: var(--mce-search-active-fg) !important;
+}
+
+/* When the textarea is read-only (rare for source view) dim caret. */
+textarea.pm-mce-ta[readonly] { caret-color: transparent; }

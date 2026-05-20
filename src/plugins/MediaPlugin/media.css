@@ -1,0 +1,130 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   MediaPlugin — modal body (tabs, preview, badge, error).
+   Extracted from penman-ui.css; loaded by MediaPlugin/index.js.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* ============================================================
+ * MediaPlugin — modal (tabs, preview, badge, error)
+ * Moved out of inline <style>/style="..." so dark theme works.
+ * ============================================================ */
+.penman-media-tabs {
+  display: flex;
+  border-bottom: 1px solid var(--pm-border);
+  margin-bottom: 15px;
+}
+.penman-media-tab {
+  padding: 8px 16px;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  font-weight: 500;
+  color: var(--pm-text-muted);
+  transition: color var(--pm-duration-fast) var(--pm-ease),
+              border-color var(--pm-duration-fast) var(--pm-ease);
+}
+.penman-media-tab:hover { color: var(--pm-text); }
+.penman-media-tab.active {
+  border-bottom-color: var(--pm-accent);
+  color: var(--pm-accent);
+}
+.penman-media-tab-content { display: none; }
+.penman-media-tab-content.active { display: block; }
+
+.penman-media-pane {
+  padding: 0 15px 15px 15px;
+}
+.penman-media-row {
+  margin-bottom: 10px;
+}
+.penman-media-row-flex {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.penman-media-row-flex > div { flex: 1; }
+.penman-media-row label,
+.penman-media-row-flex label {
+  display: block;
+  font-weight: 500;
+  color: var(--pm-text);
+}
+.penman-media-row-flex label {
+  font-size: 12px;
+  margin-bottom: 4px;
+  font-weight: 400;
+}
+.penman-media-checkbox-row {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.penman-media-checkbox-label {
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+  color: var(--pm-text);
+}
+.penman-media-checkbox-label input { margin-inline-end: 5px; }
+
+.penman-media-embed-header {
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.penman-media-embed-options {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.penman-media-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  background: var(--pm-bg-hover);
+  color: var(--pm-text);
+  margin-inline-start: 10px;
+  text-transform: capitalize;
+}
+
+.penman-media-preview-label {
+  display: block;
+  font-weight: 500;
+  margin-top: 15px;
+  color: var(--pm-text);
+}
+.penman-media-preview-area {
+  border: 1px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  background: var(--pm-bg-toolbar);
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 15px;
+  position: relative;
+  overflow: hidden;
+}
+.penman-media-preview-area::after {
+  content: "";
+  display: block;
+  padding-top: 56.25%;
+}
+.penman-media-preview-area iframe,
+.penman-media-preview-area video {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+.penman-media-preview-placeholder { color: var(--pm-text-muted); }
+.penman-media-preview-error      { color: var(--pm-color-danger); }
+
+.penman-media-error {
+  color: var(--pm-color-danger);
+  font-size: 13px;
+  margin-bottom: 10px;
+}

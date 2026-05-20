@@ -1,0 +1,52 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   BlockTypePlugin — search box + filterable list inside the BlockType
+   dropdown. Themed via --pm-* tokens so dark mode just works.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.penman-blocktype-search {
+  border: 1.5px solid var(--pm-border);
+  border-radius: var(--pm-radius-sm);
+  outline: none;
+  font-size: 13px;
+  width: calc(100% - 16px);
+  margin: 0 8px 6px 8px !important;
+  font-family: inherit;
+  direction: auto;
+  padding: 6px 10px;
+  background: var(--pm-bg);
+  color: var(--pm-text);
+  transition: border-color var(--pm-duration-fast) var(--pm-ease),
+              box-shadow   var(--pm-duration-fast) var(--pm-ease);
+}
+
+.penman-blocktype-search:focus {
+  border-color: var(--pm-border-focus);
+  box-shadow: var(--pm-shadow-focus);
+}
+
+.penman-blocktype-list {
+  padding: 0 6px;
+}
+
+.penman-blocktype-item {
+  border-radius: var(--pm-radius-sm);
+  color: var(--pm-text);
+  font-family: inherit;
+  transition: background-color var(--pm-duration-fast) var(--pm-ease),
+              color           var(--pm-duration-fast) var(--pm-ease);
+  display: flex;
+  align-items: center;
+  padding: 6px 8px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.penman-blocktype-item:hover {
+  background-color: var(--pm-bg-hover);
+}
+
+.penman-blocktype-item-active {
+  background-color: var(--pm-accent-light);
+  color: var(--pm-accent);
+  font-weight: 600;
+}

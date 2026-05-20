@@ -116,6 +116,21 @@ export class MediaModal {
 
     const el = modal.element || modal.modalElement;
 
+    // The footer is declared inside the body HTML for convenience (so it can
+    // sit alongside the other modal content in source order), but to make it
+    // stick to the bottom while the body scrolls we lift it out and re-attach
+    // it as a sibling of .penman-modal-body inside the modal flex column.
+    // After the move, the modal layout becomes:
+    //   .penman-modal (flex column, max-height:80vh)
+    //     .penman-modal-header
+    //     .penman-modal-body (flex:1; overflow-y:auto)
+    //     .penman-modal-footer   ← now sibling, naturally pinned at bottom
+    const _bodyEl = el.querySelector('.penman-modal-body');
+    const _footerEl = _bodyEl && _bodyEl.querySelector('.penman-modal-footer');
+    if (_bodyEl && _footerEl && _footerEl.parentNode === _bodyEl) {
+      _bodyEl.parentNode.insertBefore(_footerEl, _bodyEl.nextSibling);
+    }
+
     const tabs = el.querySelectorAll('.penman-media-tab');
     const tabContents = el.querySelectorAll('.penman-media-tab-content');
 

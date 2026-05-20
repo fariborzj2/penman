@@ -65,6 +65,12 @@ export class Dropdown {
     this.element.__dropdownInstance = this;
 
     this.buttonElement.addEventListener('click', this.toggle);
+    // Prevent the button from stealing focus on mousedown so the
+    // contenteditable's current selection (if any) is preserved by the time
+    // the click handler runs. Without this, browsers like Firefox can drop
+    // the editor's selection before the dropdown's onOpen callback gets a
+    // chance to save it.
+    this.buttonElement.addEventListener('mousedown', (e) => e.preventDefault());
     this.buttonElement.addEventListener('keydown', (e) => {
       // ArrowDown jumps focus into the panel without changing open state.
       if (e.key === 'ArrowDown' && this.isOpen) {

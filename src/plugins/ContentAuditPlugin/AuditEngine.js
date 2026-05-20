@@ -80,7 +80,7 @@ export class AuditEngine {
       }
     }
 
-    const score = this._scoreFor(issues);
+    const score = this._scoreFor(issues, context.stats);
     return {
       score,
       labelKey: this._labelKeyFor(score),  // i18n key — modal translates
@@ -90,6 +90,19 @@ export class AuditEngine {
       issues,
       issuesByCategory: this._groupByCategory(issues),
     };
+  }
+
+  /**
+   * Public helper so external callers (e.g. AuditModal merging in async
+   * link-status results) can recompute the score with the same logic the
+   * engine uses internally — including the wordCount-based cap.
+   */
+  scoreFor(issues, stats) {
+    return this._scoreFor(issues, stats);
+  }
+
+  labelKeyFor(score) {
+    return this._labelKeyFor(score);
   }
 
   // ── Context ──────────────────────────────────────────────────────────────
@@ -156,13 +169,29 @@ export class AuditEngine {
 
   // ── Scoring ──────────────────────────────────────────────────────────────
 
-  _scoreFor(issues) {
+  _scoreFor(issues, stats) {
     const weights = { critical: 15, warning: 8, suggestion: 3 };
     let score = 100;
     for (const issue of issues) {
       score -= weights[issue.severity] || 0;
     }
-    return Math.max(0, Math.min(100, score));
+    score = Math.max(0, Math.min(100, score));
+
+    // A document with no real text shouldn't be rewarded with a high score
+    // just because there are no rule violations to detect. Cap the overall
+    // score by the amount of content present so the ring reflects reality.
+    if (stats) {
+      const wc = stats.wordCount || 0;
+      let cap = 100;
+      if (wc === 0)        cap = 0;
+      else if (wc < 10)    cap = 15;
+      else if (wc < 30)    cap = 35;
+      else if (wc < 60)    cap = 50;
+      else if (wc < 100)   cap = 65;
+      score = Math.min(score, cap);
+    }
+
+    return score;
   }
 
   _categoryScores(issues) {

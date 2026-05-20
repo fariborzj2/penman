@@ -78,6 +78,14 @@ const seoRules = [
     return issues;
   }),
 
+  rule('seo-content-empty', 'seo', 'critical', (ctx) => {
+    if (ctx.stats.wordCount > 0) return [];
+    return [{
+      element: null,
+      locKey: 'plugins.audit.loc.empty',
+    }];
+  }),
+
   rule('seo-content-too-short', 'seo', 'warning', (ctx) => {
     if (ctx.stats.wordCount === 0 || ctx.stats.wordCount >= 100) return [];
     return [{

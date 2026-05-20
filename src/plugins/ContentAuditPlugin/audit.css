@@ -19,14 +19,18 @@
 
 .penman-audit-hero {
   display: grid;
-  grid-template-columns: 220px 1fr;
-  gap: 28px;
-  padding: 24px 28px;
+  grid-template-columns: 170px 1fr;
+  gap: 24px;
+  padding: 20px 24px;
   border-bottom: 1px solid var(--pm-border-subtle);
   background: linear-gradient(180deg, var(--pm-bg) 0%, var(--pm-bg-toolbar) 100%);
   position: sticky;
   top: 0;
   z-index: 2;
+  /* Both columns share the row height; the score column can never grow
+     taller than the stats column on desktop because they live in the same
+     grid row and the row sizes to the shorter, content-driven track. */
+  align-items: stretch;
 }
 
 .penman-audit-score {
@@ -34,13 +38,20 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
+  /* Keep the score column visually constrained by the stats column on its
+     right. If the ring + label would overflow, scale them down rather than
+     forcing the whole hero taller. */
+  min-height: 0;
+  min-width: 0;
+  align-self: stretch;
 }
 
 .penman-audit-score-ring {
   position: relative;
-  width: 160px;
-  height: 160px;
+  width: 110px;
+  height: 110px;
+  flex: 0 0 auto;
 }
 
 .penman-audit-score-ring svg {
@@ -51,7 +62,7 @@
 
 .penman-audit-score-ring circle {
   fill: none;
-  stroke-width: 12;
+  stroke-width: 14;
   stroke-linecap: round;
 }
 
@@ -75,7 +86,7 @@
 }
 
 .penman-audit-score-ring .label .num {
-  font-size: 44px;
+  font-size: 32px;
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -83,18 +94,18 @@
 }
 
 .penman-audit-score-ring .label .max {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
   color: var(--pm-text-muted);
-  margin-top: 4px;
+  margin-top: 2px;
 }
 
 .penman-audit-score-quality {
-  font-size: 13px;
+  font-size: 11.5px;
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  padding: 4px 12px;
+  letter-spacing: 0.06em;
+  padding: 3px 10px;
   border-radius: 99px;
   background: var(--pm-bg-hover);
   color: var(--pm-text-muted);
@@ -134,8 +145,12 @@
 .penman-audit-stats {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
   gap: 10px;
-  align-content: start;
+  /* Stretch the rows to fill the hero row height so the stats column is
+     always at least as tall as the score ring column beside it. */
+  align-content: stretch;
+  align-self: stretch;
 }
 
 .penman-audit-stat {

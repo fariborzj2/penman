@@ -46,6 +46,7 @@ export default {
     "topOfDoc": "Top of document",
     "headingN": "{level} #{n}: \"{text}\"",
     "charsCount": "{tag} ({count} chars)",
+    "empty": "No content",
     "wordsTotal": "{count} words total",
     "wordsNoImages": "{count} words, 0 images",
     "paragraphQuote": "Paragraph: \"{text}\"",
@@ -98,6 +99,12 @@ export default {
       "desc": "H1 headings should be concise (under 70 characters).",
       "why": "Long H1s are truncated in search results and hurt scannability.",
       "fix": "Trim the H1 to its most essential phrase."
+    },
+    "seo-content-empty": {
+      "title": "Content is empty",
+      "desc": "The editor has no text to analyze.",
+      "why": "Without content there is nothing for readers or search engines to value, so quality is treated as zero.",
+      "fix": "Add meaningful, on-topic content to the document."
     },
     "seo-content-too-short": {
       "title": "Content is too short",

@@ -4,6 +4,7 @@ import { escapeHtml, safeUrl } from '../../utils/html.js';
 import __faStrings from './lang/fa.js';
 import __enStrings from './lang/en.js';
 import __icons from './icons/index.js';
+import './suggestedposts.css';
 
 /**
  * SuggestedPostsPlugin

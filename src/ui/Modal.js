@@ -30,6 +30,9 @@ export class Modal {
     this._keydownHandler = null;
     this._titleId = uniqueId('penman-modal-title-');
 
+    // Drag state, populated lazily when the user first grabs the header.
+    this._drag = null;
+
     this._createDOM();
     this._bindEvents();
     this._injectStyles();
@@ -249,6 +252,10 @@ export class Modal {
     this._keydownHandler = (e) => this._handleKeydown(e);
     document.addEventListener('keydown', this._keydownHandler);
 
+    // Make the dialog draggable by its header. We wire this after the modal
+    // is in the DOM so getBoundingClientRect() reports real coordinates.
+    this._makeDraggable();
+
     // Focus first input/control inside the modal. If nothing focusable exists,
     // focus the dialog container itself so the trap has somewhere to start.
     const focusable = this._getFocusableElements();
@@ -256,6 +263,112 @@ export class Modal {
     setTimeout(() => {
       try { initialTarget.focus(); } catch (_) { /* noop */ }
     }, 10);
+  }
+
+  /**
+   * Make the modal draggable by its header. The dialog starts centered by the
+   * overlay's flexbox layout; the first pointerdown on the header pins it to
+   * its current visual rect with position:fixed, then subsequent moves update
+   * left/top. Pointer Events are used so mouse, touch, and pen all work, and
+   * pointer capture keeps the drag going if the cursor briefly leaves the
+   * header.
+   *
+   * Paired with the global CSS rule `.penman-modal-overlay { pointer-events:
+   * none; }`, this lets the user interact with whatever is underneath the
+   * dialog while the dialog itself stays focused and interactive.
+   */
+  _makeDraggable() {
+    const modalEl = this.modalElement;
+    if (!modalEl) return;
+    const header = modalEl.querySelector('.penman-modal-header');
+    if (!header) return;
+
+    const state = {
+      active: false,
+      pointerId: null,
+      startX: 0,
+      startY: 0,
+      originLeft: 0,
+      originTop: 0,
+      floating: false,
+    };
+    this._drag = state;
+
+    const onPointerDown = (e) => {
+      // Clicks on any control inside the header (the close button, etc.)
+      // must reach their own handler — never start a drag from a button.
+      if (e.target && e.target.closest && e.target.closest('button')) return;
+      // Only primary button / first touch initiates a drag.
+      if (e.button !== undefined && e.button !== 0) return;
+
+      // Pin the modal at its current visual position the first time we drag.
+      // Subsequent drags just update left/top.
+      if (!state.floating) {
+        const rect = modalEl.getBoundingClientRect();
+        modalEl.style.position = 'fixed';
+        modalEl.style.left = rect.left + 'px';
+        modalEl.style.top = rect.top + 'px';
+        modalEl.style.margin = '0';
+        modalEl.style.transform = 'none';
+        modalEl.classList.add('is-floating');
+        state.floating = true;
+      }
+
+      const rect = modalEl.getBoundingClientRect();
+      state.active = true;
+      state.pointerId = e.pointerId;
+      state.startX = e.clientX;
+      state.startY = e.clientY;
+      state.originLeft = rect.left;
+      state.originTop = rect.top;
+
+      modalEl.classList.add('is-dragging');
+      try { header.setPointerCapture(e.pointerId); } catch (_) { /* noop */ }
+      e.preventDefault();
+    };
+
+    const onPointerMove = (e) => {
+      if (!state.active || e.pointerId !== state.pointerId) return;
+
+      const dx = e.clientX - state.startX;
+      const dy = e.clientY - state.startY;
+      let nextLeft = state.originLeft + dx;
+      let nextTop  = state.originTop  + dy;
+
+      // Clamp so the modal can't be dragged entirely off-screen. Keep at
+      // least 60px of the header visible on the left/right and the header
+      // strip itself visible at the top/bottom so the user can always grab
+      // it again.
+      const w = modalEl.offsetWidth;
+      const minLeft = 8 - w + 60;
+      const maxLeft = window.innerWidth - 60 - 8;
+      const minTop  = 0;
+      const maxTop  = window.innerHeight - 40 - 8;
+
+      if (nextLeft < minLeft) nextLeft = minLeft;
+      if (nextLeft > maxLeft) nextLeft = maxLeft;
+      if (nextTop  < minTop)  nextTop  = minTop;
+      if (nextTop  > maxTop)  nextTop  = maxTop;
+
+      modalEl.style.left = nextLeft + 'px';
+      modalEl.style.top  = nextTop  + 'px';
+    };
+
+    const endDrag = (e) => {
+      if (!state.active) return;
+      if (e && e.pointerId !== state.pointerId) return;
+      state.active = false;
+      state.pointerId = null;
+      modalEl.classList.remove('is-dragging');
+      try {
+        if (e && e.pointerId !== undefined) header.releasePointerCapture(e.pointerId);
+      } catch (_) { /* noop */ }
+    };
+
+    header.addEventListener('pointerdown', onPointerDown);
+    header.addEventListener('pointermove', onPointerMove);
+    header.addEventListener('pointerup', endDrag);
+    header.addEventListener('pointercancel', endDrag);
   }
 
   close() {

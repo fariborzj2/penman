@@ -13,6 +13,7 @@ import enStrings from './lang/en.js';
 import icons from './icons/index.js';
 import { escapeHtml } from '../../utils/html.js';
 import { isMac, modKey } from '../../utils/platform.js';
+import './help.css';
 
 const VERSION = '0.1.0';
 const LICENSE = 'MIT';

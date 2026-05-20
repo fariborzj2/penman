@@ -1,0 +1,217 @@
+/* ═══════════════════════════════════════════════════════════════════════
+   TablePlugin — table dropdown menu (10×10 grid picker + action rows).
+   Extracted from penman-ui.css; loaded by TablePlugin.js.
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Top-level "insert table" picker — the standalone grid that appears
+   when the user clicks the toolbar Table button (renders before the
+   .penman-table-menu drops in). Originally lived in penman-ui.css as a
+   numbered "TABLE GRID" section; consolidated here so all table styles
+   travel together with the plugin. */
+.penman-table-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 8px 10px 10px;
+}
+
+.penman-grid-cell {
+  aspect-ratio: 1/1;
+  border-radius: 2px;
+  background: var(--pm-border-subtle);
+  border: 1px solid var(--pm-border);
+  transition: background-color var(--pm-duration-fast) var(--pm-ease),
+              border-color     var(--pm-duration-fast) var(--pm-ease);
+  cursor: pointer;
+}
+
+.penman-grid-cell:hover,
+.penman-grid-cell.penman-grid-cell-active {
+  background: var(--pm-accent-light);
+  border-color: var(--pm-accent);
+}
+
+/* ============================================================
+ * TablePlugin — table dropdown menu (grid picker + actions)
+ * Layout:
+ *   - 10×10 hover-picker at the top
+ *   - section-title rows ("Cell" / "Row" / "Column" / "Table") in
+ *     uppercase small caps
+ *   - icon + label action rows
+ *   - disabled action rows show a different cursor + tooltip
+ * ============================================================ */
+.penman-table-menu {
+  min-width: 200px;
+  color: var(--pm-text);
+  background: var(--pm-bg);
+}
+
+.penman-table-insert-mode {
+  padding: 5px 12px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.penman-table-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 2px;
+  padding: 0;
+}
+.penman-grid-cell {
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--pm-border);
+  background: var(--pm-bg);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background var(--pm-duration-fast) var(--pm-ease),
+              border-color var(--pm-duration-fast) var(--pm-ease);
+}
+.penman-grid-cell--selected {
+  background: var(--pm-accent-light);
+  border-color: var(--pm-accent);
+}
+
+.penman-grid-label {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--pm-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.penman-table-menu hr {
+  border: none;
+  border-top: 1px solid var(--pm-border-subtle);
+  margin: 6px 0;
+}
+
+/* Section title — Cell / Row / Column / Table */
+.penman-menu-section-title {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pm-text-muted);
+}
+
+/* Single action row (icon + label, full-width clickable button) */
+.penman-menu-action {
+  appearance: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 16px;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  font-size: 13.5px;
+  font-family: inherit;
+  text-align: inherit;
+  color: var(--pm-text);
+  transition: background var(--pm-duration-fast) var(--pm-ease),
+              color      var(--pm-duration-fast) var(--pm-ease);
+}
+.penman-menu-action:hover:not(:disabled) {
+  background: var(--pm-bg-hover);
+}
+.penman-menu-action:active:not(:disabled) {
+  background: var(--pm-bg-active);
+}
+.penman-menu-action:disabled,
+.penman-menu-action[aria-disabled="true"] {
+  cursor: not-allowed;
+  color: var(--pm-text-muted);
+  opacity: 0.55;
+}
+.penman-menu-action:disabled .penman-menu-action-icon,
+.penman-menu-action[aria-disabled="true"] .penman-menu-action-icon {
+  opacity: 0.7;
+}
+
+.penman-menu-action-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  color: var(--pm-text-muted);
+}
+.penman-menu-action:hover:not(:disabled) .penman-menu-action-icon {
+  color: var(--pm-accent);
+}
+.penman-menu-action-label {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* ── Cascading flyout (parent group + side panel) ───────────────────────── */
+.penman-menu-flyout {
+  position: relative;
+}
+.penman-menu-flyout-trigger {
+  /* same .penman-menu-action layout, plus a chevron in the trailing edge */
+}
+.penman-menu-flyout-chevron {
+  display: inline-flex;
+  align-items: center;
+  margin-inline-start: auto;
+  color: var(--pm-text-muted);
+  transition: color var(--pm-duration-fast) var(--pm-ease);
+}
+/* Flip the chevron when the menu sits in an RTL context so it visually
+   points toward where the panel will open (left side in RTL). */
+[dir="rtl"] .penman-menu-flyout-chevron svg {
+  transform: scaleX(-1);
+}
+.penman-menu-flyout-trigger:hover:not(:disabled) .penman-menu-flyout-chevron,
+.penman-menu-flyout--open > .penman-menu-flyout-trigger:not(:disabled) .penman-menu-flyout-chevron {
+  color: var(--pm-accent);
+}
+
+/* The side-panel sits to the right of the trigger in LTR, to the left in RTL.
+   It's hidden by default and shown when the parent gets .--open. */
+.penman-menu-flyout-panel {
+  position: absolute;
+  top: 0;
+  inset-inline-start: 100%;
+  min-width: 200px;
+  padding: 6px 0;
+  margin-inline-start: 2px;
+  background: var(--pm-bg);
+  border: 1px solid var(--pm-border-subtle);
+  border-radius: var(--pm-radius-sm);
+  box-shadow: var(--pm-shadow-md);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateX(-4px);
+  transition: opacity   var(--pm-duration-fast) var(--pm-ease),
+              transform var(--pm-duration-fast) var(--pm-ease);
+  z-index: 1;
+}
+[dir="rtl"] .penman-menu-flyout-panel {
+  transform: translateX(4px);
+}
+.penman-menu-flyout--open > .penman-menu-flyout-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(0);
+}
+
+/* Highlight the parent trigger while the side-panel is open */
+.penman-menu-flyout--open > .penman-menu-flyout-trigger {
+  background: var(--pm-bg-hover);
+}
+
+/* When the parent group is disabled (no table active), don't show the chevron
+   as an interactive hint — the panel is also kept closed via JS. */
+.penman-menu-item--disabled > .penman-menu-flyout-trigger {
+  cursor: not-allowed;
+}
+.penman-menu-item--disabled .penman-menu-flyout-panel {
+  display: none;
+}

@@ -311,6 +311,10 @@
   border-radius: var(--pmc-radius);
   overflow: hidden;
   transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  max-width: 100%;
+}
+.penman-image img {
+  max-width: 100%;
 }
 .penman-image:hover {
   border-color: var(--pmc-image-hover);

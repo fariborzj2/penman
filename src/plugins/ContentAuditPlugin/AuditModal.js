@@ -311,19 +311,16 @@ export class AuditModal {
     if (!report.issuesByCategory.links) report.issuesByCategory.links = [];
     report.issuesByCategory.links.push(...extras);
 
-    // Re-score now that the link issues are included.
-    const weights = { critical: 15, warning: 8, suggestion: 3 };
-    let score = 100;
-    for (const i of report.issues) score -= weights[i.severity] || 0;
-    score = Math.max(0, Math.min(100, score));
+    // Re-score now that the link issues are included. Delegate to the
+    // engine so the wordCount-aware cap (empty / very-short content) stays
+    // consistent with the initial scoring pass.
+    const score = this.engine.scoreFor(report.issues, report.stats);
     report.score = score;
-    if (score >= 90) report.labelKey = 'plugins.audit.quality.excellent';
-    else if (score >= 75) report.labelKey = 'plugins.audit.quality.good';
-    else if (score >= 60) report.labelKey = 'plugins.audit.quality.fair';
-    else if (score >= 40) report.labelKey = 'plugins.audit.quality.weak';
-    else report.labelKey = 'plugins.audit.quality.poor';
+    report.labelKey = this.engine.labelKeyFor(score);
 
-    // Update category score for links.
+    // Update category score for links (no wordCount cap on per-category
+    // scores — categories are scored only by their own issues).
+    const weights = { critical: 15, warning: 8, suggestion: 3 };
     let linkScore = 100;
     for (const i of (report.issuesByCategory.links || [])) {
       linkScore -= weights[i.severity] || 0;
