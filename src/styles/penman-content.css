@@ -68,7 +68,10 @@
   padding: 22px 26px;
   outline: none;
   font-family: inherit;
-  font-size: 15px;
+  /* Default body font size. Must remain in sync with one of the values
+     exposed by FontSizePlugin so the user can re-select it from the
+     toolbar dropdown after changing a selection's size. */
+  font-size: 14px;
   line-height: 1.75;
   color: var(--pmc-text);
   overflow-y: auto;
