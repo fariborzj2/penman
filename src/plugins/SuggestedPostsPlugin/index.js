@@ -112,6 +112,47 @@ export function setupSuggestedPostsPlugin(editor) {
     }
   });
 
+  // ── Lock the widget down: it must only be edited via the modal ────────
+  //
+  // Defense in depth. The wrapper is inserted with contenteditable="false"
+  // (see insertBlock below), the sanitizer preserves that attribute, and
+  // suggestedposts.css disables user-select/pointer-events on the inner
+  // content. But content can arrive from many sources — setContent() on a
+  // saved post, paste, undo/redo, third-party scripts — and a single
+  // missing attribute would re-open inline editing. This pass walks every
+  // wrapper currently in the editor and re-asserts the lock.
+  function lockAllWrappers() {
+    if (!editor.editableArea) return;
+    const wrappers = editor.editableArea.querySelectorAll('.penman-suggested-posts-wrapper');
+    wrappers.forEach(w => {
+      if (w.getAttribute('contenteditable') !== 'false') {
+        w.setAttribute('contenteditable', 'false');
+      }
+    });
+  }
+
+  // Run once after init (covers content set before plugin init) and on
+  // every content change (covers setContent, paste, undo/redo, etc.).
+  setTimeout(lockAllWrappers, 0);
+  if (typeof editor.on === 'function') {
+    editor.on('change', lockAllWrappers);
+  }
+
+  // Intercept clicks on the inner <a> links: inside the editor a click
+  // must NOT navigate to the URL — it should just select the block so the
+  // floating Edit toolbar appears. The CSS already sets pointer-events:
+  // none on children, but we also guard at the JS layer for browsers /
+  // contexts where that style might be overridden.
+  editor.editableArea.addEventListener('click', (e) => {
+    const wrapper = e.target.closest && e.target.closest('.penman-suggested-posts-wrapper');
+    if (!wrapper) return;
+    const link = e.target.closest && e.target.closest('a');
+    if (link) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }, true);
+
   // ── مودال (Modal) ─────────────────────────────────────────────────────────
   function openModal() {
     if (editor.selection && typeof editor.selection.save === 'function' && !editingBlock) {

@@ -2,6 +2,34 @@
    SuggestedPostsPlugin — items list inside the modal + small button
    helpers used only by this plugin.
    ═══════════════════════════════════════════════════════════════════════ */
+
+/* ───────────────────────────────────────────────────────────────────────
+   In-editor widget: a "suggested posts" block is a non-editable atomic
+   unit. Users can ONLY modify it through the plugin modal (opened via
+   the floating Edit button), so we lock down inline interactions:
+     - cursor:pointer   → signals the block is a single selectable unit
+     - user-select:none → caret/drag-select can't enter the widget
+     - pointer-events on children disabled → inner <a> links won't
+       navigate inside the editor; clicks bubble to the wrapper so
+       nodeSelected fires and the floating toolbar appears
+   The wrapper itself keeps pointer-events:auto so the click that
+   triggers selection still reaches it.
+   ─────────────────────────────────────────────────────────────────────── */
+.penman-editor-area .penman-suggested-posts-wrapper {
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+.penman-editor-area .penman-suggested-posts-wrapper * {
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  pointer-events: none;
+}
+
 .psp-items-list { margin-bottom: 4px; }
 .psp-items-wrap {
   border: 1px solid var(--pm-border-subtle, #e2e8f0);
