@@ -170,6 +170,7 @@
   position: relative;
   outline: none;
   user-select: none;
+  white-space: nowrap;
 }
 
 .penman-btn:hover {

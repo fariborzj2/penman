@@ -673,6 +673,7 @@ export function setupImagePlugin(editor) {
                 el.style.display = 'flex';
                 el.style.alignItems = 'center';
                 el.style.padding = '12px 0';
+                el.style.gap = '15px';
                 el.style.borderBottom = '1px solid #f0f0f0';
                 
                 // Thumbnail
@@ -681,7 +682,6 @@ export function setupImagePlugin(editor) {
                 thumbDiv.style.height = '64px';
                 thumbDiv.style.borderRadius = '8px';
                 thumbDiv.style.overflow = 'hidden';
-                thumbDiv.style.marginRight = '16px';
                 thumbDiv.style.flexShrink = '0';
                 thumbDiv.style.backgroundColor = '#f5f5f5';
                 
@@ -788,7 +788,6 @@ export function setupImagePlugin(editor) {
                 
                 // Checkbox
                 const checkContainer = document.createElement('div');
-                checkContainer.style.marginLeft = '16px';
                 checkContainer.style.display = 'flex';
                 checkContainer.style.alignItems = 'center';
                 
