@@ -1,0 +1,16 @@
+Options -Indexes -ExecCGI
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule ^[^/]+\.(?:jpe?g|png|gif|webp)$ - [L,NC]
+    RewriteRule ^ - [F,L]
+</IfModule>
+
+<FilesMatch "\.(?:php[0-9]*|phtml|phar|shtml?|cgi|pl|py|rb|sh|svg|html?)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Content-Security-Policy "sandbox"
+</IfModule>

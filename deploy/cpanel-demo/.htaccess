@@ -1,0 +1,17 @@
+Options -Indexes
+
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "^(?!gallery\.php$).*\.(?:php[0-9]*|phtml|phar|shtml?|cgi|pl|py|rb|sh)$">
+    Require all denied
+</FilesMatch>
+
+<FilesMatch "\.(?:map|log|zip|tar|gz|sql|bak|old|ini|env)$">
+    Require all denied
+</FilesMatch>
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+</IfModule>

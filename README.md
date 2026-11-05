@@ -19,7 +19,7 @@ A framework-agnostic, modular vanilla-JavaScript rich text editor (WYSIWYG) with
 - **21 built-in plugins** — bold/italic/underline/strikethrough, headings, block types, font size, lists, tables, images & gallery, embeds, media (video/audio), code blocks (CodeMirror + highlight.js), find/replace, markdown shortcuts, drafts (auto-save to IndexedDB/localStorage), source view, color picker, content audit, suggested posts, help dialog, and more.
 - **Themed UI primitives** — `FormModal` (declarative form schema), `DropdownMenu` (items + search), `Tooltip` (shared service for all toolbar buttons), `ColorPicker`, `FloatingUI`.
 - **Selection / history managers** with snapshot transactions for atomic edits.
-- **Optional Node server** with safe upload handling (MIME allowlist, size cap, CORS allowlist).
+- **Optional Node server** that decodes and re-encodes raster uploads, with a size cap and CORS allowlist.
 
 ## Installation
 
@@ -185,7 +185,11 @@ Architecture, security model, public API, and per-plugin guides live in [`docs/`
 
 ## Server (optional)
 
-`server/server.js` ships a minimal Express server for image uploads with a MIME allowlist, configurable size cap, CORS allowlist, and environment-variable URL base.
+`server/server.js` is a separate Node 20.9+ service. It decodes JPEG, PNG, GIF, and WebP images, re-encodes them as new WebP files with server-generated names, and serves only those names. Uploaded bytes, SVG, and client filenames are never written to the public directory. Bind it behind your own authenticated reverse proxy if exposing uploads to users; CORS is not authentication.
+
+```bash
+npm install --prefix server
+```
 
 ```bash
 PORT=3000 \
@@ -194,6 +198,12 @@ ALLOWED_ORIGIN=https://app.example.com \
 MAX_FILE_SIZE_MB=10 \
 npm run server
 ```
+
+Test the upload boundary with `npm test --prefix server`. The live cPanel demo at
+`penman.uae.gift` uses the separate files in [`deploy/cpanel-demo/`](deploy/cpanel-demo/):
+it has no server upload route. The image picker decodes images in the browser,
+and the gallery only lists re-encoded raster files. Do not restore an old
+`upload.php` or the quarantined uploads directory to that web root.
 
 ## Development
 

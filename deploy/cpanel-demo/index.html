@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Penman Editor</title>
+  <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    body {
+      font-family: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 80px 20px 40px;
+      background: linear-gradient(135deg, #f0f4ff 0%, #fafbff 50%, #f5f0ff 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+      align-items: center;
+      font-size: 13px;
+    }
+    /* Page header */
+    .page-header {
+      text-align: center;
+      max-width: 600px;
+    }
+    .page-header h1 {
+      font-size: 28px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 8px;
+      letter-spacing: -0.03em;
+    }
+    .page-header p {
+      color: #64748b;
+      font-size: 15px;
+      margin: 0;
+    }
+
+    /* Editor card */
+    .editor-card {
+      width: 100%;
+      max-width: 850px;
+      background: #ffffff;
+      border-radius: 16px;
+      box-shadow: 0 4px 24px rgba(79, 110, 247, 0.07), 0 1px 4px rgba(0,0,0,0.04);
+    }
+
+    .editor-card-header {
+      padding: 16px 20px 14px;
+      border-bottom: 1px solid #f0f2f8;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .editor-card-header h2 {
+      margin: 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #374151;
+    }
+
+    .editor-card-badge {
+      font-size: 11px;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 99px;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-rtl {
+      background: #eff6ff;
+      color: #3b82f6;
+    }
+
+    .badge-ltr {
+      background: #f0fdf4;
+      color: #16a34a;
+    }
+
+    .editor-card-body {
+      padding: 16px;
+    }
+
+    /* ───── Theme toggle (top-right floating control) ───────────────────── */
+    .theme-toggle {
+      position: fixed;
+      top: 18px;
+      inset-inline-end: 18px;
+      z-index: 1000;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      border-radius: 999px;
+      padding: 4px;
+      box-shadow: 0 4px 16px rgba(15, 23, 42, 0.06);
+    }
+    .theme-toggle button {
+      all: unset;
+      box-sizing: border-box;
+      width: 32px;
+      height: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 999px;
+      cursor: pointer;
+      color: #64748b;
+      transition: background 120ms ease, color 120ms ease;
+    }
+    .theme-toggle button:hover { background: rgba(15, 23, 42, 0.04); color: #1e2a3a; }
+    .theme-toggle button[aria-pressed="true"] {
+      background: #1e2a3a;
+      color: #f8fafc;
+    }
+    .theme-toggle svg { width: 16px; height: 16px; }
+
+    /* When the page is in dark mode (manual or system), restyle the demo
+       page surface to match — so the editors don't sit on a bright page. */
+    :root[data-theme="dark"] body {
+      background: linear-gradient(135deg, #0b1020 0%, #0e1428 50%, #11132a 100%);
+    }
+    :root[data-theme="dark"] .page-header h1,
+    :root[data-theme="dark"] .editor-card-header h2 { color: #e2e8f0; }
+    :root[data-theme="dark"] .page-header p { color: #94a3b8; }
+    :root[data-theme="dark"] .editor-card {
+      background: #1a1f2e;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4), 0 1px 4px rgba(0, 0, 0, 0.2);
+    }
+    :root[data-theme="dark"] .editor-card-header { border-bottom-color: #252d42; }
+    :root[data-theme="dark"] .badge-rtl { background: #1e3a5f; color: #93c5fd; }
+    :root[data-theme="dark"] .badge-ltr { background: #1e3a2f; color: #86efac; }
+    :root[data-theme="dark"] .theme-toggle {
+      background: rgba(20, 25, 40, 0.85);
+      border-color: rgba(255, 255, 255, 0.08);
+    }
+    :root[data-theme="dark"] .theme-toggle button { color: #94a3b8; }
+    :root[data-theme="dark"] .theme-toggle button:hover { background: rgba(255, 255, 255, 0.05); color: #e2e8f0; }
+    :root[data-theme="dark"] .theme-toggle button[aria-pressed="true"] {
+      background: #f8fafc; color: #0f172a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]):not([data-theme="dark"]) body {
+        background: linear-gradient(135deg, #0b1020 0%, #0e1428 50%, #11132a 100%);
+      }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .editor-card {
+        background: #1a1f2e;
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+      }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .page-header h1,
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .editor-card-header h2 { color: #e2e8f0; }
+      :root:not([data-theme="light"]):not([data-theme="dark"]) .page-header p { color: #94a3b8; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Theme toggle: cycles light → auto → dark.
+       Aria-pressed reflects the active option for screen readers. -->
+  <div class="theme-toggle" role="group" aria-label="Theme">
+    <button type="button" data-theme-set="light" aria-label="Light theme" title="Light">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+    </button>
+    <button type="button" data-theme-set="auto" aria-label="Auto (system)" title="Auto">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+    </button>
+    <button type="button" data-theme-set="dark" aria-label="Dark theme" title="Dark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </div>
+
+  <div class="main">
+    <div class="page-header">
+      <img src="/penman-logo.png" alt="Penman" style="width: 280px; height: auto; margin: 0 auto 16px; display: block;" />
+      <h1 style="position: absolute; left: -10000px; width: 1px; height: 1px; overflow: hidden;">Penman Editor</h1>
+      <p>ویرایشگر متن غنی نسل جدید با معماری مدرن، عملکرد سریع و رابط کاربری روان؛ طراحی‌شده برای تولید و مدیریت محتوا بدون وابستگی خارجی و با تمرکز بر توسعه‌پذیری، پایداری و تجربه کاربری حرفه‌ای.</p>
+    </div>
+
+    <div class="editor-card">
+      <div class="editor-card-header">
+        <h2>ویرایشگر فارسی</h2>
+        <span class="editor-card-badge badge-rtl">RTL</span>
+      </div>
+      <div class="editor-card-body">
+        <textarea class="mytextarea" name="shortstory" data-height="280" data-direction="rtl"><p>متن مقاله را اینجا وارد کنید</p></textarea>
+      </div>
+    </div>
+
+    <div class="editor-card" dir="ltr">
+      <div class="editor-card-header">
+        <h2>English Editor</h2>
+        <span class="editor-card-badge badge-ltr">LTR</span>
+      </div>
+      <div class="editor-card-body">
+        <textarea class="mytextarea" name="fullstory" data-height="280" data-direction="ltr"><p>Enter your full story here</p></textarea>
+      </div>
+    </div>
+  </div>
+
+  <!-- Load the built script -->
+  <script src="/penman.umd.js?v=0.1.7"></script>
+  <script type="module">
+
+
+    // Assign to window for console access if needed, simulating real usage
+    // window.penman = penman;
+
+    // Define the global default configurations
+    const penmanDefaults = {
+      lang: 'fa',
+      plugins: ['embed', 'link', 'draft', 'suggestedposts', 'format', 'list', 'blocktype', 'fontsize', 'removeformat', 'hr', 'findreplace', 'table', 'image', 'color', 'sourcecode', 'direction', 'media', 'codeblock', 'markdown', 'audit', 'help', 'wordimport'],
+      // The page title (H1) is stored in a separate input outside the editor,
+      // so the audit should not require / complain about H1 inside the body.
+      auditIgnoreH1: true,
+      toolbar: {
+        rows: [
+          ['undo', 'redo', 'blocktype', 'fontsize', 'image', 'media', 'embed', 'table', 'suggestedposts', 'wordimport', 'dirrtl', 'dirltr','findreplace', 'sourcecode', 'hr', 'codeblock', 'audit','help'],
+          ['bold', 'italic', 'underline','strikethrough', 'superscript', 'subscript', 'justifyright', 'justifycenter', 'justifyleft', 'justifyfull', 'bullist', 'numlist', 'indentlist', 'outdentlist', 'link', 'unlink', 'removeformat', 'textcolor', 'highlight'],
+        ]
+      },
+      // This public demo stores draft images in the visitor's browser only.
+      // No file is sent to the hosting account or its PHP runtime.
+      imageUploadFn: async (file, onProgress) => {
+        const types = new Set(['image/jpeg', 'image/png', 'image/gif', 'image/webp']);
+        if (!(file instanceof File) || !types.has(file.type) || file.size < 1 || file.size > 5 * 1024 * 1024) {
+          throw new Error('Only JPG, PNG, GIF, or WebP images up to 5 MB are supported.');
+        }
+        const bitmap = await createImageBitmap(file);
+        try {
+          if (bitmap.width < 1 || bitmap.height < 1 || bitmap.width * bitmap.height > 16000000) {
+            throw new Error('Image dimensions are not supported.');
+          }
+          const canvas = document.createElement('canvas');
+          canvas.width = bitmap.width;
+          canvas.height = bitmap.height;
+          canvas.getContext('2d').drawImage(bitmap, 0, 0);
+          const url = canvas.toDataURL('image/png');
+          if (onProgress) onProgress(file.size, file.size);
+          return { url, alt: file.name };
+        } finally {
+          bitmap.close();
+        }
+      }
+    };
+
+    // Initialize all matching editors dynamically, using data attributes to customize behavior per-editor
+    penman.init({
+      selector: '.mytextarea',
+      config: penmanDefaults,
+      resolveConfig: (el, defaultConfig) => {
+        return {
+          ...defaultConfig,
+          height: parseInt(el.dataset.height, 10) || 300,
+          direction: el.dataset.direction || 'auto',
+          lang: el.dataset.direction === 'rtl' ? 'fa' : 'en' // Override language based on direction for better defaults
+        };
+      }
+    });
+
+    const allInstances = penman.getAll();
+
+    // ───── Wire up the page-level theme toggle ──────────────────────────
+    // The toggle has three pills: Light / Auto / Dark. Clicking a pill:
+    //   1. Sets data-theme on <html> (or removes it for auto) so the demo
+    //      page restyles itself via the CSS rules above.
+    //   2. Calls editor.setTheme() on every editor so their chrome (toolbar,
+    //      modals, dropdowns) re-themes in unison.
+    //   3. Persists the choice in localStorage so reloads remember it.
+    (function setupThemeToggle() {
+      const KEY = 'penman-demo-theme';
+      const buttons = document.querySelectorAll('.theme-toggle [data-theme-set]');
+      const root = document.documentElement;
+
+      function apply(theme) {
+        if (theme === 'auto') {
+          root.removeAttribute('data-theme');
+          root.removeAttribute('data-theme-source');
+        } else {
+          root.setAttribute('data-theme', theme);
+          // Tag the source so Editor.setTheme() doesn't clobber it later.
+          root.setAttribute('data-theme-source', 'penman');
+        }
+        allInstances.forEach(ed => {
+          if (ed && typeof ed.setTheme === 'function') ed.setTheme(theme);
+        });
+        buttons.forEach(b => {
+          b.setAttribute('aria-pressed', String(b.dataset.themeSet === theme));
+        });
+        try { localStorage.setItem(KEY, theme); } catch (_) { /* ignore */ }
+      }
+
+      buttons.forEach(b => {
+        b.addEventListener('click', () => apply(b.dataset.themeSet));
+      });
+
+      const saved = (() => { try { return localStorage.getItem(KEY); } catch (_) { return null; } })();
+      apply(saved && ['light', 'dark', 'auto'].includes(saved) ? saved : 'auto');
+    })();
+
+    allInstances.forEach(instance => {
+      // 👇 ثبت گالری در پلاگین تصویر (برای نمایش فایل‌های پوشه server/uploads)
+      if (instance.image && instance.image.gallery) {
+        instance.image.gallery.registerSource({
+          id: 'local-uploads',
+          name: 'Local Uploads',
+          trustLevel: 'TRUSTED', // Since it comes from our own server
+          list: async (cursor = null, limit = 20) => {
+            // در سرور local که راه‌اندازی کردیم، endpoint به نام /gallery ایجاد کردیم
+            const response = await fetch('https://penman.uae.gift/gallery.php');
+            const data = await response.json();
+            return data; // { items: [...], nextCursor: null }
+          },
+          get: async (id) => {
+            // در این مثال ساده get به صورت dummy کار می‌کند چون لیست همه فیلدها را دارد
+            return { id, url: `https://penman.uae.gift/uploads/${id}` };
+          }
+        });
+      }
+    });
+
+  </script>
+</body>
+</html>
